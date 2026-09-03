@@ -1,0 +1,38 @@
+# Gradle
+.gradle/
+gradle-wrapper.jar
+gradle-wrapper.properties
+
+# Build outputs
+build/
+app/build/
+*/build/
+*.apk
+*.aar
+*.dex
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+local.properties
+.externalNativeBuild
+
+# Mac / Windows
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Keystore (arquivos de assinatura, se houver)
+*.jks
+*.keystore
+
+# Outros
+.vscode/
+.settings/
+.classpath
+.project

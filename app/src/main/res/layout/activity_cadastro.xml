@@ -7,4 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".view.CadastroActivity">
 
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

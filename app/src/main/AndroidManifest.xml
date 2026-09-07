@@ -12,40 +12,45 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Controle_gastos"
         tools:targetApi="31">
+
+        <!-- SPLASH (TELA INICIAL) -->
         <activity
             android:name=".view.SplashActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- LOGIN -->
+        <activity
+            android:name=".view.LoginActivity"
+            android:exported="true" />
+
+        <!-- CADASTRO -->
         <activity
             android:name=".view.CadastroActivity"
             android:exported="false" />
-        <activity
-            android:name=".view.LoginActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <!-- DASHBOARD -->
+        <activity
+            android:name=".view.DashboardActivity"
+            android:exported="false" />
+
+        <!-- (OPCIONAL) MainActivity se você for usar -->
+        <!-- Se não for usar, pode deletar ou comentar -->
+        <!--
         <activity
             android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:exported="false" />
+        -->
 
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
+
     </application>
 
 </manifest>

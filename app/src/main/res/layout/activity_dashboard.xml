@@ -1,17 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:background="@color/fundo_escuro">
+    android:background="@color/fundo_escuro"
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/dashboard_em_construcao"
-        android:textColor="#FFFFFF"
-        android:textSize="24sp"
-        android:fontFamily="@font/abril_fatface" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-</LinearLayout>
+        <!-- Título -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gastos por Categoria"
+            android:fontFamily="@font/abril_fatface"
+            android:textSize="22sp"
+            android:textColor="@color/text_white"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Subtítulo -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Toque na categoria para filtrar os lançamentos"
+            android:textColor="@color/text_gray"
+            android:textSize="12sp"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Gráfico de Pizza -->
+        <com.github.mikephil.charting.charts.PieChart
+            android:id="@+id/pieChart"
+            android:layout_width="match_parent"
+            android:layout_height="260dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Legendas -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvLegendas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Botões de Filtro (horizontal) -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/containerFiltros"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
+
+        <!-- Título da Lista -->
+        <TextView
+            android:id="@+id/tvTituloLista"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lançamentos"
+            android:fontFamily="@font/abril_fatface"
+            android:textSize="18sp"
+            android:textColor="@color/text_white"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Lista de Lançamentos -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvLancamentos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Botão Exportar -->
+        <Button
+            android:id="@+id/btnExportar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Exportar Detalhamento em PDF / CSV →"
+            android:backgroundTint="@color/card_bg"
+            android:textColor="@color/text_gray"
+            android:textSize="12sp"
+            android:padding="12dp"
+            android:stateListAnimator="@null" />
+
+    </LinearLayout>
+</ScrollView>

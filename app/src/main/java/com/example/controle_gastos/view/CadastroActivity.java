@@ -2,50 +2,75 @@ package com.example.controle_gastos.view;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class CadastroActivity extends AppCompatActivity {
 
-    private EditText editNome, editEmail, editSenha;
-    private Button btnCadastrar;
-    private TextView tvVoltarLogin;
+    private TextInputEditText etEmail, etPassword, etConfirmPassword;
+    private MaterialButton btnCadastrar;
+    private TextView tvLogin;
+    private ImageView btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro);
 
-        editNome = findViewById(R.id.editNomeCadastro);
-        editEmail = findViewById(R.id.editEmailCadastro);
-        editSenha = findViewById(R.id.editSenhaCadastro);
+        // Vincular componentes do layout
+        etEmail = findViewById(R.id.etEmail);
+        etPassword = findViewById(R.id.etPassword);
+        etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnCadastrar = findViewById(R.id.btnCadastrar);
-        tvVoltarLogin = findViewById(R.id.tvVoltarLogin);
+        tvLogin = findViewById(R.id.tvLogin);
+        btnBack = findViewById(R.id.btnBack);
 
+        // Ação do botão Cadastrar
         btnCadastrar.setOnClickListener(v -> {
-            String nome = editNome.getText().toString().trim();
-            String email = editEmail.getText().toString().trim();
-            String senha = editSenha.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
+            String senha = etPassword.getText().toString().trim();
+            String confirmarSenha = etConfirmPassword.getText().toString().trim();
 
-            if (nome.isEmpty() || email.isEmpty() || senha.isEmpty()) {
+            // Validações
+            if (email.isEmpty() || senha.isEmpty() || confirmarSenha.isEmpty()) {
                 Toast.makeText(CadastroActivity.this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
-            } else {
-                // Cadastro concluído, volta para o Login
-                Toast.makeText(CadastroActivity.this, "Conta criada! Faça login.", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(CadastroActivity.this, LoginActivity.class);
-                startActivity(intent);
-                finish(); // Fecha a tela de cadastro
+                return;
             }
-        });
 
-        tvVoltarLogin.setOnClickListener(v -> {
+            if (!senha.equals(confirmarSenha)) {
+                Toast.makeText(CadastroActivity.this, "As senhas não coincidem!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (senha.length() < 6) {
+                Toast.makeText(CadastroActivity.this, "A senha deve ter pelo menos 6 caracteres.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Cadastro bem-sucedido (simulado)
+            Toast.makeText(CadastroActivity.this, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show();
+
+            // Navegar para Login
             Intent intent = new Intent(CadastroActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
+        });
+
+        // Ação do link "Faça login"
+        tvLogin.setOnClickListener(v -> {
+            Intent intent = new Intent(CadastroActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        // Ação do botão voltar (seta)
+        btnBack.setOnClickListener(v -> {
+            finish(); // Volta para a tela anterior (Login)
         });
     }
 }

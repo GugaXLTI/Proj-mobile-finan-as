@@ -1,8 +1,230 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".view.LoginActivity"/>
+    android:background="@color/fundo_escuro"
+    android:padding="24dp">
+
+    <!-- LOGO (ADICIONADA AQUI) -->
+
+    <ImageView
+        android:id="@+id/ivLogoLogin"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/resource_new"
+        android:contentDescription="Logo do app"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/tvTituloLogin"
+        android:layout_marginBottom="16dp" />
+
+    <!-- TÍTULO PRINCIPAL -->
+    <TextView
+        android:id="@+id/tvTituloLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/abril_fatface"
+        android:text="Bem-vindo de volta"
+        android:textAlignment="center"
+        android:textColor="#FFFFFF"
+        android:textSize="28sp"
+        app:layout_constraintTop_toBottomOf="@+id/ivLogoLogin"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/tvSubtituloLogin" />
+
+    <!-- SUBTÍTULO -->
+    <TextView
+        android:id="@+id/tvSubtituloLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Acesse sua conta para continuar"
+        android:fontFamily="@font/abril_fatface"
+        android:textSize="18sp"
+        android:textColor="#94A3B8"
+        android:textAlignment="center"
+        app:layout_constraintTop_toBottomOf="@+id/tvTituloLogin"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/tvLabelEmail"
+        android:layout_marginBottom="32dp" />
+
+    <!-- LABEL E-MAIL -->
+    <TextView
+        android:id="@+id/tvLabelEmail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="E-mail"
+        android:textColor="#94A3B8"
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvSubtituloLogin"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/editEmail" />
+
+    <!-- CAMPO E-MAIL -->
+    <EditText
+        android:id="@+id/editEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_campo_login"
+        android:hint="seu@email.com"
+        android:inputType="textEmailAddress"
+        android:textColor="#64748B"
+        android:textColorHint="#94A3B8"
+        android:padding="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvLabelEmail"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/tvLabelSenha"
+        android:layout_marginBottom="16dp" />
+
+    <!-- LABEL SENHA -->
+    <TextView
+        android:id="@+id/tvLabelSenha"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Senha"
+        android:textColor="#94A3B8"
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/editEmail"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/editSenha" />
+
+    <!-- CAMPO SENHA -->
+    <EditText
+        android:id="@+id/editSenha"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_campo_login"
+        android:hint="••••••••"
+        android:inputType="textPassword"
+        android:textColor="#64748B"
+        android:textColorHint="#94A3B8"
+        android:padding="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvLabelSenha"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/tvEsqueceuSenha"
+        android:layout_marginBottom="8dp" />
+
+    <!-- LINK ESQUECEU A SENHA? -->
+    <TextView
+        android:id="@+id/tvEsqueceuSenha"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Esqueceu a senha?"
+        android:textColor="#1E88E5"
+        android:textSize="14sp"
+        android:padding="4dp"
+        app:layout_constraintTop_toBottomOf="@+id/editSenha"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnEntrar"
+        android:layout_marginBottom="24dp" />
+
+    <!-- BOTÃO ENTRAR -->
+    <Button
+        android:id="@+id/btnEntrar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Entrar"
+        android:backgroundTint="#10B981"
+        android:textColor="#090D16"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:padding="14dp"
+        android:stateListAnimator="@null"
+        app:layout_constraintTop_toBottomOf="@+id/tvEsqueceuSenha"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/divisorContainer"
+        android:layout_marginBottom="8dp" />
+
+    <!-- DIVISOR "ou" COM LINHAS -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/divisorContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/btnEntrar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnGoogle"
+        android:layout_marginBottom="8dp">
+
+        <View
+            android:id="@+id/linhaEsquerda"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="#94A3B8"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/tvDivisorTexto"
+            android:layout_marginEnd="16dp" />
+
+        <TextView
+            android:id="@+id/tvDivisorTexto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ou"
+            android:textColor="#94A3B8"
+            android:textSize="14sp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <View
+            android:id="@+id/linhaDireita"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="#94A3B8"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/tvDivisorTexto"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="16dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- BOTÃO CONTINUAR COM GOOGLE -->
+    <Button
+        android:id="@+id/btnGoogle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Continuar com Google"
+        android:backgroundTint="#232E44"
+        android:textColor="#CBD5E1"
+        android:textSize="16sp"
+        android:padding="14dp"
+        android:stateListAnimator="@null"
+        app:iconGravity="textStart"
+        app:iconPadding="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/divisorContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/tvRodape"
+        android:layout_marginBottom="8dp" />
+
+    <!-- RODAPÉ (link cadastro) -->
+    <TextView
+        android:id="@+id/tvRodape"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Não tem uma conta? Cadastre-se"
+        android:textColor="#10B981"
+        android:textSize="14sp"
+        android:padding="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/btnGoogle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

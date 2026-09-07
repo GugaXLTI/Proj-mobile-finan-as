@@ -10,9 +10,9 @@
     <!-- LOGO -->
     <ImageView
         android:id="@+id/ivLogoSplash"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:src="@drawable/logo"
+        android:layout_width="75dp"
+        android:layout_height="75dp"
+        android:src="@drawable/resource_new"
         android:contentDescription="Logo do app"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"

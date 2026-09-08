@@ -39,17 +39,14 @@
             android:name=".view.DashboardActivity"
             android:exported="false" />
 
-        <!-- (OPCIONAL) MainActivity se você for usar -->
-        <!-- Se não for usar, pode deletar ou comentar -->
-        <!--
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-        -->
+        <activity android:name=".view.DividasActivity" android:exported="false" />
+
 
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
+
+
 
     </application>
 

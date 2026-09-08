@@ -1,5 +1,6 @@
 package com.example.controle_gastos.view;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -32,8 +33,8 @@ public class DashboardActivity extends AppCompatActivity {
     private com.github.mikephil.charting.charts.PieChart pieChart;
     private RecyclerView rvLegendas, rvLancamentos;
     private LinearLayout containerFiltros;
-    private Button btnExportar;
-    private TextView tvTituloLista;
+    private Button btnExportar, btnVerDividas; // <-- ADICIONADO btnVerDividas
+    private TextView tvTituloLista, tvTotalLista;
 
     private List<Transacao> todasTransacoes;
     private List<Transacao> transacoesFiltradas;
@@ -51,7 +52,9 @@ public class DashboardActivity extends AppCompatActivity {
         rvLancamentos = findViewById(R.id.rvLancamentos);
         containerFiltros = findViewById(R.id.containerFiltros);
         btnExportar = findViewById(R.id.btnExportar);
+        btnVerDividas = findViewById(R.id.btnVerDividas); // <-- VINCULADO
         tvTituloLista = findViewById(R.id.tvTituloLista);
+        tvTotalLista = findViewById(R.id.tvTotalLista);
 
         // Carregar dados mock
         todasTransacoes = DadosMock.getTransacoesIniciais();
@@ -68,6 +71,12 @@ public class DashboardActivity extends AppCompatActivity {
         atualizarDashboard("Todos");
         configurarFiltros();
         configurarExportar();
+
+        // ======== NAVEGAÇÃO PARA DÍVIDAS ========
+        btnVerDividas.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, DividasActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void configurarPieChart() {
@@ -106,7 +115,6 @@ public class DashboardActivity extends AppCompatActivity {
             entries.add(new PieEntry(entry.getValue().floatValue(), entry.getKey()));
         }
 
-        // Se não houver despesas, mostrar placeholder
         if (entries.isEmpty()) {
             entries.add(new PieEntry(100f, "Sem dados"));
         }
@@ -121,7 +129,6 @@ public class DashboardActivity extends AppCompatActivity {
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
 
-        // Calcular total de despesas para o centro do gráfico
         double totalDespesas = 0;
         for (Transacao t : transacoesFiltradas) {
             if (t.getTipo().equals("DESPESA")) totalDespesas += t.getValor();
@@ -153,12 +160,16 @@ public class DashboardActivity extends AppCompatActivity {
         lancamentoAdapter = new LancamentoAdapter(transacoesFiltradas);
         rvLancamentos.setAdapter(lancamentoAdapter);
 
-        // Atualizar título da lista
-        tvTituloLista.setText(categoriaFiltro.equals("Todos") ? "Lançamentos" : "Lançamentos em " + categoriaFiltro);
+        // Atualizar título e total da lista
+        double totalLista = 0;
+        for (Transacao t : transacoesFiltradas) {
+            totalLista += t.getValor();
+        }
+        tvTituloLista.setText(categoriaFiltro.equals("Todos") ? "LANÇAMENTOS" : "LANÇAMENTOS EM " + categoriaFiltro.toUpperCase());
+        tvTotalLista.setText("Total: R$ " + String.format(Locale.getDefault(), "%.2f", totalLista));
     }
 
     private void configurarFiltros() {
-        // Contar quantas despesas por categoria
         Map<String, Integer> categoriasCount = new HashMap<>();
         for (Transacao t : todasTransacoes) {
             if (t.getTipo().equals("DESPESA")) {
@@ -167,10 +178,8 @@ public class DashboardActivity extends AppCompatActivity {
             }
         }
 
-        // Botão "Todos"
         criarBotaoFiltro("Todos", todasTransacoes.size());
 
-        // Botões para cada categoria
         for (Map.Entry<String, Integer> entry : categoriasCount.entrySet()) {
             criarBotaoFiltro(entry.getKey(), entry.getValue());
         }
@@ -182,7 +191,6 @@ public class DashboardActivity extends AppCompatActivity {
         btn.setPadding(24, 8, 24, 8);
         btn.setTextColor(getResources().getColor(android.R.color.white, getTheme()));
 
-        // Fundo com cantos arredondados
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(getResources().getColor(R.color.card_bg, getTheme()));
         drawable.setCornerRadius(20f);

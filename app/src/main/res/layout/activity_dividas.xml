@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/fundo_escuro"
+    android:padding="16dp">
+
+    <!-- Título -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Controle de Dívidas"
+        android:fontFamily="@font/abril_fatface"
+        android:textSize="22sp"
+        android:textColor="@color/text_white"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Subtítulo -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Gerencie pendências, faturas e pagamentos"
+        android:textColor="@color/text_gray"
+        android:textSize="12sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Filtros Rápidos -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnTodosDevedores"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:text="Todos Devedores"
+                android:backgroundTint="@color/card_bg"
+                android:textColor="@color/text_white"
+                android:textSize="12sp"
+                android:paddingHorizontal="16dp"
+                android:stateListAnimator="@null"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnCategorias"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:text="Categorias..."
+                android:backgroundTint="@color/card_bg"
+                android:textColor="@color/text_white"
+                android:textSize="12sp"
+                android:paddingHorizontal="16dp"
+                android:stateListAnimator="@null" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Resumo -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/card_bg"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Total a pagar:"
+                android:textColor="@color/text_gray"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/tvTotalAPagar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="R$ 3.424,80"
+                android:textColor="#EF4444"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Total já pago:"
+                android:textColor="@color/text_gray"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/tvTotalPago"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="R$ 1.950,00"
+                android:textColor="#10B981"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Total Geral:"
+                android:textColor="@color/text_gray"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/tvTotalGeral"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="R$ 5.374,80"
+                android:textColor="@color/text_white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Lista de Dívidas -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDividas"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Botão Cadastrar Nova Pendência -->
+    <Button
+        android:id="@+id/btnCadastrarDivida"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cadastrar Nova Pendência"
+        android:backgroundTint="@color/brand_green"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:padding="14dp"
+        android:stateListAnimator="@null" />
+
+</LinearLayout>

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/fundo_escuro"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Título -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lançar Nova Dívida"
+            android:fontFamily="@font/abril_fatface"
+            android:textSize="24sp"
+            android:textColor="@color/text_white"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Subtítulo -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cartões, faturas, empréstimos ou outras pendências"
+            android:textColor="@color/text_gray"
+            android:textSize="13sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Tipo de Dívida -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tipo de Dívida"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spinnerTipoDivida"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_campo_login"
+            android:padding="12dp"
+            android:textColor="@color/text_white"
+            android:popupBackground="@color/card_bg"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Selecione o Cartão/Banco -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Selecione o Cartão / Banco"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spinnerBanco"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_campo_login"
+            android:padding="12dp"
+            android:textColor="@color/text_white"
+            android:popupBackground="@color/card_bg"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Devedor / Responsável -->
+        <EditText
+            android:id="@+id/editDevedor"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_campo_login"
+            android:hint="Israel (Próprio)"
+            android:padding="12dp"
+            android:textColor="@color/text_white"
+            android:textColorHint="@color/text_hint" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Devedor / Responsável"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Descrição da Despesa -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Descrição da Despesa"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/editDescricao"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_campo_login"
+            android:hint="Ex: Compra Mercado, Fatura Cartão, Empréstimo"
+            android:textColor="@color/text_white"
+            android:textColorHint="@color/text_hint"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Categoria -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Categoria"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spinnerCategoria"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_campo_login"
+            android:padding="12dp"
+            android:textColor="@color/text_white"
+            android:popupBackground="@color/card_bg"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Valor Total -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Valor Total (R$)"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/editValor"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_campo_login"
+            android:hint="R$ 0,00"
+            android:inputType="numberDecimal"
+            android:textColor="@color/text_white"
+            android:textColorHint="@color/text_hint"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Parcelas -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Parcelas"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spinnerParcelas"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_campo_login"
+            android:padding="12dp"
+            android:textColor="@color/text_white"
+            android:popupBackground="@color/card_bg"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Data da Compra -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Data da Compra"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/editDataCompra"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_campo_login"
+            android:hint="06/09/2026"
+            android:inputType="date"
+            android:textColor="@color/text_white"
+            android:textColorHint="@color/text_hint"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:focusable="false"
+            android:clickable="true" />
+
+        <!-- 1º Vencimento -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1º Vencimento"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/editVencimento"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_campo_login"
+            android:hint="10/10/2026"
+            android:inputType="date"
+            android:textColor="@color/text_white"
+            android:textColorHint="@color/text_hint"
+            android:padding="12dp"
+            android:layout_marginBottom="24dp"
+            android:focusable="false"
+            android:clickable="true" />
+
+        <!-- Botão Salvar -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSalvarDivida"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:backgroundTint="@color/brand_green"
+            android:text="Salvar Lançamento"
+            android:textAllCaps="false"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="8dp" />
+
+    </LinearLayout>
+</ScrollView>

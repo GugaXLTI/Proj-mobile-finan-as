@@ -33,7 +33,7 @@ public class DashboardActivity extends AppCompatActivity {
     private com.github.mikephil.charting.charts.PieChart pieChart;
     private RecyclerView rvLegendas, rvLancamentos;
     private LinearLayout containerFiltros;
-    private Button btnExportar, btnVerDividas; // <-- ADICIONADO btnVerDividas
+    private Button btnExportar, btnVerDividas;
     private TextView tvTituloLista, tvTotalLista;
 
     private List<Transacao> todasTransacoes;
@@ -41,20 +41,30 @@ public class DashboardActivity extends AppCompatActivity {
     private LancamentoAdapter lancamentoAdapter;
     private LegendaAdapter legendaAdapter;
 
+    // Bottom Navigation
+    private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
-        // Vincular componentes
+        // Vincular componentes principais
         pieChart = findViewById(R.id.pieChart);
         rvLegendas = findViewById(R.id.rvLegendas);
         rvLancamentos = findViewById(R.id.rvLancamentos);
         containerFiltros = findViewById(R.id.containerFiltros);
         btnExportar = findViewById(R.id.btnExportar);
-        btnVerDividas = findViewById(R.id.btnVerDividas); // <-- VINCULADO
+        btnVerDividas = findViewById(R.id.btnVerDividas);
         tvTituloLista = findViewById(R.id.tvTituloLista);
         tvTotalLista = findViewById(R.id.tvTotalLista);
+
+        // Vincular Bottom Navigation
+        tabInicio = findViewById(R.id.tabInicio);
+        tabLancar = findViewById(R.id.tabLancar);
+        tabDividas = findViewById(R.id.tabDividas);
+        tabRelatorios = findViewById(R.id.tabRelatorios);
+        tabConfig = findViewById(R.id.tabConfig);
 
         // Carregar dados mock
         todasTransacoes = DadosMock.getTransacoesIniciais();
@@ -67,15 +77,43 @@ public class DashboardActivity extends AppCompatActivity {
         // Configurar gráfico
         configurarPieChart();
 
-        // Atualizar tudo com o filtro "Todos"
+        // Atualizar Dashboard
         atualizarDashboard("Todos");
         configurarFiltros();
         configurarExportar();
 
-        // ======== NAVEGAÇÃO PARA DÍVIDAS ========
+        // ======== NAVEGAÇÃO ========
+
+        // Botão "Ver Dívidas"
         btnVerDividas.setOnClickListener(v -> {
             Intent intent = new Intent(DashboardActivity.this, DividasActivity.class);
             startActivity(intent);
+        });
+
+        // Aba "Início"
+        tabInicio.setOnClickListener(v -> {
+            Toast.makeText(this, "Você já está no Início", Toast.LENGTH_SHORT).show();
+        });
+
+        // Aba "Lançar" (se não tiver tela, pode usar Toast)
+        tabLancar.setOnClickListener(v -> {
+            Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show();
+        });
+
+        // Aba "Dívidas"
+        tabDividas.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, DividasActivity.class);
+            startActivity(intent);
+        });
+
+        // Aba "Relatórios"
+        tabRelatorios.setOnClickListener(v -> {
+            Toast.makeText(this, "Você já está em Relatórios", Toast.LENGTH_SHORT).show();
+        });
+
+        // Aba "Config" (quando a tela de Configurações existir, substitua o Toast pelo Intent)
+        tabConfig.setOnClickListener(v -> {
+            Toast.makeText(this, "Abrir Configurações (em breve)", Toast.LENGTH_SHORT).show();
         });
     }
 

@@ -1,5 +1,6 @@
 package com.example.controle_gastos.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -23,19 +24,29 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     private DividaAdapter adapter;
     private List<Divida> dividas;
 
+    // Bottom Navigation
+    private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dividas);
 
-        // Vincular componentes
+        // Vincular componentes principais
         rvDividas = findViewById(R.id.rvDividas);
         tvTotalAPagar = findViewById(R.id.tvTotalAPagar);
         tvTotalPago = findViewById(R.id.tvTotalPago);
         tvTotalGeral = findViewById(R.id.tvTotalGeral);
         btnCadastrarDivida = findViewById(R.id.btnCadastrarDivida);
 
-        // Carregar dados mock
+        // Vincular Bottom Navigation
+        tabInicio = findViewById(R.id.tabInicio);
+        tabLancar = findViewById(R.id.tabLancar);
+        tabDividas = findViewById(R.id.tabDividas);
+        tabRelatorios = findViewById(R.id.tabRelatorios);
+        tabConfig = findViewById(R.id.tabConfig);
+
+        // Carregar dados
         dividas = DadosMock.getDividasIniciais();
 
         // Configurar RecyclerView
@@ -46,11 +57,52 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         // Atualizar totais
         atualizarTotais();
 
-        // Botão Cadastrar
+        // ======== NAVEGAÇÃO ========
+
+        // Botão Cadastrar nova dívida
         btnCadastrarDivida.setOnClickListener(v -> {
-            Toast.makeText(this, "Abrir tela de cadastro de dívida", Toast.LENGTH_SHORT).show();
-            // Aqui futuramente você navega para AdicionarDividaActivity
+            Intent intent = new Intent(DividasActivity.this, CadastroDividaActivity.class);
+            startActivity(intent);
         });
+
+        // Aba "Início" → volta para a Dashboard
+        tabInicio.setOnClickListener(v -> {
+            Intent intent = new Intent(DividasActivity.this, DashboardActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        // Aba "Lançar"
+        tabLancar.setOnClickListener(v -> {
+            Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show();
+        });
+
+        // Aba "Dívidas" (já está aqui)
+        tabDividas.setOnClickListener(v -> {
+            Toast.makeText(this, "Você já está em Dívidas", Toast.LENGTH_SHORT).show();
+        });
+
+        // Aba "Relatórios" → volta para a Dashboard
+        tabRelatorios.setOnClickListener(v -> {
+            Intent intent = new Intent(DividasActivity.this, DashboardActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        // Aba "Config" (quando a tela existir)
+        tabConfig.setOnClickListener(v -> {
+            Toast.makeText(this, "Abrir Configurações (em breve)", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Recarregar dados ao voltar
+        dividas = DadosMock.getDividasIniciais();
+        adapter = new DividaAdapter(dividas, this);
+        rvDividas.setAdapter(adapter);
+        atualizarTotais();
     }
 
     private void atualizarTotais() {
@@ -72,19 +124,22 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         tvTotalGeral.setText(String.format(Locale.getDefault(), "R$ %.2f", totalGeral));
     }
 
-    // ========== Ações dos botões ==========
+    // ========== Ações dos botões dos cards ==========
     @Override
     public void onExcluirClick(int position) {
         Divida d = dividas.get(position);
-        Toast.makeText(this, "Excluir: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
-        // Aqui futuramente remove do banco e atualiza a lista
+        DadosMock.removerDivida(position);
+        dividas = DadosMock.getDividasIniciais();
+        adapter = new DividaAdapter(dividas, this);
+        rvDividas.setAdapter(adapter);
+        atualizarTotais();
+        Toast.makeText(this, "Dívida excluída: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onEditarClick(int position) {
         Divida d = dividas.get(position);
         Toast.makeText(this, "Editar: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
-        // Aqui futuramente abre tela de edição
     }
 
     @Override
@@ -94,6 +149,5 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         adapter.notifyItemChanged(position);
         atualizarTotais();
         Toast.makeText(this, "Pagamento registrado: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
-        // Aqui futuramente atualiza no banco
     }
 }

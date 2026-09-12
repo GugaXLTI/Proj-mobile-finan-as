@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0B1220">
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Título e Subtítulo -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Configurações"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="Preferências do sistema, cartões e segurança"
+                android:textColor="#64748B"
+                android:textSize="13sp" />
+
+            <!-- Card do Perfil -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="#131C2E"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tvAvatar"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_avatar"
+                        android:gravity="center"
+                        android:text="I"
+                        android:textColor="#10B981"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp">
+
+                        <TextView
+                            android:id="@+id/tvNomeUsuario"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Israel"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Conta Pessoal Ativa"
+                            android:textColor="#64748B"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvEditar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Editar"
+                        android:textColor="#10B981"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:padding="8dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Card Principal -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#131C2E"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <!-- Meus Cartões & Bancos -->
+                    <LinearLayout
+                        android:id="@+id/itemCartoes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="12dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_menu_myplaces"
+                            app:tint="#10B981"
+                            android:contentDescription="Cartões" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Meus Cartões &amp; Bancos"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Nubank, Inter e novas opções"
+                                android:textColor="#64748B"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="›"
+                            android:textColor="#64748B"
+                            android:textSize="20sp" />
+                    </LinearLayout>
+
+                    <!-- Categorias de Dívida -->
+                    <LinearLayout
+                        android:id="@+id/itemCategorias"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="12dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_menu_agenda"
+                            app:tint="#3B82F6"
+                            android:contentDescription="Categorias" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Categorias de Dívida"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Criar, renomear e organizar tags"
+                                android:textColor="#64748B"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="›"
+                            android:textColor="#64748B"
+                            android:textSize="20sp" />
+                    </LinearLayout>
+
+                    <!-- Lembretes de Fatura -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_lock_idle_alarm"
+                            app:tint="#F59E0B"
+                            android:contentDescription="Lembretes" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Lembretes de Fatura"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Avisar 3 dias antes de vencer"
+                                android:textColor="#64748B"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchLembretes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            app:thumbTint="#FFFFFF"
+                            app:trackTint="#10B981" />
+                    </LinearLayout>
+
+                    <!-- Segurança & Biometria -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_lock_lock"
+                            app:tint="#A855F7"
+                            android:contentDescription="Segurança" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Segurança &amp; Biometria"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Exigir Face ID e impressão digital"
+                                android:textColor="#64748B"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchBiometria"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            app:thumbTint="#FFFFFF"
+                            app:trackTint="#10B981" />
+                    </LinearLayout>
+
+                    <!-- Backup dos Dados -->
+                    <LinearLayout
+                        android:id="@+id/itemBackup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="12dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_menu_save"
+                            app:tint="#64748B"
+                            android:contentDescription="Backup" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Backup dos Dados"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Exportar planilha (CSV) ou nuvem"
+                                android:textColor="#64748B"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="›"
+                            android:textColor="#64748B"
+                            android:textSize="20sp" />
+                    </LinearLayout>
+
+                    <!-- Desconectar / Limpar Sessão -->
+                    <LinearLayout
+                        android:id="@+id/itemDesconectar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="12dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_menu_close_clear_cancel"
+                            app:tint="#EF4444"
+                            android:contentDescription="Desconectar" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Desconectar / Limpar Sessão"
+                            android:textColor="#EF4444"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="12dp" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Versão do App -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:text="ORG Gestão Financeira v1.0.4"
+                android:textColor="#334155"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Bottom Navigation -->
+    <LinearLayout
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="#0B1220"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/tabInicio"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⌂\nInício"
+            android:textColor="#64748B"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/tabLancar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="+\nLançar"
+            android:textColor="#64748B"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/tabDividas"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⊡\nDívidas"
+            android:textColor="#64748B"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/tabRelatorios"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="◷\nRelatórios"
+            android:textColor="#64748B"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/tabConfig"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⚙\nConfig"
+            android:textColor="#10B981"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -96,6 +96,7 @@ Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – co
 
 ## 📂 Estrutura do Projeto (resumida)
 
+```text
 app/src/main/java/com/example/controle_gastos/
 ├── model/
 │   ├── Transacao.java          # Classe de dados de transações
@@ -115,7 +116,7 @@ app/src/main/java/com/example/controle_gastos/
     ├── DividasActivity.java    # Tela de Dívidas
     ├── CadastroDividaActivity.java  # Cadastro de Dívida
     └── ConfiguracoesActivity.java   # Configurações
-
+```
     ----------------------------------------------------------------------------------
 
 ## 📌 Histórico de Commits (resumo)

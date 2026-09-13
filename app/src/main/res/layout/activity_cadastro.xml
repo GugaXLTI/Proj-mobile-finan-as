@@ -12,7 +12,7 @@
     android:paddingBottom="24dp"
     tools:context=".view.CadastroActivity">
 
-    <!-- Top Bar: Seta Voltar + Ícone Carteira + ORG -->
+    <!-- (OBS)Top Bar: Seta Voltar + Ícone Carteira + ORG -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="wrap_content"

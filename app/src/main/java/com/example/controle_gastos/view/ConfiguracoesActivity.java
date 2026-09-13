@@ -87,27 +87,32 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         // ======== NAVEGAÇÃO ========
 
+        // Aba "Início" → abre a tela Início
         tabInicio.setOnClickListener(v -> {
-            Intent intent = new Intent(ConfiguracoesActivity.this, DashboardActivity.class);
+            Intent intent = new Intent(ConfiguracoesActivity.this, InicioActivity.class);
             startActivity(intent);
             finish();
         });
 
+        // Aba "Lançar"
         tabLancar.setOnClickListener(v ->
                 Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show());
 
+        // Aba "Dívidas" → abre a tela de Dívidas
         tabDividas.setOnClickListener(v -> {
             Intent intent = new Intent(ConfiguracoesActivity.this, DividasActivity.class);
             startActivity(intent);
             finish();
         });
 
+        // Aba "Relatórios" → abre a Dashboard
         tabRelatorios.setOnClickListener(v -> {
             Intent intent = new Intent(ConfiguracoesActivity.this, DashboardActivity.class);
             startActivity(intent);
             finish();
         });
 
+        // Aba "Config" (você já está aqui)
         tabConfig.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está em Configurações", Toast.LENGTH_SHORT).show());
     }

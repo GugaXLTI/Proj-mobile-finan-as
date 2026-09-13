@@ -90,9 +90,11 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Aba "Início"
-        tabInicio.setOnClickListener(v ->
-                Toast.makeText(this, "Você já está no Início", Toast.LENGTH_SHORT).show());
+        // Aba "Início" → abre a tela Início (nova home)
+        tabInicio.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, InicioActivity.class);
+            startActivity(intent);
+        });
 
         // Aba "Lançar"
         tabLancar.setOnClickListener(v ->
@@ -104,7 +106,7 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Aba "Relatórios"
+        // Aba "Relatórios" (você já está aqui)
         tabRelatorios.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está em Relatórios", Toast.LENGTH_SHORT).show());
 

@@ -45,7 +45,8 @@ public class LoginActivity extends AppCompatActivity {
             if (email.isEmpty() || senha.isEmpty()) {
                 Toast.makeText(LoginActivity.this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
             } else {
-                Intent intent = new Intent(LoginActivity.this, DashboardActivity.class);
+                // Navegar para a tela Início (nova home)
+                Intent intent = new Intent(LoginActivity.this, InicioActivity.class);
                 startActivity(intent);
                 finish();
             }

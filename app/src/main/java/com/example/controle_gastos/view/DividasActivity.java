@@ -65,9 +65,9 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
             startActivity(intent);
         });
 
-        // Aba "Início" → volta para a Dashboard
+        // Aba "Início" → abre a tela Início
         tabInicio.setOnClickListener(v -> {
-            Intent intent = new Intent(DividasActivity.this, DashboardActivity.class);
+            Intent intent = new Intent(DividasActivity.this, InicioActivity.class);
             startActivity(intent);
             finish();
         });
@@ -80,7 +80,7 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         tabDividas.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está em Dívidas", Toast.LENGTH_SHORT).show());
 
-        // Aba "Relatórios" → volta para a Dashboard
+        // Aba "Relatórios" → abre a Dashboard
         tabRelatorios.setOnClickListener(v -> {
             Intent intent = new Intent(DividasActivity.this, DashboardActivity.class);
             startActivity(intent);

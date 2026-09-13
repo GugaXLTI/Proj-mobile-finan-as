@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="8dp">
+
+    <!-- Círculo com a inicial do banco/categoria -->
+    <TextView
+        android:id="@+id/tvInicialVencimento"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/bg_avatar"
+        android:gravity="center"
+        android:text="N"
+        android:textColor="#10B981"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <!-- Informações -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="12dp">
+
+        <TextView
+            android:id="@+id/tvTituloVencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fatura Nubank Roxinho"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDetalheVencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cartão de Crédito • Vence em 15/10"
+            android:textColor="#64748B"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Valor -->
+    <TextView
+        android:id="@+id/tvValorVencimento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="R$ 2.450,00"
+        android:textColor="#EF4444"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

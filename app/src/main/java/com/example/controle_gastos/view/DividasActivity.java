@@ -73,14 +73,12 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         });
 
         // Aba "Lançar"
-        tabLancar.setOnClickListener(v -> {
-            Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show();
-        });
+        tabLancar.setOnClickListener(v ->
+                Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show());
 
         // Aba "Dívidas" (já está aqui)
-        tabDividas.setOnClickListener(v -> {
-            Toast.makeText(this, "Você já está em Dívidas", Toast.LENGTH_SHORT).show();
-        });
+        tabDividas.setOnClickListener(v ->
+                Toast.makeText(this, "Você já está em Dívidas", Toast.LENGTH_SHORT).show());
 
         // Aba "Relatórios" → volta para a Dashboard
         tabRelatorios.setOnClickListener(v -> {
@@ -89,9 +87,10 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
             finish();
         });
 
-        // Aba "Config" (quando a tela existir)
+        // Aba "Config" → abre a tela de Configurações
         tabConfig.setOnClickListener(v -> {
-            Toast.makeText(this, "Abrir Configurações (em breve)", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(DividasActivity.this, ConfiguracoesActivity.class);
+            startActivity(intent);
         });
     }
 

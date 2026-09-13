@@ -91,14 +91,12 @@ public class DashboardActivity extends AppCompatActivity {
         });
 
         // Aba "Início"
-        tabInicio.setOnClickListener(v -> {
-            Toast.makeText(this, "Você já está no Início", Toast.LENGTH_SHORT).show();
-        });
+        tabInicio.setOnClickListener(v ->
+                Toast.makeText(this, "Você já está no Início", Toast.LENGTH_SHORT).show());
 
-        // Aba "Lançar" (se não tiver tela, pode usar Toast)
-        tabLancar.setOnClickListener(v -> {
-            Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show();
-        });
+        // Aba "Lançar"
+        tabLancar.setOnClickListener(v ->
+                Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show());
 
         // Aba "Dívidas"
         tabDividas.setOnClickListener(v -> {
@@ -107,13 +105,13 @@ public class DashboardActivity extends AppCompatActivity {
         });
 
         // Aba "Relatórios"
-        tabRelatorios.setOnClickListener(v -> {
-            Toast.makeText(this, "Você já está em Relatórios", Toast.LENGTH_SHORT).show();
-        });
+        tabRelatorios.setOnClickListener(v ->
+                Toast.makeText(this, "Você já está em Relatórios", Toast.LENGTH_SHORT).show());
 
-        // Aba "Config" (quando a tela de Configurações existir, substitua o Toast pelo Intent)
+        // Aba "Config" → abre a tela de Configurações
         tabConfig.setOnClickListener(v -> {
-            Toast.makeText(this, "Abrir Configurações (em breve)", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(DashboardActivity.this, ConfiguracoesActivity.class);
+            startActivity(intent);
         });
     }
 
@@ -244,8 +242,7 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void configurarExportar() {
-        btnExportar.setOnClickListener(v -> {
-            Toast.makeText(this, "Exportação em breve!", Toast.LENGTH_SHORT).show();
-        });
+        btnExportar.setOnClickListener(v ->
+                Toast.makeText(this, "Exportação em breve!", Toast.LENGTH_SHORT).show());
     }
 }

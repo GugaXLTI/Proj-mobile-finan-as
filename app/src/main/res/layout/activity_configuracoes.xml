@@ -21,7 +21,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Título e Subtítulo -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -38,7 +37,6 @@
                 android:textColor="#64748B"
                 android:textSize="13sp" />
 
-            <!-- Card do Perfil -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -101,7 +99,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Card Principal -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -116,7 +113,6 @@
                     android:orientation="vertical"
                     android:padding="8dp">
 
-                    <!-- Meus Cartões & Bancos -->
                     <LinearLayout
                         android:id="@+id/itemCartoes"
                         android:layout_width="match_parent"
@@ -163,7 +159,6 @@
                             android:textSize="20sp" />
                     </LinearLayout>
 
-                    <!-- Categorias de Dívida -->
                     <LinearLayout
                         android:id="@+id/itemCategorias"
                         android:layout_width="match_parent"
@@ -210,7 +205,6 @@
                             android:textSize="20sp" />
                     </LinearLayout>
 
-                    <!-- Lembretes de Fatura -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -256,7 +250,6 @@
                             app:trackTint="#10B981" />
                     </LinearLayout>
 
-                    <!-- Segurança & Biometria -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -302,7 +295,6 @@
                             app:trackTint="#10B981" />
                     </LinearLayout>
 
-                    <!-- Backup dos Dados -->
                     <LinearLayout
                         android:id="@+id/itemBackup"
                         android:layout_width="match_parent"
@@ -349,7 +341,6 @@
                             android:textSize="20sp" />
                     </LinearLayout>
 
-                    <!-- Desconectar / Limpar Sessão -->
                     <LinearLayout
                         android:id="@+id/itemDesconectar"
                         android:layout_width="match_parent"
@@ -380,7 +371,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Versão do App -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -393,11 +383,10 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Navigation -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="72dp"
         android:background="#0B1220"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -413,7 +402,7 @@
             android:gravity="center"
             android:text="⌂\nInício"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabLancar"
@@ -423,7 +412,7 @@
             android:gravity="center"
             android:text="+\nLançar"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabDividas"
@@ -433,7 +422,7 @@
             android:gravity="center"
             android:text="⊡\nDívidas"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabRelatorios"
@@ -443,7 +432,7 @@
             android:gravity="center"
             android:text="◷\nRelatórios"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabConfig"
@@ -453,7 +442,7 @@
             android:gravity="center"
             android:text="⚙\nConfig"
             android:textColor="#10B981"
-            android:textSize="10sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
     </LinearLayout>

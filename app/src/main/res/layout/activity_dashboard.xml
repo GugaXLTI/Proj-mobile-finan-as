@@ -21,10 +21,10 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Título e Subtítulo -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/inter_medium"
                 android:text="Gastos por Categoria"
                 android:textColor="#FFFFFF"
                 android:textSize="24sp"
@@ -38,7 +38,6 @@
                 android:textColor="#64748B"
                 android:textSize="13sp" />
 
-            <!-- Card do Gráfico de Pizza -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -50,18 +49,10 @@
                 <com.github.mikephil.charting.charts.PieChart
                     android:id="@+id/pieChart"
                     android:layout_width="match_parent"
-                    android:layout_height="260dp"
+                    android:layout_height="300dp"
                     android:layout_margin="16dp" />
             </androidx.cardview.widget.CardView>
 
-            <!-- Legendas -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvLegendas"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp" />
-
-            <!-- Filtros -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -75,7 +66,6 @@
                     android:orientation="horizontal" />
             </HorizontalScrollView>
 
-            <!-- Card da Lista de Lançamentos -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -136,27 +126,13 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Botão Ver Dívidas -->
-            <Button
-                android:id="@+id/btnVerDividas"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Ver Dívidas"
-                android:backgroundTint="#131C2E"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:padding="12dp"
-                android:stateListAnimator="@null"
-                android:layout_marginTop="8dp" />
-
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Navigation -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="72dp"
         android:background="#0B1220"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -172,7 +148,7 @@
             android:gravity="center"
             android:text="⌂\nInício"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabLancar"
@@ -182,7 +158,7 @@
             android:gravity="center"
             android:text="+\nLançar"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabDividas"
@@ -192,7 +168,7 @@
             android:gravity="center"
             android:text="⊡\nDívidas"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabRelatorios"
@@ -202,7 +178,7 @@
             android:gravity="center"
             android:text="◷\nRelatórios"
             android:textColor="#10B981"
-            android:textSize="10sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
@@ -213,7 +189,7 @@
             android:gravity="center"
             android:text="⚙\nConfig"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
     </LinearLayout>
 

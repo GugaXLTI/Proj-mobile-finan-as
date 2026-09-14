@@ -30,6 +30,13 @@ public class LancamentoAdapter extends RecyclerView.Adapter<LancamentoAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Transacao t = transacoes.get(position);
+
+        // Inicial do lançamento
+        String inicial = t.getDescricao() != null && !t.getDescricao().isEmpty()
+                ? t.getDescricao().substring(0, 1).toUpperCase()
+                : "?";
+
+        holder.tvIcone.setText(inicial);
         holder.tvDescricao.setText(t.getDescricao());
         holder.tvDetalhe.setText("Nubank • " + t.getCategoria());
         holder.tvValor.setText(String.format(Locale.getDefault(), "R$ %.2f", t.getValor()));
@@ -41,9 +48,11 @@ public class LancamentoAdapter extends RecyclerView.Adapter<LancamentoAdapter.Vi
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvDescricao, tvDetalhe, tvValor;
+        TextView tvIcone, tvDescricao, tvDetalhe, tvValor;
+
         ViewHolder(View itemView) {
             super(itemView);
+            tvIcone = itemView.findViewById(R.id.tvIconeLancamento);
             tvDescricao = itemView.findViewById(R.id.tvDescricaoLancamento);
             tvDetalhe = itemView.findViewById(R.id.tvDetalheLancamento);
             tvValor = itemView.findViewById(R.id.tvValorLancamento);

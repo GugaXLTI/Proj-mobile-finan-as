@@ -33,7 +33,6 @@ public class InicioActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inicio);
 
-        // Vincular componentes
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
         tvTotalDividasInicio = findViewById(R.id.tvTotalDividasInicio);
         tvTotalPagoInicio = findViewById(R.id.tvTotalPagoInicio);
@@ -41,17 +40,14 @@ public class InicioActivity extends AppCompatActivity {
         rvVencimentos = findViewById(R.id.rvVencimentos);
         btnVerTodosVencimentos = findViewById(R.id.btnVerTodosVencimentos);
 
-        // Bottom Navigation
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
         tabDividas = findViewById(R.id.tabDividas);
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        // Carregar dados
         dividas = DadosMock.getDividasIniciais();
 
-        // Configurar lista de vencimentos (apenas os não pagos, limitado a 3)
         List<Divida> vencimentos = new ArrayList<>();
         for (Divida d : dividas) {
             if (!d.isPago()) vencimentos.add(d);
@@ -63,12 +59,8 @@ public class InicioActivity extends AppCompatActivity {
         rvVencimentos.setLayoutManager(new LinearLayoutManager(this));
         rvVencimentos.setAdapter(new VencimentoAdapter(vencimentos));
 
-        // Atualizar totais
         atualizarTotais();
 
-        // ======== AÇÕES ========
-
-        // Botão "Ver Todas as Contas e Cartões"
         btnVerTodosVencimentos.setOnClickListener(v -> {
             Intent intent = new Intent(InicioActivity.this, DividasActivity.class);
             startActivity(intent);
@@ -79,8 +71,10 @@ public class InicioActivity extends AppCompatActivity {
         tabInicio.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está no Início", Toast.LENGTH_SHORT).show());
 
-        tabLancar.setOnClickListener(v ->
-                Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show());
+        tabLancar.setOnClickListener(v -> {
+            Intent intent = new Intent(InicioActivity.this, CadastroDividaActivity.class);
+            startActivity(intent);
+        });
 
         tabDividas.setOnClickListener(v -> {
             Intent intent = new Intent(InicioActivity.this, DividasActivity.class);
@@ -101,7 +95,6 @@ public class InicioActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Recarregar os dados ao voltar
         dividas = DadosMock.getDividasIniciais();
         atualizarTotais();
     }

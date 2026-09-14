@@ -32,62 +32,53 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dividas);
 
-        // Vincular componentes principais
         rvDividas = findViewById(R.id.rvDividas);
         tvTotalAPagar = findViewById(R.id.tvTotalAPagar);
         tvTotalPago = findViewById(R.id.tvTotalPago);
         tvTotalGeral = findViewById(R.id.tvTotalGeral);
         btnCadastrarDivida = findViewById(R.id.btnCadastrarDivida);
 
-        // Vincular Bottom Navigation
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
         tabDividas = findViewById(R.id.tabDividas);
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        // Carregar dados
         dividas = DadosMock.getDividasIniciais();
 
-        // Configurar RecyclerView
         rvDividas.setLayoutManager(new LinearLayoutManager(this));
         adapter = new DividaAdapter(dividas, this);
         rvDividas.setAdapter(adapter);
 
-        // Atualizar totais
         atualizarTotais();
 
         // ======== NAVEGAÇÃO ========
 
-        // Botão Cadastrar nova dívida
         btnCadastrarDivida.setOnClickListener(v -> {
             Intent intent = new Intent(DividasActivity.this, CadastroDividaActivity.class);
             startActivity(intent);
         });
 
-        // Aba "Início" → abre a tela Início
         tabInicio.setOnClickListener(v -> {
             Intent intent = new Intent(DividasActivity.this, InicioActivity.class);
             startActivity(intent);
             finish();
         });
 
-        // Aba "Lançar"
-        tabLancar.setOnClickListener(v ->
-                Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show());
+        tabLancar.setOnClickListener(v -> {
+            Intent intent = new Intent(DividasActivity.this, CadastroDividaActivity.class);
+            startActivity(intent);
+        });
 
-        // Aba "Dívidas" (já está aqui)
         tabDividas.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está em Dívidas", Toast.LENGTH_SHORT).show());
 
-        // Aba "Relatórios" → abre a Dashboard
         tabRelatorios.setOnClickListener(v -> {
             Intent intent = new Intent(DividasActivity.this, DashboardActivity.class);
             startActivity(intent);
             finish();
         });
 
-        // Aba "Config" → abre a tela de Configurações
         tabConfig.setOnClickListener(v -> {
             Intent intent = new Intent(DividasActivity.this, ConfiguracoesActivity.class);
             startActivity(intent);
@@ -97,7 +88,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     @Override
     protected void onResume() {
         super.onResume();
-        // Recarregar dados ao voltar
         dividas = DadosMock.getDividasIniciais();
         adapter = new DividaAdapter(dividas, this);
         rvDividas.setAdapter(adapter);
@@ -123,7 +113,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         tvTotalGeral.setText(String.format(Locale.getDefault(), "R$ %.2f", totalGeral));
     }
 
-    // ========== Ações dos botões dos cards ==========
     @Override
     public void onExcluirClick(int position) {
         Divida d = dividas.get(position);

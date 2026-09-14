@@ -21,7 +21,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Título -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -31,7 +30,6 @@
                 android:textColor="@color/text_white"
                 android:layout_marginBottom="4dp" />
 
-            <!-- Subtítulo -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -40,7 +38,6 @@
                 android:textSize="12sp"
                 android:layout_marginBottom="16dp" />
 
-            <!-- Filtros Rápidos -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -78,7 +75,6 @@
                 </LinearLayout>
             </HorizontalScrollView>
 
-            <!-- Resumo -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -157,7 +153,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Lista de Dívidas -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvDividas"
                 android:layout_width="match_parent"
@@ -165,7 +160,6 @@
                 android:layout_weight="1"
                 android:layout_marginBottom="12dp" />
 
-            <!-- Botão Cadastrar nova dívida -->
             <Button
                 android:id="@+id/btnCadastrarDivida"
                 android:layout_width="match_parent"
@@ -181,11 +175,10 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Navigation -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="72dp"
         android:background="#0B1220"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -201,7 +194,7 @@
             android:gravity="center"
             android:text="⌂\nInício"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabLancar"
@@ -211,7 +204,7 @@
             android:gravity="center"
             android:text="+\nLançar"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabDividas"
@@ -221,7 +214,7 @@
             android:gravity="center"
             android:text="⊡\nDívidas"
             android:textColor="#10B981"
-            android:textSize="10sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
@@ -232,7 +225,7 @@
             android:gravity="center"
             android:text="◷\nRelatórios"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabConfig"
@@ -242,7 +235,7 @@
             android:gravity="center"
             android:text="⚙\nConfig"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
     </LinearLayout>
 

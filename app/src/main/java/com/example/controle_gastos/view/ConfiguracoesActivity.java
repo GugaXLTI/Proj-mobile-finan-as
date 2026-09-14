@@ -24,7 +24,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_configuracoes);
 
-        // Vincular componentes
         itemCartoes = findViewById(R.id.itemCartoes);
         itemCategorias = findViewById(R.id.itemCategorias);
         itemBackup = findViewById(R.id.itemBackup);
@@ -33,7 +32,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         switchBiometria = findViewById(R.id.switchBiometria);
         tvEditar = findViewById(R.id.tvEditar);
 
-        // Bottom Navigation
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
         tabDividas = findViewById(R.id.tabDividas);
@@ -42,35 +40,28 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         // ======== AÇÕES DOS ITENS ========
 
-        // Editar perfil
         tvEditar.setOnClickListener(v ->
                 Toast.makeText(this, "Editar perfil (em breve)", Toast.LENGTH_SHORT).show());
 
-        // Meus Cartões & Bancos
         itemCartoes.setOnClickListener(v ->
                 Toast.makeText(this, "Gerenciar cartões (em breve)", Toast.LENGTH_SHORT).show());
 
-        // Categorias de Dívida
         itemCategorias.setOnClickListener(v ->
                 Toast.makeText(this, "Gerenciar categorias (em breve)", Toast.LENGTH_SHORT).show());
 
-        // Backup dos Dados
         itemBackup.setOnClickListener(v ->
                 Toast.makeText(this, "Exportar dados (em breve)", Toast.LENGTH_SHORT).show());
 
-        // Lembretes de Fatura (Switch)
         switchLembretes.setOnCheckedChangeListener((buttonView, isChecked) -> {
             String msg = isChecked ? "Lembretes ativados" : "Lembretes desativados";
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         });
 
-        // Segurança & Biometria (Switch)
         switchBiometria.setOnCheckedChangeListener((buttonView, isChecked) -> {
             String msg = isChecked ? "Biometria ativada" : "Biometria desativada";
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         });
 
-        // Desconectar / Limpar Sessão (com diálogo de confirmação)
         itemDesconectar.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
                     .setTitle("Desconectar")
@@ -87,32 +78,29 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         // ======== NAVEGAÇÃO ========
 
-        // Aba "Início" → abre a tela Início
         tabInicio.setOnClickListener(v -> {
             Intent intent = new Intent(ConfiguracoesActivity.this, InicioActivity.class);
             startActivity(intent);
             finish();
         });
 
-        // Aba "Lançar"
-        tabLancar.setOnClickListener(v ->
-                Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show());
+        tabLancar.setOnClickListener(v -> {
+            Intent intent = new Intent(ConfiguracoesActivity.this, CadastroDividaActivity.class);
+            startActivity(intent);
+        });
 
-        // Aba "Dívidas" → abre a tela de Dívidas
         tabDividas.setOnClickListener(v -> {
             Intent intent = new Intent(ConfiguracoesActivity.this, DividasActivity.class);
             startActivity(intent);
             finish();
         });
 
-        // Aba "Relatórios" → abre a Dashboard
         tabRelatorios.setOnClickListener(v -> {
             Intent intent = new Intent(ConfiguracoesActivity.this, DashboardActivity.class);
             startActivity(intent);
             finish();
         });
 
-        // Aba "Config" (você já está aqui)
         tabConfig.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está em Configurações", Toast.LENGTH_SHORT).show());
     }

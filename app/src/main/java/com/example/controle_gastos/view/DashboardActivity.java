@@ -2,8 +2,15 @@ package com.example.controle_gastos.view;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -12,15 +19,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
-import com.example.controle_gastos.adapter.LancamentoAdapter;
-import com.example.controle_gastos.adapter.LegendaAdapter;
-import com.example.controle_gastos.model.CategoriaResumo;
-import com.example.controle_gastos.model.Transacao;
+import com.example.controle_gastos.adapter.DividaAdapter;
+import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.utils.DadosMock;
+import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.utils.ColorTemplate;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,20 +35,31 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class DashboardActivity extends AppCompatActivity {
+public class DashboardActivity extends AppCompatActivity implements DividaAdapter.OnDividaActionListener {
 
     private com.github.mikephil.charting.charts.PieChart pieChart;
-    private RecyclerView rvLegendas, rvLancamentos;
+    private RecyclerView rvLancamentos;
     private LinearLayout containerFiltros;
-    private Button btnExportar, btnVerDividas;
+    private Button btnExportar;
     private TextView tvTituloLista, tvTotalLista;
 
-    private List<Transacao> todasTransacoes;
-    private List<Transacao> transacoesFiltradas;
-    private LancamentoAdapter lancamentoAdapter;
-    private LegendaAdapter legendaAdapter;
+    private List<Divida> todasDividas;
+    private List<Divida> dividasFiltradas;
+    private DividaAdapter dividaAdapter;
 
-    // Bottom Navigation
+    private float totalParaPercentual = 0f;
+
+    private final int[] CORES_FIGMA = {
+            Color.parseColor("#A855F7"),
+            Color.parseColor("#10B981"),
+            Color.parseColor("#F59E0B"),
+            Color.parseColor("#EC4899"),
+            Color.parseColor("#EAB308"),
+            Color.parseColor("#3B82F6"),
+            Color.parseColor("#EF4444"),
+            Color.parseColor("#06B6D4")
+    };
+
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     @Override
@@ -49,193 +67,191 @@ public class DashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
-        // Vincular componentes principais
         pieChart = findViewById(R.id.pieChart);
-        rvLegendas = findViewById(R.id.rvLegendas);
         rvLancamentos = findViewById(R.id.rvLancamentos);
         containerFiltros = findViewById(R.id.containerFiltros);
         btnExportar = findViewById(R.id.btnExportar);
-        btnVerDividas = findViewById(R.id.btnVerDividas);
         tvTituloLista = findViewById(R.id.tvTituloLista);
         tvTotalLista = findViewById(R.id.tvTotalLista);
 
-        // Vincular Bottom Navigation
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
         tabDividas = findViewById(R.id.tabDividas);
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        // Carregar dados mock
-        todasTransacoes = DadosMock.getTransacoesIniciais();
-        transacoesFiltradas = new ArrayList<>(todasTransacoes);
+        todasDividas = DadosMock.getDividasIniciais();
+        dividasFiltradas = new ArrayList<>(todasDividas);
 
-        // Configurar RecyclerViews
-        rvLegendas.setLayoutManager(new LinearLayoutManager(this));
         rvLancamentos.setLayoutManager(new LinearLayoutManager(this));
 
-        // Configurar gráfico
         configurarPieChart();
-
-        // Atualizar Dashboard
         atualizarDashboard("Todos");
         configurarFiltros();
         configurarExportar();
-
-        // ======== NAVEGAÇÃO ========
-
-        // Botão "Ver Dívidas"
-        btnVerDividas.setOnClickListener(v -> {
-            Intent intent = new Intent(DashboardActivity.this, DividasActivity.class);
-            startActivity(intent);
-        });
-
-        // Aba "Início" → abre a tela Início (nova home)
-        tabInicio.setOnClickListener(v -> {
-            Intent intent = new Intent(DashboardActivity.this, InicioActivity.class);
-            startActivity(intent);
-        });
-
-        // Aba "Lançar"
-        tabLancar.setOnClickListener(v ->
-                Toast.makeText(this, "Funcionalidade em breve!", Toast.LENGTH_SHORT).show());
-
-        // Aba "Dívidas"
-        tabDividas.setOnClickListener(v -> {
-            Intent intent = new Intent(DashboardActivity.this, DividasActivity.class);
-            startActivity(intent);
-        });
-
-        // Aba "Relatórios" (você já está aqui)
-        tabRelatorios.setOnClickListener(v ->
-                Toast.makeText(this, "Você já está em Relatórios", Toast.LENGTH_SHORT).show());
-
-        // Aba "Config" → abre a tela de Configurações
-        tabConfig.setOnClickListener(v -> {
-            Intent intent = new Intent(DashboardActivity.this, ConfiguracoesActivity.class);
-            startActivity(intent);
-        });
+        configurarNavegacao();
     }
 
     private void configurarPieChart() {
-        pieChart.setUsePercentValues(true);
+        pieChart.setUsePercentValues(false);
         pieChart.getDescription().setEnabled(false);
-        pieChart.setExtraOffsets(5, 10, 5, 5);
-        pieChart.setEntryLabelColor(Color.WHITE);
-        pieChart.setEntryLabelTextSize(12f);
+        pieChart.setExtraOffsets(12, 12, 12, 12);
         pieChart.setDrawHoleEnabled(true);
-        pieChart.setHoleRadius(40f);
-        pieChart.setTransparentCircleRadius(45f);
-        pieChart.setCenterTextSize(16f);
-        pieChart.setCenterTextColor(Color.WHITE);
+        pieChart.setHoleColor(Color.parseColor("#131C2E"));
+        pieChart.setHoleRadius(50f);
+        pieChart.setTransparentCircleRadius(55f);
+        pieChart.setTransparentCircleColor(Color.parseColor("#131C2E"));
+        pieChart.getLegend().setEnabled(false);
+        pieChart.setRotationEnabled(false);
+        pieChart.setHighlightPerTapEnabled(true);
+        pieChart.setDrawEntryLabels(false);
     }
 
     private void atualizarDashboard(String categoriaFiltro) {
-        // Filtrar transações
-        transacoesFiltradas.clear();
-        for (Transacao t : todasTransacoes) {
-            if (categoriaFiltro.equals("Todos") || t.getCategoria().equals(categoriaFiltro)) {
-                transacoesFiltradas.add(t);
+        dividasFiltradas.clear();
+        for (Divida d : todasDividas) {
+            if (categoriaFiltro.equals("Todos") || d.getCategoria().equals(categoriaFiltro)) {
+                dividasFiltradas.add(d);
             }
         }
 
-        // Atualizar gráfico de pizza (apenas despesas)
         Map<String, Double> gastosPorCategoria = new HashMap<>();
-        for (Transacao t : transacoesFiltradas) {
-            if (t.getTipo().equals("DESPESA")) {
-                double valor = gastosPorCategoria.getOrDefault(t.getCategoria(), 0.0);
-                gastosPorCategoria.put(t.getCategoria(), valor + t.getValor());
+        for (Divida d : dividasFiltradas) {
+            if (!d.isPago()) {
+                double valor = gastosPorCategoria.getOrDefault(d.getCategoria(), 0.0);
+                gastosPorCategoria.put(d.getCategoria(), valor + d.getValorRestante());
             }
         }
 
+        totalParaPercentual = 0f;
+        for (Double v : gastosPorCategoria.values()) {
+            totalParaPercentual += v.floatValue();
+        }
+
+        final Map<Float, String> labelsPorValor = new HashMap<>();
         List<PieEntry> entries = new ArrayList<>();
         for (Map.Entry<String, Double> entry : gastosPorCategoria.entrySet()) {
-            entries.add(new PieEntry(entry.getValue().floatValue(), entry.getKey()));
+            float valor = entry.getValue().floatValue();
+            labelsPorValor.put(valor, entry.getKey());
+            entries.add(new PieEntry(valor, entry.getKey()));
         }
 
         if (entries.isEmpty()) {
             entries.add(new PieEntry(100f, "Sem dados"));
+            labelsPorValor.put(100f, "Sem dados");
+            totalParaPercentual = 100f;
         }
 
         PieDataSet dataSet = new PieDataSet(entries, "");
-        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        dataSet.setColors(CORES_FIGMA);
         dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(12f);
-        dataSet.setValueLineColor(Color.WHITE);
-        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setValueTextSize(13f);
+        dataSet.setValueTypeface(Typeface.DEFAULT_BOLD);
+        dataSet.setXValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
+
+        dataSet.setValueFormatter(new ValueFormatter() {
+
+            private String montarTexto(float value, String label) {
+                if (label == null) label = "";
+                float percentual = totalParaPercentual > 0 ? (value / totalParaPercentual) * 100f : 0f;
+                return label + "\n" + String.format(Locale.getDefault(), "%.0f%%", percentual);
+            }
+
+            @Override
+            public String getFormattedValue(float value) {
+                String label = labelsPorValor.get(value);
+                return montarTexto(value, label);
+            }
+
+            @Override
+            public String getFormattedValue(float value, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
+                String label = null;
+                if (entry instanceof PieEntry) {
+                    PieEntry pe = (PieEntry) entry;
+                    if (pe.getLabel() != null) label = pe.getLabel();
+                }
+                if (label == null) label = labelsPorValor.get(value);
+                return montarTexto(value, label);
+            }
+        });
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
 
-        double totalDespesas = 0;
-        for (Transacao t : transacoesFiltradas) {
-            if (t.getTipo().equals("DESPESA")) totalDespesas += t.getValor();
+        double totalDividas = 0;
+        for (Divida d : dividasFiltradas) {
+            if (!d.isPago()) totalDividas += d.getValorRestante();
         }
-        pieChart.setCenterText("Total\nR$ " + String.format(Locale.getDefault(), "%.2f", totalDespesas));
+
+        SpannableStringBuilder centerText = new SpannableStringBuilder();
+        String labelTotal = "TOTAL\n";
+        String valorTotal = "R$ " + String.format(Locale.getDefault(), "%.2f", totalDividas);
+        centerText.append(labelTotal);
+        centerText.append(valorTotal);
+
+        centerText.setSpan(new ForegroundColorSpan(Color.parseColor("#94A3B8")),
+                0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centerText.setSpan(new RelativeSizeSpan(0.7f),
+                0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centerText.setSpan(new ForegroundColorSpan(Color.WHITE),
+                labelTotal.length(), centerText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centerText.setSpan(new StyleSpan(Typeface.BOLD),
+                labelTotal.length(), centerText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        pieChart.setCenterText(centerText);
+        pieChart.setCenterTextSize(15f);
         pieChart.invalidate();
 
-        // Atualizar legendas
-        Map<String, CategoriaResumo> resumoMap = new HashMap<>();
-        for (Transacao t : transacoesFiltradas) {
-            if (t.getTipo().equals("DESPESA")) {
-                CategoriaResumo resumo = resumoMap.get(t.getCategoria());
-                if (resumo == null) {
-                    resumoMap.put(t.getCategoria(), new CategoriaResumo(t.getCategoria(), t.getValor(), 1));
-                } else {
-                    resumoMap.put(t.getCategoria(),
-                            new CategoriaResumo(t.getCategoria(),
-                                    resumo.getTotal() + t.getValor(),
-                                    resumo.getQuantidade() + 1));
-                }
-            }
+        List<Divida> dividasNaoPagas = new ArrayList<>();
+        for (Divida d : dividasFiltradas) {
+            if (!d.isPago()) dividasNaoPagas.add(d);
         }
 
-        List<CategoriaResumo> categorias = new ArrayList<>(resumoMap.values());
-        legendaAdapter = new LegendaAdapter(categorias);
-        rvLegendas.setAdapter(legendaAdapter);
+        dividaAdapter = new DividaAdapter(dividasNaoPagas, this);
+        rvLancamentos.setAdapter(dividaAdapter);
 
-        // Atualizar lista de lançamentos
-        lancamentoAdapter = new LancamentoAdapter(transacoesFiltradas);
-        rvLancamentos.setAdapter(lancamentoAdapter);
-
-        // Atualizar título e total da lista
-        double totalLista = 0;
-        for (Transacao t : transacoesFiltradas) {
-            totalLista += t.getValor();
-        }
-        tvTituloLista.setText(categoriaFiltro.equals("Todos") ? "LANÇAMENTOS" : "LANÇAMENTOS EM " + categoriaFiltro.toUpperCase());
-        tvTotalLista.setText("Total: R$ " + String.format(Locale.getDefault(), "%.2f", totalLista));
+        tvTituloLista.setText(categoriaFiltro.equals("Todos") ? "DÍVIDAS" : "DÍVIDAS EM " + categoriaFiltro.toUpperCase());
+        tvTotalLista.setText("Total: R$ " + String.format(Locale.getDefault(), "%.2f", totalDividas));
     }
 
     private void configurarFiltros() {
         Map<String, Integer> categoriasCount = new HashMap<>();
-        for (Transacao t : todasTransacoes) {
-            if (t.getTipo().equals("DESPESA")) {
-                int count = categoriasCount.getOrDefault(t.getCategoria(), 0);
-                categoriasCount.put(t.getCategoria(), count + 1);
+        for (Divida d : todasDividas) {
+            if (!d.isPago()) {
+                int count = categoriasCount.getOrDefault(d.getCategoria(), 0);
+                categoriasCount.put(d.getCategoria(), count + 1);
             }
         }
 
-        criarBotaoFiltro("Todos", todasTransacoes.size());
-
+        criarBotaoFiltro("Todos", todasDividas.size(), true);
         for (Map.Entry<String, Integer> entry : categoriasCount.entrySet()) {
-            criarBotaoFiltro(entry.getKey(), entry.getValue());
+            criarBotaoFiltro(entry.getKey(), entry.getValue(), false);
         }
     }
 
-    private void criarBotaoFiltro(String categoria, int count) {
+    private void criarBotaoFiltro(String categoria, int count, boolean selecionado) {
         Button btn = new Button(this);
-        btn.setText(categoria + (categoria.equals("Todos") ? "" : " (" + count + ")"));
-        btn.setPadding(24, 8, 24, 8);
-        btn.setTextColor(getResources().getColor(android.R.color.white, getTheme()));
+        String texto = categoria.equals("Todos")
+                ? "Todos"
+                : categoria + (count > 1 ? " (" + count + ")" : "");
+        btn.setText(texto);
+        btn.setAllCaps(false);
+        btn.setPadding(40, 12, 40, 12);
+        btn.setTextSize(13f);
 
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setColor(getResources().getColor(R.color.card_bg, getTheme()));
-        drawable.setCornerRadius(20f);
-        drawable.setStroke(1, getResources().getColor(R.color.text_gray, getTheme()));
-        btn.setBackground(drawable);
+        aplicarEstiloBotao(btn, selecionado);
 
-        btn.setOnClickListener(v -> atualizarDashboard(categoria));
+        btn.setOnClickListener(v -> {
+            for (int i = 0; i < containerFiltros.getChildCount(); i++) {
+                View child = containerFiltros.getChildAt(i);
+                if (child instanceof Button) {
+                    aplicarEstiloBotao((Button) child, false);
+                }
+            }
+            aplicarEstiloBotao(btn, true);
+            atualizarDashboard(categoria);
+        });
 
         containerFiltros.addView(btn);
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) btn.getLayoutParams();
@@ -243,8 +259,73 @@ public class DashboardActivity extends AppCompatActivity {
         btn.setLayoutParams(params);
     }
 
+    private void aplicarEstiloBotao(Button btn, boolean selecionado) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setCornerRadius(50f);
+
+        if (selecionado) {
+            drawable.setColor(Color.parseColor("#4C1D95"));
+            drawable.setStroke(1, Color.parseColor("#A855F7"));
+            btn.setTextColor(Color.WHITE);
+        } else {
+            drawable.setColor(Color.parseColor("#131C2E"));
+            drawable.setStroke(1, Color.parseColor("#334155"));
+            btn.setTextColor(Color.parseColor("#CBD5E1"));
+        }
+        btn.setBackground(drawable);
+    }
+
     private void configurarExportar() {
         btnExportar.setOnClickListener(v ->
                 Toast.makeText(this, "Exportação em breve!", Toast.LENGTH_SHORT).show());
+    }
+
+    private void configurarNavegacao() {
+        tabInicio.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, InicioActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        tabLancar.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, CadastroDividaActivity.class);
+            startActivity(intent);
+        });
+
+        tabDividas.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, DividasActivity.class);
+            startActivity(intent);
+        });
+
+        tabRelatorios.setOnClickListener(v ->
+                Toast.makeText(this, "Você já está em Relatórios", Toast.LENGTH_SHORT).show());
+
+        tabConfig.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, ConfiguracoesActivity.class);
+            startActivity(intent);
+        });
+    }
+
+    @Override
+    public void onExcluirClick(int position) {
+        Divida d = dividasFiltradas.get(position);
+        DadosMock.removerDivida(position);
+        todasDividas = DadosMock.getDividasIniciais();
+        atualizarDashboard("Todos");
+        Toast.makeText(this, "Dívida excluída: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onEditarClick(int position) {
+        Divida d = dividasFiltradas.get(position);
+        Toast.makeText(this, "Editar: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onPagarClick(int position) {
+        Divida d = dividasFiltradas.get(position);
+        d.setPago(true);
+        atualizarDashboard("Todos");
+        Toast.makeText(this, "Pagamento registrado: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 }

@@ -21,7 +21,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Topo: Avatar + Saudação + Sincronizado -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -76,7 +75,6 @@
                     android:textSize="11sp" />
             </LinearLayout>
 
-            <!-- Card: Total de Dívidas Acumuladas -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -129,7 +127,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Card: Total já pago -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -165,7 +162,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Card: Alerta de Atenção Este Mês -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -219,7 +215,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Título: Próximos Vencimentos -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -229,7 +224,6 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <!-- Card: Lista de Vencimentos -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -266,11 +260,10 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Navigation -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="72dp"
         android:background="#0B1220"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -286,7 +279,7 @@
             android:gravity="center"
             android:text="⌂\nInício"
             android:textColor="#10B981"
-            android:textSize="10sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
@@ -297,7 +290,7 @@
             android:gravity="center"
             android:text="+\nLançar"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabDividas"
@@ -307,7 +300,7 @@
             android:gravity="center"
             android:text="⊡\nDívidas"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabRelatorios"
@@ -317,7 +310,7 @@
             android:gravity="center"
             android:text="◷\nRelatórios"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabConfig"
@@ -327,7 +320,7 @@
             android:gravity="center"
             android:text="⚙\nConfig"
             android:textColor="#64748B"
-            android:textSize="10sp" />
+            android:textSize="12sp" />
 
     </LinearLayout>
 

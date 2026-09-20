@@ -7,6 +7,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
+import com.example.controle_gastos.dao.UsuarioDao;
+import com.example.controle_gastos.database.AppDatabase;
+import com.example.controle_gastos.model.Usuario;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -17,12 +20,17 @@ public class CadastroActivity extends AppCompatActivity {
     private TextView tvLogin;
     private ImageView btnBack;
 
+    private AppDatabase db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro);
 
-        // Vincular componentes do layout
+        // Inicializa o banco
+        db = AppDatabase.getInstance(this);
+
+        // Vincular componentes
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
@@ -30,47 +38,58 @@ public class CadastroActivity extends AppCompatActivity {
         tvLogin = findViewById(R.id.tvLogin);
         btnBack = findViewById(R.id.btnBack);
 
-        // Ação do botão Cadastrar
-        btnCadastrar.setOnClickListener(v -> {
-            String email = etEmail.getText().toString().trim();
-            String senha = etPassword.getText().toString().trim();
-            String confirmarSenha = etConfirmPassword.getText().toString().trim();
+        btnCadastrar.setOnClickListener(v -> realizarCadastro());
 
-            // Validações
-            if (email.isEmpty() || senha.isEmpty() || confirmarSenha.isEmpty()) {
-                Toast.makeText(CadastroActivity.this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (!senha.equals(confirmarSenha)) {
-                Toast.makeText(CadastroActivity.this, "As senhas não coincidem!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (senha.length() < 6) {
-                Toast.makeText(CadastroActivity.this, "A senha deve ter pelo menos 6 caracteres.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Cadastro bem-sucedido (simulado)
-            Toast.makeText(CadastroActivity.this, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show();
-
-            // Navegar para Login
-            Intent intent = new Intent(CadastroActivity.this, LoginActivity.class);
-            startActivity(intent);
-            finish();
-        });
-
-        // Ação do link "Faça login"
         tvLogin.setOnClickListener(v -> {
             Intent intent = new Intent(CadastroActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
         });
 
-        // Ação do botão voltar (seta)
-        btnBack.setOnClickListener(v -> {
-            finish(); // Volta para a tela anterior (Login)
-        });
+        btnBack.setOnClickListener(v -> finish());
+    }
+
+    private void realizarCadastro() {
+        String email = etEmail.getText().toString().trim();
+        String senha = etPassword.getText().toString().trim();
+        String confirmarSenha = etConfirmPassword.getText().toString().trim();
+
+        // Validações
+        if (email.isEmpty() || senha.isEmpty() || confirmarSenha.isEmpty()) {
+            Toast.makeText(this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!senha.equals(confirmarSenha)) {
+            Toast.makeText(this, "As senhas não coincidem!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (senha.length() < 6) {
+            Toast.makeText(this, "A senha deve ter pelo menos 6 caracteres.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Verifica se o e-mail já existe
+        UsuarioDao usuarioDao = db.usuarioDao();
+        Usuario existente = usuarioDao.buscarPorEmail(email);
+
+        if (existente != null) {
+            Toast.makeText(this, "Este e-mail já está cadastrado!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Insere o novo usuário
+        Usuario novoUsuario = new Usuario("Usuário", email, senha);
+        long idGerado = usuarioDao.inserir(novoUsuario);
+
+        if (idGerado > 0) {
+            Toast.makeText(this, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(CadastroActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        } else {
+            Toast.makeText(this, "Erro ao cadastrar. Tente novamente.", Toast.LENGTH_SHORT).show();
+        }
     }
 }

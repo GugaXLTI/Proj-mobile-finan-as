@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaAdapter;
+import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
-import com.example.controle_gastos.utils.DadosMock;
 
 import java.util.List;
 import java.util.Locale;
@@ -24,13 +24,16 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     private DividaAdapter adapter;
     private List<Divida> dividas;
 
-    // Bottom Navigation
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
+
+    private AppDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dividas);
+
+        db = AppDatabase.getInstance(this);
 
         rvDividas = findViewById(R.id.rvDividas);
         tvTotalAPagar = findViewById(R.id.tvTotalAPagar);
@@ -44,15 +47,9 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        dividas = DadosMock.getDividasIniciais();
-
         rvDividas.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new DividaAdapter(dividas, this);
-        rvDividas.setAdapter(adapter);
 
-        atualizarTotais();
-
-        // ======== NAVEGAÇÃO ========
+        carregarDividas();
 
         btnCadastrarDivida.setOnClickListener(v -> {
             Intent intent = new Intent(DividasActivity.this, CadastroDividaActivity.class);
@@ -88,7 +85,11 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     @Override
     protected void onResume() {
         super.onResume();
-        dividas = DadosMock.getDividasIniciais();
+        carregarDividas();
+    }
+
+    private void carregarDividas() {
+        dividas = db.dividaDao().listarTodas();
         adapter = new DividaAdapter(dividas, this);
         rvDividas.setAdapter(adapter);
         atualizarTotais();
@@ -113,14 +114,13 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         tvTotalGeral.setText(String.format(Locale.getDefault(), "R$ %.2f", totalGeral));
     }
 
+    // ========== Ações dos botões dos cards ==========
+
     @Override
     public void onExcluirClick(int position) {
         Divida d = dividas.get(position);
-        DadosMock.removerDivida(position);
-        dividas = DadosMock.getDividasIniciais();
-        adapter = new DividaAdapter(dividas, this);
-        rvDividas.setAdapter(adapter);
-        atualizarTotais();
+        db.dividaDao().deletar(d);
+        carregarDividas();
         Toast.makeText(this, "Dívida excluída: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 
@@ -134,8 +134,8 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     public void onPagarClick(int position) {
         Divida d = dividas.get(position);
         d.setPago(true);
-        adapter.notifyItemChanged(position);
-        atualizarTotais();
+        db.dividaDao().atualizar(d);
+        carregarDividas();
         Toast.makeText(this, "Pagamento registrado: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 }

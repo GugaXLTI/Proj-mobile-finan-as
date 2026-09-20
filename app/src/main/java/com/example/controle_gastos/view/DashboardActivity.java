@@ -20,8 +20,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaAdapter;
+import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
-import com.example.controle_gastos.utils.DadosMock;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -49,6 +49,8 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
 
     private float totalParaPercentual = 0f;
 
+    private AppDatabase db;
+
     private final int[] CORES_FIGMA = {
             Color.parseColor("#A855F7"),
             Color.parseColor("#10B981"),
@@ -67,6 +69,8 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
+        db = AppDatabase.getInstance(this);
+
         pieChart = findViewById(R.id.pieChart);
         rvLancamentos = findViewById(R.id.rvLancamentos);
         containerFiltros = findViewById(R.id.containerFiltros);
@@ -80,16 +84,25 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        todasDividas = DadosMock.getDividasIniciais();
-        dividasFiltradas = new ArrayList<>(todasDividas);
-
         rvLancamentos.setLayoutManager(new LinearLayoutManager(this));
 
         configurarPieChart();
-        atualizarDashboard("Todos");
-        configurarFiltros();
+        carregarDados();
         configurarExportar();
         configurarNavegacao();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        carregarDados();
+    }
+
+    private void carregarDados() {
+        todasDividas = db.dividaDao().listarTodas();
+        dividasFiltradas = new ArrayList<>(todasDividas);
+        atualizarDashboard("Todos");
+        configurarFiltros();
     }
 
     private void configurarPieChart() {
@@ -216,6 +229,9 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     }
 
     private void configurarFiltros() {
+        // Limpa o container antes de recriar
+        containerFiltros.removeAllViews();
+
         Map<String, Integer> categoriasCount = new HashMap<>();
         for (Divida d : todasDividas) {
             if (!d.isPago()) {
@@ -309,9 +325,8 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     @Override
     public void onExcluirClick(int position) {
         Divida d = dividasFiltradas.get(position);
-        DadosMock.removerDivida(position);
-        todasDividas = DadosMock.getDividasIniciais();
-        atualizarDashboard("Todos");
+        db.dividaDao().deletar(d);
+        carregarDados();
         Toast.makeText(this, "Dívida excluída: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 
@@ -325,7 +340,8 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     public void onPagarClick(int position) {
         Divida d = dividasFiltradas.get(position);
         d.setPago(true);
-        atualizarDashboard("Todos");
+        db.dividaDao().atualizar(d);
+        carregarDados();
         Toast.makeText(this, "Pagamento registrado: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 }

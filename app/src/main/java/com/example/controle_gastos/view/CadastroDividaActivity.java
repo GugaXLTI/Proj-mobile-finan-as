@@ -8,14 +8,11 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
+import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
-import com.example.controle_gastos.utils.DadosMock;
 import com.google.android.material.button.MaterialButton;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 
 public class CadastroDividaActivity extends AppCompatActivity {
@@ -24,12 +21,15 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private EditText editDevedor, editDescricao, editValor, editDataCompra, editVencimento;
     private MaterialButton btnSalvar;
 
+    private AppDatabase db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro_divida);
 
-        // Vincular componentes
+        db = AppDatabase.getInstance(this);
+
         spinnerTipoDivida = findViewById(R.id.spinnerTipoDivida);
         spinnerBanco = findViewById(R.id.spinnerBanco);
         spinnerCategoria = findViewById(R.id.spinnerCategoria);
@@ -41,37 +41,29 @@ public class CadastroDividaActivity extends AppCompatActivity {
         editVencimento = findViewById(R.id.editVencimento);
         btnSalvar = findViewById(R.id.btnSalvarDivida);
 
-        // Configurar Spinners
         configurarSpinners();
-
-        // Configurar seletores de data
         configurarDatePicker(editDataCompra);
         configurarDatePicker(editVencimento);
 
-        // Ação do botão Salvar
         btnSalvar.setOnClickListener(v -> salvarDivida());
     }
 
     private void configurarSpinners() {
-        // Tipo de Dívida
         String[] tipos = {"Cartão de Crédito", "Empréstimo", "Fatura", "Boleto", "Outros"};
         ArrayAdapter<String> adapterTipo = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, tipos);
         adapterTipo.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTipoDivida.setAdapter(adapterTipo);
 
-        // Bancos
         String[] bancos = {"Nubank", "Itaú", "Banco Inter", "Bradesco", "Santander"};
         ArrayAdapter<String> adapterBanco = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, bancos);
         adapterBanco.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerBanco.setAdapter(adapterBanco);
 
-        // Categorias
         String[] categorias = {"Alimentação", "Transporte", "Saúde", "Educação", "Lazer", "Moradia", "Outros"};
         ArrayAdapter<String> adapterCategoria = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categorias);
         adapterCategoria.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategoria.setAdapter(adapterCategoria);
 
-        // Parcelas
         String[] parcelas = {"1x (À vista)", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x", "11x", "12x"};
         ArrayAdapter<String> adapterParcelas = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, parcelas);
         adapterParcelas.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -95,8 +87,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
     }
 
     private void salvarDivida() {
-        // Pegar valores dos campos
-        String tipo = spinnerTipoDivida.getSelectedItem().toString();
         String banco = spinnerBanco.getSelectedItem().toString();
         String categoria = spinnerCategoria.getSelectedItem().toString();
         String parcelas = spinnerParcelas.getSelectedItem().toString();
@@ -106,7 +96,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         String dataCompra = editDataCompra.getText().toString().trim();
         String vencimento = editVencimento.getText().toString().trim();
 
-        // Validações
         if (devedor.isEmpty() || descricao.isEmpty() || valorStr.isEmpty() || dataCompra.isEmpty() || vencimento.isEmpty()) {
             Toast.makeText(this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
             return;
@@ -125,10 +114,8 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        // Criar nova dívida
-        int novoId = DadosMock.getDividasIniciais().size() + 1;
+        // Cria a dívida sem ID (Room gera automaticamente)
         Divida novaDivida = new Divida(
-                novoId,
                 descricao,
                 valor,
                 0.0,
@@ -139,10 +126,14 @@ public class CadastroDividaActivity extends AppCompatActivity {
                 false
         );
 
-        // Adicionar à lista compartilhada (USANDO O MÉTODO DO DADOSMOCK)
-        DadosMock.adicionarDivida(novaDivida);
+        // Insere no Room
+        long idGerado = db.dividaDao().inserir(novaDivida);
 
-        Toast.makeText(this, "Dívida cadastrada com sucesso!", Toast.LENGTH_SHORT).show();
-        finish();
+        if (idGerado > 0) {
+            Toast.makeText(this, "Dívida cadastrada com sucesso!", Toast.LENGTH_SHORT).show();
+            finish();
+        } else {
+            Toast.makeText(this, "Erro ao cadastrar. Tente novamente.", Toast.LENGTH_SHORT).show();
+        }
     }
 }

@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.VencimentoAdapter;
+import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
-import com.example.controle_gastos.utils.DadosMock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,15 +23,17 @@ public class InicioActivity extends AppCompatActivity {
     private RecyclerView rvVencimentos;
     private Button btnVerTodosVencimentos;
 
-    // Bottom Navigation
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
+    private AppDatabase db;
     private List<Divida> dividas;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inicio);
+
+        db = AppDatabase.getInstance(this);
 
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
         tvTotalDividasInicio = findViewById(R.id.tvTotalDividasInicio);
@@ -46,27 +48,14 @@ public class InicioActivity extends AppCompatActivity {
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        dividas = DadosMock.getDividasIniciais();
-
-        List<Divida> vencimentos = new ArrayList<>();
-        for (Divida d : dividas) {
-            if (!d.isPago()) vencimentos.add(d);
-        }
-        if (vencimentos.size() > 3) {
-            vencimentos = vencimentos.subList(0, 3);
-        }
-
         rvVencimentos.setLayoutManager(new LinearLayoutManager(this));
-        rvVencimentos.setAdapter(new VencimentoAdapter(vencimentos));
 
-        atualizarTotais();
+        carregarDados();
 
         btnVerTodosVencimentos.setOnClickListener(v -> {
             Intent intent = new Intent(InicioActivity.this, DividasActivity.class);
             startActivity(intent);
         });
-
-        // ======== NAVEGAÇÃO ========
 
         tabInicio.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está no Início", Toast.LENGTH_SHORT).show());
@@ -95,7 +84,23 @@ public class InicioActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        dividas = DadosMock.getDividasIniciais();
+        carregarDados();
+    }
+
+    private void carregarDados() {
+        dividas = db.dividaDao().listarTodas();
+
+        // Lista de vencimentos (não pagas, até 3)
+        List<Divida> vencimentos = new ArrayList<>();
+        for (Divida d : dividas) {
+            if (!d.isPago()) vencimentos.add(d);
+        }
+        if (vencimentos.size() > 3) {
+            vencimentos = vencimentos.subList(0, 3);
+        }
+
+        rvVencimentos.setAdapter(new VencimentoAdapter(vencimentos));
+
         atualizarTotais();
     }
 

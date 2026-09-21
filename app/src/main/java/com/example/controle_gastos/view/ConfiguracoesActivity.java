@@ -15,7 +15,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
     private LinearLayout itemCartoes, itemCategorias, itemBackup, itemDesconectar;
     private SwitchMaterial switchLembretes, switchBiometria;
-    private TextView tvEditar;
+    private TextView tvEditar, tvNomeUsuario, tvAvatar;
 
     // Bottom Navigation
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
@@ -30,6 +30,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         // Inicializa a sessão
         session = new SessionManager(this);
 
+        // Vincula componentes
         itemCartoes = findViewById(R.id.itemCartoes);
         itemCategorias = findViewById(R.id.itemCategorias);
         itemBackup = findViewById(R.id.itemBackup);
@@ -37,12 +38,22 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         switchLembretes = findViewById(R.id.switchLembretes);
         switchBiometria = findViewById(R.id.switchBiometria);
         tvEditar = findViewById(R.id.tvEditar);
+        tvNomeUsuario = findViewById(R.id.tvNomeUsuario);
+        tvAvatar = findViewById(R.id.tvAvatar);
 
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
         tabDividas = findViewById(R.id.tabDividas);
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
+
+        // ======== MOSTRAR O NOME DO USUÁRIO LOGADO ========
+        String nome = session.getNome();
+        if (nome != null && !nome.isEmpty()) {
+            tvNomeUsuario.setText(nome);
+            // Avatar com a primeira letra do nome
+            tvAvatar.setText(String.valueOf(nome.charAt(0)).toUpperCase());
+        }
 
         // ======== AÇÕES DOS ITENS ========
 
@@ -68,13 +79,12 @@ public class ConfiguracoesActivity extends AppCompatActivity {
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         });
 
-        // ⭐ DESCONECTAR / LIMPAR SESSÃO (COM SESSION MANAGER)
+        // DESCONECTAR / LIMPAR SESSÃO
         itemDesconectar.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
                     .setTitle("Desconectar")
                     .setMessage("Tem certeza que deseja sair da sua conta?")
                     .setPositiveButton("Sim", (dialog, which) -> {
-                        // Limpa a sessão
                         session.logout();
 
                         Intent intent = new Intent(ConfiguracoesActivity.this, LoginActivity.class);

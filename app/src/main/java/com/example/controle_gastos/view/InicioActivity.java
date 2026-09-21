@@ -12,6 +12,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.VencimentoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,13 +20,14 @@ import java.util.Locale;
 
 public class InicioActivity extends AppCompatActivity {
 
-    private TextView tvNomeInicio, tvTotalDividasInicio, tvTotalPagoInicio, tvAlertaMes;
+    private TextView tvAvatarInicio, tvNomeInicio, tvTotalDividasInicio, tvTotalPagoInicio, tvAlertaMes;
     private RecyclerView rvVencimentos;
     private Button btnVerTodosVencimentos;
 
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     private AppDatabase db;
+    private SessionManager session;
     private List<Divida> dividas;
 
     @Override
@@ -34,7 +36,9 @@ public class InicioActivity extends AppCompatActivity {
         setContentView(R.layout.activity_inicio);
 
         db = AppDatabase.getInstance(this);
+        session = new SessionManager(this);
 
+        tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
         tvTotalDividasInicio = findViewById(R.id.tvTotalDividasInicio);
         tvTotalPagoInicio = findViewById(R.id.tvTotalPagoInicio);
@@ -47,6 +51,14 @@ public class InicioActivity extends AppCompatActivity {
         tabDividas = findViewById(R.id.tabDividas);
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
+
+        // ======== MOSTRAR O NOME DO USUÁRIO LOGADO ========
+        String nome = session.getNome();
+        if (nome != null && !nome.isEmpty()) {
+            tvNomeInicio.setText(nome);
+            // Avatar com a primeira letra do nome
+            tvAvatarInicio.setText(String.valueOf(nome.charAt(0)).toUpperCase());
+        }
 
         rvVencimentos.setLayoutManager(new LinearLayoutManager(this));
 
@@ -84,6 +96,12 @@ public class InicioActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Atualiza o nome sempre que voltar para a tela
+        String nome = session.getNome();
+        if (nome != null && !nome.isEmpty()) {
+            tvNomeInicio.setText(nome);
+            tvAvatarInicio.setText(String.valueOf(nome.charAt(0)).toUpperCase());
+        }
         carregarDados();
     }
 

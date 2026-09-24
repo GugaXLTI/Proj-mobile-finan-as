@@ -6,7 +6,7 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
-## [Não lançado]
+## [Não lançado] – Sprint 4 (Persistência de Dados)
 
 ### Adicionado
 - Campo `usuarioId` nas entidades `Divida` e `Transacao`
@@ -38,28 +38,62 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
-## [1.0.0] - 2026-09-19
+## [1.0.0] – Sprint 3 (Room + Autenticação) – 2026-09-19
 
 ### Adicionado
 - Persistência de dados com Room (SQLite)
-- Autenticação local (cadastro + login)
-- Sessão persistente com SharedPreferences
-- CRUD completo de dívidas
-- Tela de Início (Home)
-- Dashboard com gráfico de rosca
-- Tela de Dívidas
-- Cadastro de Dívida
-- Tela de Configurações
-- Bottom Navigation funcional
+- Entidades `Usuario`, `Divida` e `Transacao` com `@Entity`
+- DAOs (`UsuarioDao`, `DividaDao`, `TransacaoDao`) com CRUD completo
+- Classe `AppDatabase` (versão 1)
+- Classe `DatabaseClient` (singleton)
+- `SessionManager` para gerenciar sessão com SharedPreferences
+- Autenticação local com validação no banco
+- Sessão persistente (usuário continua logado ao reabrir o app)
+- Logout limpando a sessão
+
+### Modificado
+- Tela de Login agora valida credenciais no Room
+- Tela de Cadastro agora salva usuário no Room
+- Tela de Início, Dívidas e Dashboard agora leem dados do Room
+- Cadastro de Dívida agora salva no Room
 
 ---
 
-## [0.1.0] - 2026-09-03
+## [0.5.0] – Sprint 2 (Telas Navegáveis) – 2026-09-12
 
 ### Adicionado
-- Estrutura inicial do projeto Android
-- Splash Screen
-- Tela de Login
-- Tela de Cadastro
-- Navegação básica entre telas
-- Dados mock para testes
+- Bottom Navigation com 5 abas (Início, Lançar, Dívidas, Relatórios, Config)
+- Tela de Início (Home) com resumo de dívidas e vencimentos
+- Tela de Cadastro de Dívida com formulário completo
+- Tela de Configurações com perfil, cartões, categorias, biometria e backup
+- Gráfico de rosca (MPAndroidChart) na Dashboard
+
+### Modificado
+- Dashboard movida para a aba "Relatórios"
+- Aba "Lançar" agora abre o Cadastro de Dívida
+- Navegação ajustada em todas as telas
+
+---
+
+## [0.3.0] – Sprint 1 (Telas Iniciais) – 2026-09-05
+
+### Adicionado
+- Splash Screen com logo e timer de 2 segundos
+- Tela de Login com validação de campos
+- Tela de Cadastro com confirmação de senha
+- Dashboard com gráfico e filtros por categoria
+- Tela de Dívidas com cards e totais
+- Fontes personalizadas (Abril Fatface e Lato)
+
+### Modificado
+- Estrutura de cores centralizada em `colors.xml`
+
+---
+
+## [0.1.0] – Kickoff do Projeto – 2026-09-03
+
+### Adicionado
+- Estrutura inicial do projeto Android em Java
+- Repositório no GitHub com README e .gitignore
+- Pacotes `model`, `view`, `adapter` e `utils`
+- Classe `Transacao` (modelo de dados)

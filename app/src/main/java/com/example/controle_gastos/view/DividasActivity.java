@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -12,6 +13,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.SessionManager;
 
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +29,7 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     private AppDatabase db;
+    private SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +37,7 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         setContentView(R.layout.activity_dividas);
 
         db = AppDatabase.getInstance(this);
+        session = new SessionManager(this);
 
         rvDividas = findViewById(R.id.rvDividas);
         tvTotalAPagar = findViewById(R.id.tvTotalAPagar);
@@ -89,7 +93,8 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     }
 
     private void carregarDividas() {
-        dividas = db.dividaDao().listarTodas();
+        // ⭐ FILTRA POR USUÁRIO LOGADO
+        dividas = db.dividaDao().listarPorUsuario(session.getUserId());
         adapter = new DividaAdapter(dividas, this);
         rvDividas.setAdapter(adapter);
         atualizarTotais();
@@ -117,25 +122,31 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     // ========== Ações dos botões dos cards ==========
 
     @Override
-    public void onExcluirClick(int position) {
-        Divida d = dividas.get(position);
-        db.dividaDao().deletar(d);
-        carregarDividas();
-        Toast.makeText(this, "Dívida excluída: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
+    public void onExcluirClick(Divida divida) {
+        new AlertDialog.Builder(this)
+                .setTitle("Excluir dívida")
+                .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?")
+                .setPositiveButton("Excluir", (dialog, which) -> {
+                    db.dividaDao().deletar(divida);
+                    carregarDividas();
+                    Toast.makeText(this, "Dívida excluída: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     @Override
-    public void onEditarClick(int position) {
-        Divida d = dividas.get(position);
-        Toast.makeText(this, "Editar: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
+    public void onEditarClick(Divida divida) {
+        Intent intent = new Intent(DividasActivity.this, CadastroDividaActivity.class);
+        intent.putExtra("divida_id", divida.getId());
+        startActivity(intent);
     }
 
     @Override
-    public void onPagarClick(int position) {
-        Divida d = dividas.get(position);
-        d.setPago(true);
-        db.dividaDao().atualizar(d);
+    public void onPagarClick(Divida divida) {
+        divida.setPago(true);
+        db.dividaDao().atualizar(divida);
         carregarDividas();
-        Toast.makeText(this, "Pagamento registrado: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Pagamento registrado: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 }

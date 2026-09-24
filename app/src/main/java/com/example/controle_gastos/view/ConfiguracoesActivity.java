@@ -8,6 +8,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
+import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -21,14 +22,16 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     private SessionManager session;
+    private AppDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_configuracoes);
 
-        // Inicializa a sessão
+        // Inicializa a sessão e o banco
         session = new SessionManager(this);
+        db = AppDatabase.getInstance(this);
 
         // Vincula componentes
         itemCartoes = findViewById(R.id.itemCartoes);
@@ -51,7 +54,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         String nome = session.getNome();
         if (nome != null && !nome.isEmpty()) {
             tvNomeUsuario.setText(nome);
-            // Avatar com a primeira letra do nome
             tvAvatar.setText(String.valueOf(nome.charAt(0)).toUpperCase());
         }
 
@@ -66,8 +68,8 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         itemCategorias.setOnClickListener(v ->
                 Toast.makeText(this, "Gerenciar categorias (em breve)", Toast.LENGTH_SHORT).show());
 
-        itemBackup.setOnClickListener(v ->
-                Toast.makeText(this, "Exportar dados (em breve)", Toast.LENGTH_SHORT).show());
+        // BACKUP: agora serve como "Limpar Tudo" (para testes internos)
+        itemBackup.setOnClickListener(v -> mostrarDialogoLimparTudo());
 
         switchLembretes.setOnCheckedChangeListener((buttonView, isChecked) -> {
             String msg = isChecked ? "Lembretes ativados" : "Lembretes desativados";
@@ -123,5 +125,26 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         tabConfig.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está em Configurações", Toast.LENGTH_SHORT).show());
+    }
+
+    // ======== DIÁLOGO "LIMPAR TUDO" (para testes internos) ========
+    private void mostrarDialogoLimparTudo() {
+        new AlertDialog.Builder(this)
+                .setTitle("Limpar Tudo (Testes)")
+                .setMessage("Esta opção apaga TODAS as dívidas, transações e usuários cadastrados. " +
+                        "Use apenas para testes. Tem certeza?")
+                .setPositiveButton("Sim, limpar tudo", (dialog, which) -> {
+                    db.clearAllTables();
+                    session.logout();
+
+                    Toast.makeText(this, "Banco de dados limpo com sucesso!", Toast.LENGTH_LONG).show();
+
+                    Intent intent = new Intent(ConfiguracoesActivity.this, LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 }

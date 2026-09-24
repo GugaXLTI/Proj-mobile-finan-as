@@ -10,14 +10,17 @@ public class Transacao {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
+    public int usuarioId; // ⭐ NOVO: vínculo com o usuário
+
     public String descricao;
     public double valor;
     public String data;
     public String tipo;
     public String categoria;
 
-    public Transacao(int id, String descricao, double valor, String data, String tipo, String categoria) {
+    public Transacao(int id, int usuarioId, String descricao, double valor, String data, String tipo, String categoria) {
         this.id = id;
+        this.usuarioId = usuarioId;
         this.descricao = descricao;
         this.valor = valor;
         this.data = data;
@@ -26,7 +29,8 @@ public class Transacao {
     }
 
     @Ignore
-    public Transacao(String descricao, double valor, String data, String tipo, String categoria) {
+    public Transacao(int usuarioId, String descricao, double valor, String data, String tipo, String categoria) {
+        this.usuarioId = usuarioId;
         this.descricao = descricao;
         this.valor = valor;
         this.data = data;
@@ -35,6 +39,7 @@ public class Transacao {
     }
 
     public int getId() { return id; }
+    public int getUsuarioId() { return usuarioId; }
     public String getDescricao() { return descricao; }
     public double getValor() { return valor; }
     public String getData() { return data; }

@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,6 +23,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.SessionManager;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -50,6 +52,7 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     private float totalParaPercentual = 0f;
 
     private AppDatabase db;
+    private SessionManager session;
 
     private final int[] CORES_FIGMA = {
             Color.parseColor("#A855F7"),
@@ -70,6 +73,7 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         setContentView(R.layout.activity_dashboard);
 
         db = AppDatabase.getInstance(this);
+        session = new SessionManager(this);
 
         pieChart = findViewById(R.id.pieChart);
         rvLancamentos = findViewById(R.id.rvLancamentos);
@@ -99,7 +103,8 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     }
 
     private void carregarDados() {
-        todasDividas = db.dividaDao().listarTodas();
+        // ⭐ FILTRA POR USUÁRIO LOGADO
+        todasDividas = db.dividaDao().listarPorUsuario(session.getUserId());
         dividasFiltradas = new ArrayList<>(todasDividas);
         atualizarDashboard("Todos");
         configurarFiltros();
@@ -229,7 +234,6 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     }
 
     private void configurarFiltros() {
-        // Limpa o container antes de recriar
         containerFiltros.removeAllViews();
 
         Map<String, Integer> categoriasCount = new HashMap<>();
@@ -322,26 +326,34 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         });
     }
 
+    // ========== Ações dos botões dos cards ==========
+
     @Override
-    public void onExcluirClick(int position) {
-        Divida d = dividasFiltradas.get(position);
-        db.dividaDao().deletar(d);
-        carregarDados();
-        Toast.makeText(this, "Dívida excluída: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
+    public void onExcluirClick(Divida divida) {
+        new AlertDialog.Builder(this)
+                .setTitle("Excluir dívida")
+                .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?")
+                .setPositiveButton("Excluir", (dialog, which) -> {
+                    db.dividaDao().deletar(divida);
+                    carregarDados();
+                    Toast.makeText(this, "Dívida excluída: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     @Override
-    public void onEditarClick(int position) {
-        Divida d = dividasFiltradas.get(position);
-        Toast.makeText(this, "Editar: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
+    public void onEditarClick(Divida divida) {
+        Intent intent = new Intent(DashboardActivity.this, CadastroDividaActivity.class);
+        intent.putExtra("divida_id", divida.getId());
+        startActivity(intent);
     }
 
     @Override
-    public void onPagarClick(int position) {
-        Divida d = dividasFiltradas.get(position);
-        d.setPago(true);
-        db.dividaDao().atualizar(d);
+    public void onPagarClick(Divida divida) {
+        divida.setPago(true);
+        db.dividaDao().atualizar(divida);
         carregarDados();
-        Toast.makeText(this, "Pagamento registrado: " + d.getTitulo(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Pagamento registrado: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 }

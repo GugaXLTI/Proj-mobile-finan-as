@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
-import com.example.controle_gastos.database.DatabaseSeeder;
 import com.example.controle_gastos.utils.SessionManager;
 
 public class SplashActivity extends AppCompatActivity {
@@ -18,9 +17,6 @@ public class SplashActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
-
-        // Popula o banco na primeira execução
-        DatabaseSeeder.popularSeVazio(this);
 
         // Aguarda 2 segundos e verifica a sessão
         new Handler().postDelayed(() -> {

@@ -21,9 +21,11 @@ public interface TransacaoDao {
     @Delete
     void deletar(Transacao transacao);
 
-    @Query("SELECT * FROM transacoes")
-    List<Transacao> listarTodas();
+    // ======== CONSULTAS POR USUÁRIO (novas) ========
 
-    @Query("SELECT * FROM transacoes WHERE tipo = :tipo")
-    List<Transacao> listarPorTipo(String tipo);
+    @Query("SELECT * FROM transacoes WHERE usuarioId = :usuarioId")
+    List<Transacao> listarPorUsuario(int usuarioId);
+
+    @Query("SELECT * FROM transacoes WHERE usuarioId = :usuarioId AND tipo = :tipo")
+    List<Transacao> listarPorTipoDoUsuario(int usuarioId, String tipo);
 }

@@ -16,4 +16,8 @@ public interface UsuarioDao {
 
     @Query("SELECT * FROM usuarios WHERE email = :email LIMIT 1")
     Usuario buscarPorEmail(String email);
+
+    // ⭐ NOVO: busca por ID (útil para validar a sessão)
+    @Query("SELECT * FROM usuarios WHERE id = :id LIMIT 1")
+    Usuario buscarPorId(int id);
 }

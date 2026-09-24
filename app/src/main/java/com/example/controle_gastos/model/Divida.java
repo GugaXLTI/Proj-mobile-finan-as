@@ -10,6 +10,8 @@ public class Divida {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
+    public int usuarioId; // ⭐ NOVO: vínculo com o usuário
+
     public String titulo;
     public double valorTotal;
     public double valorPago;
@@ -20,9 +22,10 @@ public class Divida {
     public boolean pago;
 
     // Construtor completo (usado pelo Room)
-    public Divida(int id, String titulo, double valorTotal, double valorPago,
+    public Divida(int id, int usuarioId, String titulo, double valorTotal, double valorPago,
                   String banco, String categoria, String parcela, String vencimento, boolean pago) {
         this.id = id;
+        this.usuarioId = usuarioId;
         this.titulo = titulo;
         this.valorTotal = valorTotal;
         this.valorPago = valorPago;
@@ -35,8 +38,9 @@ public class Divida {
 
     // Construtor sem ID (usado quando o Room gera o ID automaticamente)
     @Ignore
-    public Divida(String titulo, double valorTotal, double valorPago,
+    public Divida(int usuarioId, String titulo, double valorTotal, double valorPago,
                   String banco, String categoria, String parcela, String vencimento, boolean pago) {
+        this.usuarioId = usuarioId;
         this.titulo = titulo;
         this.valorTotal = valorTotal;
         this.valorPago = valorPago;
@@ -48,6 +52,7 @@ public class Divida {
     }
 
     public int getId() { return id; }
+    public int getUsuarioId() { return usuarioId; }
     public String getTitulo() { return titulo; }
     public double getValorTotal() { return valorTotal; }
     public double getValorPago() { return valorPago; }

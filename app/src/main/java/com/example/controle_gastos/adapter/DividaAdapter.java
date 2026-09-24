@@ -19,9 +19,9 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
     private OnDividaActionListener listener;
 
     public interface OnDividaActionListener {
-        void onExcluirClick(int position);
-        void onEditarClick(int position);
-        void onPagarClick(int position);
+        void onExcluirClick(Divida divida);
+        void onEditarClick(Divida divida);
+        void onPagarClick(Divida divida);
     }
 
     public DividaAdapter(List<Divida> dividas, OnDividaActionListener listener) {
@@ -47,15 +47,15 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         holder.tvParcela.setText("Parcela " + d.getParcela());
         holder.tvVencimento.setText("Vencimento: " + d.getVencimento());
 
-        // Ações
+        // Ações - passando o objeto Divida (não a posição)
         holder.btnExcluir.setOnClickListener(v -> {
-            if (listener != null) listener.onExcluirClick(position);
+            if (listener != null) listener.onExcluirClick(d);
         });
         holder.btnEditar.setOnClickListener(v -> {
-            if (listener != null) listener.onEditarClick(position);
+            if (listener != null) listener.onEditarClick(d);
         });
         holder.btnPagar.setOnClickListener(v -> {
-            if (listener != null) listener.onPagarClick(position);
+            if (listener != null) listener.onPagarClick(d);
         });
     }
 

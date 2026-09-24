@@ -56,7 +56,6 @@ public class InicioActivity extends AppCompatActivity {
         String nome = session.getNome();
         if (nome != null && !nome.isEmpty()) {
             tvNomeInicio.setText(nome);
-            // Avatar com a primeira letra do nome
             tvAvatarInicio.setText(String.valueOf(nome.charAt(0)).toUpperCase());
         }
 
@@ -106,7 +105,8 @@ public class InicioActivity extends AppCompatActivity {
     }
 
     private void carregarDados() {
-        dividas = db.dividaDao().listarTodas();
+        // ⭐ FILTRA POR USUÁRIO LOGADO
+        dividas = db.dividaDao().listarPorUsuario(session.getUserId());
 
         // Lista de vencimentos (não pagas, até 3)
         List<Divida> vencimentos = new ArrayList<>();

@@ -13,7 +13,7 @@ import com.example.controle_gastos.model.Usuario;
 
 @Database(
         entities = {Usuario.class, Divida.class, Transacao.class},
-        version = 1,
+        version = 2,  // ⭐ MUDOU DE 1 PARA 2 (por causa do usuarioId)
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -27,10 +27,13 @@ public abstract class AppDatabase extends RoomDatabase {
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
             INSTANCE = Room.databaseBuilder(
-                    context.getApplicationContext(),
-                    AppDatabase.class,
-                    "controle_gastos_db"
-            ).allowMainThreadQueries().build();
+                            context.getApplicationContext(),
+                            AppDatabase.class,
+                            "controle_gastos_db"
+                    )
+                    .fallbackToDestructiveMigration() // ⭐ Apaga e recria o banco na migração (OK para MVP)
+                    .allowMainThreadQueries()
+                    .build();
         }
         return INSTANCE;
     }

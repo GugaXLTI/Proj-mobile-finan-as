@@ -21,11 +21,16 @@ public interface DividaDao {
     @Delete
     void deletar(Divida divida);
 
-    @Query("SELECT * FROM dividas")
-    List<Divida> listarTodas();
+    // ======== CONSULTAS POR USUÁRIO (novas) ========
 
-    @Query("SELECT * FROM dividas WHERE pago = 0")
-    List<Divida> listarNaoPagas();
+    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId")
+    List<Divida> listarPorUsuario(int usuarioId);
+
+    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId AND pago = 0")
+    List<Divida> listarNaoPagasPorUsuario(int usuarioId);
+
+    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId AND id = :id LIMIT 1")
+    Divida buscarPorIdDoUsuario(int id, int usuarioId);
 
     @Query("SELECT * FROM dividas WHERE id = :id LIMIT 1")
     Divida buscarPorId(int id);

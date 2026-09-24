@@ -2,6 +2,8 @@ package com.example.controle_gastos.view;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -10,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.Calendar;
@@ -22,6 +25,11 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private MaterialButton btnSalvar;
 
     private AppDatabase db;
+    private SessionManager session;
+
+    // Modo edição
+    private int dividaId = -1;
+    private Divida dividaEmEdicao = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +37,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
         setContentView(R.layout.activity_cadastro_divida);
 
         db = AppDatabase.getInstance(this);
+        session = new SessionManager(this);
 
         spinnerTipoDivida = findViewById(R.id.spinnerTipoDivida);
         spinnerBanco = findViewById(R.id.spinnerBanco);
@@ -44,8 +53,84 @@ public class CadastroDividaActivity extends AppCompatActivity {
         configurarSpinners();
         configurarDatePicker(editDataCompra);
         configurarDatePicker(editVencimento);
+        configurarMascaraValor(editValor);
+
+        // Verifica se está em modo edição
+        if (getIntent().hasExtra("divida_id")) {
+            dividaId = getIntent().getIntExtra("divida_id", -1);
+            if (dividaId != -1) {
+                dividaEmEdicao = db.dividaDao().buscarPorId(dividaId);
+                if (dividaEmEdicao != null) {
+                    preencherCampos(dividaEmEdicao);
+                    btnSalvar.setText("Atualizar Dívida");
+                }
+            }
+        }
 
         btnSalvar.setOnClickListener(v -> salvarDivida());
+    }
+
+    private void preencherCampos(Divida d) {
+        editDevedor.setText(d.getBanco());
+        editDescricao.setText(d.getTitulo());
+
+        String valorFormatado = String.format(Locale.getDefault(), "R$ %.2f", d.getValorTotal());
+        editValor.setText(valorFormatado);
+        editValor.setSelection(valorFormatado.length());
+
+        editVencimento.setText(d.getVencimento());
+
+        for (int i = 0; i < spinnerBanco.getAdapter().getCount(); i++) {
+            if (spinnerBanco.getAdapter().getItem(i).toString().equals(d.getBanco())) {
+                spinnerBanco.setSelection(i);
+                break;
+            }
+        }
+
+        for (int i = 0; i < spinnerCategoria.getAdapter().getCount(); i++) {
+            if (spinnerCategoria.getAdapter().getItem(i).toString().equals(d.getCategoria())) {
+                spinnerCategoria.setSelection(i);
+                break;
+            }
+        }
+
+        for (int i = 0; i < spinnerParcelas.getAdapter().getCount(); i++) {
+            if (spinnerParcelas.getAdapter().getItem(i).toString().equals(d.getParcela())) {
+                spinnerParcelas.setSelection(i);
+                break;
+            }
+        }
+    }
+
+    private void configurarMascaraValor(EditText editText) {
+        editText.addTextChangedListener(new TextWatcher() {
+            private boolean isUpdating = false;
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) { }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (isUpdating) return;
+                isUpdating = true;
+
+                String text = s.toString().replaceAll("[^0-9]", "");
+                if (text.isEmpty()) {
+                    editText.setText("");
+                    isUpdating = false;
+                    return;
+                }
+
+                double valor = Double.parseDouble(text) / 100.0;
+                String formatted = String.format(Locale.getDefault(), "R$ %.2f", valor);
+                editText.setText(formatted);
+                editText.setSelection(formatted.length());
+                isUpdating = false;
+            }
+        });
     }
 
     private void configurarSpinners() {
@@ -92,12 +177,15 @@ public class CadastroDividaActivity extends AppCompatActivity {
         String parcelas = spinnerParcelas.getSelectedItem().toString();
         String devedor = editDevedor.getText().toString().trim();
         String descricao = editDescricao.getText().toString().trim();
-        String valorStr = editValor.getText().toString().trim().replace(",", ".");
+        String valorStr = editValor.getText().toString().trim()
+                .replace("R$ ", "")
+                .replace(".", "")
+                .replace(",", ".");
         String dataCompra = editDataCompra.getText().toString().trim();
         String vencimento = editVencimento.getText().toString().trim();
 
-        if (devedor.isEmpty() || descricao.isEmpty() || valorStr.isEmpty() || dataCompra.isEmpty() || vencimento.isEmpty()) {
-            Toast.makeText(this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
+        if (devedor.isEmpty() || descricao.isEmpty() || valorStr.isEmpty() || vencimento.isEmpty()) {
+            Toast.makeText(this, "Preencha todos os campos obrigatórios!", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -114,26 +202,41 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        // Cria a dívida sem ID (Room gera automaticamente)
-        Divida novaDivida = new Divida(
-                descricao,
-                valor,
-                0.0,
-                banco,
-                categoria,
-                parcelas,
-                vencimento,
-                false
-        );
+        if (dividaEmEdicao != null) {
+            // Modo edição: atualiza a dívida existente (mantém o usuarioId original)
+            dividaEmEdicao.titulo = descricao;
+            dividaEmEdicao.valorTotal = valor;
+            dividaEmEdicao.banco = banco;
+            dividaEmEdicao.categoria = categoria;
+            dividaEmEdicao.parcela = parcelas;
+            dividaEmEdicao.vencimento = vencimento;
 
-        // Insere no Room
-        long idGerado = db.dividaDao().inserir(novaDivida);
-
-        if (idGerado > 0) {
-            Toast.makeText(this, "Dívida cadastrada com sucesso!", Toast.LENGTH_SHORT).show();
-            finish();
+            db.dividaDao().atualizar(dividaEmEdicao);
+            Toast.makeText(this, "Dívida atualizada com sucesso!", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Erro ao cadastrar. Tente novamente.", Toast.LENGTH_SHORT).show();
+            // Modo cadastro: cria nova dívida com o usuarioId do usuário logado
+            Divida novaDivida = new Divida(
+                    session.getUserId(), // ⭐ VINCULA AO USUÁRIO LOGADO
+                    descricao,
+                    valor,
+                    0.0,
+                    banco,
+                    categoria,
+                    parcelas,
+                    vencimento,
+                    false
+            );
+
+            long idGerado = db.dividaDao().inserir(novaDivida);
+
+            if (idGerado > 0) {
+                Toast.makeText(this, "Dívida cadastrada com sucesso!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Erro ao cadastrar. Tente novamente.", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
+
+        finish();
     }
 }

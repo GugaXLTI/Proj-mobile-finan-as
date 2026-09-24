@@ -1,9 +1,9 @@
 # App Gestão de Finanças
 
 ## Status do Projeto
-🚀 **Em desenvolvimento – Sprint 4 (Persistência de Dados) – Room + Autenticação implementados** 🚀
+🚀 **Em desenvolvimento – Sprint 4 (Persistência de Dados) – Room + Autenticação + Isolamento por Usuário** 🚀
 
-- ✅ Splash Screen (com verificação de sessão e seed do banco)
+- ✅ Splash Screen (com verificação de sessão)
 - ✅ Tela de Login (autenticação no Room)
 - ✅ Tela de Cadastro (nome, e-mail, senha, confirmação)
 - ✅ Tela de Início (Home com nome do usuário logado)
@@ -15,6 +15,10 @@
 - ✅ Persistência de dados com Room (SQLite)
 - ✅ Sessão persistente com SharedPreferences
 - ✅ CRUD completo de dívidas no banco
+- ✅ **Isolamento por usuário (cada conta vê apenas seus dados)**
+- ✅ **Editar dívida funcional**
+- ✅ **Confirmação ao excluir dívida**
+- ✅ **Máscara de valor automática (R$ 0,00)**
 - ✅ Validação de e-mail com Regex
 - ✅ Validação de nome e senha
 - ✅ Exibição dinâmica do usuário logado
@@ -32,7 +36,8 @@ O app permite ao usuário:
 - Manter a sessão ativa entre aberturas do app
 - Visualizar o resumo de dívidas e vencimentos na tela de Início
 - Acompanhar gastos por categoria com gráfico de rosca
-- Gerenciar dívidas (cadastrar, pagar, excluir)
+- Gerenciar dívidas (cadastrar, editar, pagar, excluir)
+- Manter seus dados isolados por conta (cada usuário vê apenas suas dívidas)
 - Configurar preferências do sistema (biometria, lembretes, backup)
 
 ---
@@ -60,7 +65,7 @@ O app permite ao usuário:
 ## 📱 Telas do App
 
 ### Splash Screen
-Tela de abertura com logo, fontes personalizadas (Abril Fatface e Lato), timer de 2 segundos, população inicial do banco (DatabaseSeeder) e verificação de sessão ativa.
+Tela de abertura com logo, fontes personalizadas (Abril Fatface e Lato), timer de 2 segundos e verificação de sessão ativa. Redireciona o usuário logado para a tela de Início, ou o novo usuário para o Login.
 
 ### Tela de Login
 Formulário com campos de e-mail e senha, validação de campos obrigatórios, verificação de credenciais no Room, link para cadastro e navegação para a tela de Início.
@@ -75,19 +80,22 @@ Formulário com campos de **nome**, e-mail, senha e confirmação de senha. Vali
 - Verificação de e-mail duplicado no banco
 
 ### Tela de Início (Home)
-Resumo de dívidas acumuladas, total já pago, alerta de faturas do mês e lista dos próximos vencimentos lidos do Room. Exibe o **nome e avatar do usuário logado** no topo.
+Resumo de dívidas acumuladas, total já pago, alerta de faturas do mês e lista dos próximos vencimentos lidos do Room. Exibe o **nome e avatar do usuário logado** no topo. **Mostra apenas as dívidas do usuário logado.**
 
 ### Dashboard (Relatórios)
-Gráfico de rosca (MPAndroidChart) com distribuição de dívidas por categoria, cores personalizadas do Figma, percentuais dentro das fatias, total no centro, filtros em formato de pílula e lista de dívidas não pagas – tudo lido do banco de dados.
+Gráfico de rosca (MPAndroidChart) com distribuição de dívidas por categoria, cores personalizadas do Figma, percentuais dentro das fatias, total no centro, filtros em formato de pílula e lista de dívidas não pagas – tudo lido do banco de dados e filtrado pelo usuário logado.
 
 ### Tela de Dívidas
-Cards com título, valor restante, banco/categoria, parcela e vencimento. Resumo com totais (a pagar, pago, geral) e botões de ação (Excluir, Editar, Pagar) que operam diretamente no banco Room.
+Cards com título, valor restante, banco/categoria, parcela e vencimento. Resumo com totais (a pagar, pago, geral) e botões de ação:
+- **Excluir** – com diálogo de confirmação ("Tem certeza?")
+- **Editar** – abre a tela de cadastro em modo edição com dados preenchidos
+- **Pagar** – marca a dívida como paga e atualiza os totais
 
 ### Cadastro de Dívida
-Formulário com tipo de dívida, banco, devedor, descrição, categoria, valor, parcelas, data da compra e 1º vencimento. Salva a nova dívida diretamente no Room.
+Formulário com tipo de dívida, banco, devedor, descrição, categoria, valor (com máscara R$ 0,00), parcelas, data da compra e 1º vencimento. Salva a nova dívida diretamente no Room, vinculada ao usuário logado.
 
 ### Configurações
-Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de cartões e categorias, lembretes de fatura, biometria, backup de dados e desconexão de sessão (logout limpa a sessão e redireciona para o Login).
+Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de cartões e categorias, lembretes de fatura, biometria, limpeza de dados (para testes) e desconexão de sessão (logout limpa a sessão e redireciona para o Login).
 
 ### Bottom Navigation
 Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – com navegação funcional entre as telas. A aba "Lançar" abre o cadastro de dívida.
@@ -120,19 +128,17 @@ Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – co
 app/src/main/java/com/example/controle_gastos/
 ├── model/
 │   ├── Usuario.java            # Entidade de usuário (@Entity)
-│   ├── Divida.java             # Entidade de dívida (@Entity)
-│   ├── Transacao.java          # Entidade de transação (@Entity)
+│   ├── Divida.java             # Entidade de dívida (@Entity, com usuarioId)
+│   ├── Transacao.java          # Entidade de transação (@Entity, com usuarioId)
 │   └── CategoriaResumo.java    # Resumo por categoria
 ├── dao/
-│   ├── UsuarioDao.java         # DAO de usuário (insert, login, buscarPorEmail)
-│   ├── DividaDao.java          # DAO de dívidas (CRUD completo)
-│   └── TransacaoDao.java       # DAO de transações (CRUD completo)
+│   ├── UsuarioDao.java         # DAO de usuário (insert, login, buscarPorEmail, buscarPorId)
+│   ├── DividaDao.java          # DAO de dívidas (CRUD + filtros por usuário)
+│   └── TransacaoDao.java       # DAO de transações (CRUD + filtros por usuário)
 ├── database/
-│   ├── AppDatabase.java        # Classe principal do Room
-│   ├── DatabaseClient.java     # Singleton de acesso ao banco
-│   └── DatabaseSeeder.java     # Popula o banco na primeira execução
+│   ├── AppDatabase.java        # Classe principal do Room (versão 2)
+│   └── DatabaseClient.java     # Singleton de acesso ao banco
 ├── utils/
-│   ├── DadosMock.java          # Dados de exemplo (seed)
 │   └── SessionManager.java     # Gerenciamento de sessão (SharedPreferences)
 ├── adapter/
 │   ├── LancamentoAdapter.java  # Adapter de lançamentos
@@ -146,7 +152,7 @@ app/src/main/java/com/example/controle_gastos/
     ├── InicioActivity.java     # Tela de Início (Home com usuário logado)
     ├── DashboardActivity.java  # Dashboard/Relatórios
     ├── DividasActivity.java    # Tela de Dívidas
-    ├── CadastroDividaActivity.java  # Cadastro de Dívida
+    ├── CadastroDividaActivity.java  # Cadastro de Dívida (cadastro + edição)
     └── ConfiguracoesActivity.java   # Configurações + Logout
 ```
 
@@ -169,12 +175,12 @@ app/src/main/java/com/example/controle_gastos/
 - `feat: implementa Room e autenticação local`
 - `feat: integra telas de dívidas com Room`
 - `feat: adiciona campo nome, validações e exibe usuário logado nas telas`
+- `fix: vincula dívidas e transações ao usuário logado`
 
 ---
 
 ## 🚧 Próximos Passos
 
-- Edição de dívidas (tela de editar funcional)
 - Tela de gerenciamento de cartões e bancos
 - Tela de gerenciamento de categorias
 - Exportação de dados (PDF/CSV)
@@ -185,4 +191,11 @@ app/src/main/java/com/example/controle_gastos/
 
 ---
 
-> **Observação:** Este README será atualizado ao final de cada Sprint com novos prints, funcionalidades e instruções.
+## 📄 Documentação Adicional
+
+- **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)** – Documentação técnica sobre a arquitetura e decisões de projeto
+- **[CHANGELOG.md](CHANGELOG.md)** – Histórico detalhado de mudanças por versão/Sprint
+
+---
+
+> **Observação:** Este README é atualizado ao final de cada Sprint com novos recursos, mudanças e instruções.

@@ -3,10 +3,10 @@
 ## Status do Projeto
 🚀 **Em desenvolvimento – Sprint 4 (Persistência de Dados) – Room + Autenticação implementados** 🚀
 
-- ✅ Splash Screen
-- ✅ Tela de Login (com autenticação no Room)
-- ✅ Tela de Cadastro (com validação de e-mail duplicado)
-- ✅ Tela de Início (Home)
+- ✅ Splash Screen (com verificação de sessão e seed do banco)
+- ✅ Tela de Login (autenticação no Room)
+- ✅ Tela de Cadastro (nome, e-mail, senha, confirmação)
+- ✅ Tela de Início (Home com nome do usuário logado)
 - ✅ Dashboard (Relatórios)
 - ✅ Tela de Dívidas
 - ✅ Tela de Cadastro de Dívida
@@ -15,6 +15,9 @@
 - ✅ Persistência de dados com Room (SQLite)
 - ✅ Sessão persistente com SharedPreferences
 - ✅ CRUD completo de dívidas no banco
+- ✅ Validação de e-mail com Regex
+- ✅ Validação de nome e senha
+- ✅ Exibição dinâmica do usuário logado
 
 > **Observação:** o MVP final será entregue no Sprint 6, com autenticação em nuvem e sincronização.
 
@@ -24,11 +27,12 @@
 Aplicativo de gestão de finanças pessoais desenvolvido para a disciplina de **[Nome da Disciplina]** no curso de **[Nome do Curso]**.
 
 O app permite ao usuário:
-- Criar conta e fazer login com autenticação local
+- Criar conta com nome, e-mail e senha (autenticação local)
+- Fazer login com validação no banco de dados
+- Manter a sessão ativa entre aberturas do app
 - Visualizar o resumo de dívidas e vencimentos na tela de Início
 - Acompanhar gastos por categoria com gráfico de rosca
 - Gerenciar dívidas (cadastrar, pagar, excluir)
-- Manter a sessão ativa entre aberturas do app
 - Configurar preferências do sistema (biometria, lembretes, backup)
 
 ---
@@ -56,16 +60,22 @@ O app permite ao usuário:
 ## 📱 Telas do App
 
 ### Splash Screen
-Tela de abertura com logo, fontes personalizadas (Abril Fatface e Lato), timer de 2 segundos, verificação de sessão e população inicial do banco de dados.
+Tela de abertura com logo, fontes personalizadas (Abril Fatface e Lato), timer de 2 segundos, população inicial do banco (DatabaseSeeder) e verificação de sessão ativa.
 
 ### Tela de Login
 Formulário com campos de e-mail e senha, validação de campos obrigatórios, verificação de credenciais no Room, link para cadastro e navegação para a tela de Início.
 
 ### Tela de Cadastro
-Formulário com campos de e-mail, senha e confirmação de senha. Validações: campos obrigatórios, senhas coincidentes, tamanho mínimo de 6 caracteres e verificação de e-mail duplicado no banco.
+Formulário com campos de **nome**, e-mail, senha e confirmação de senha. Validações:
+- Campos obrigatórios
+- Nome com no mínimo 2 caracteres e apenas letras
+- E-mail com formato válido (Regex: `nome@dominio.com`)
+- Senha com no mínimo 6 caracteres
+- Senhas coincidentes
+- Verificação de e-mail duplicado no banco
 
 ### Tela de Início (Home)
-Resumo de dívidas acumuladas, total já pago, alerta de faturas do mês e lista dos próximos vencimentos lidos do Room. Botão para acessar todas as contas e cartões.
+Resumo de dívidas acumuladas, total já pago, alerta de faturas do mês e lista dos próximos vencimentos lidos do Room. Exibe o **nome e avatar do usuário logado** no topo.
 
 ### Dashboard (Relatórios)
 Gráfico de rosca (MPAndroidChart) com distribuição de dívidas por categoria, cores personalizadas do Figma, percentuais dentro das fatias, total no centro, filtros em formato de pílula e lista de dívidas não pagas – tudo lido do banco de dados.
@@ -77,7 +87,7 @@ Cards com título, valor restante, banco/categoria, parcela e vencimento. Resumo
 Formulário com tipo de dívida, banco, devedor, descrição, categoria, valor, parcelas, data da compra e 1º vencimento. Salva a nova dívida diretamente no Room.
 
 ### Configurações
-Tela com perfil do usuário, gerenciamento de cartões e categorias, lembretes de fatura, biometria, backup de dados e desconexão de sessão (logout limpa a sessão e redireciona para o Login).
+Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de cartões e categorias, lembretes de fatura, biometria, backup de dados e desconexão de sessão (logout limpa a sessão e redireciona para o Login).
 
 ### Bottom Navigation
 Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – com navegação funcional entre as telas. A aba "Lançar" abre o cadastro de dívida.
@@ -132,8 +142,8 @@ app/src/main/java/com/example/controle_gastos/
 └── view/
     ├── SplashActivity.java     # Tela de abertura (2s + verificação de sessão)
     ├── LoginActivity.java      # Tela de Login (autenticação no Room)
-    ├── CadastroActivity.java   # Tela de Cadastro (validação de e-mail)
-    ├── InicioActivity.java     # Tela de Início (Home)
+    ├── CadastroActivity.java   # Tela de Cadastro (validações)
+    ├── InicioActivity.java     # Tela de Início (Home com usuário logado)
     ├── DashboardActivity.java  # Dashboard/Relatórios
     ├── DividasActivity.java    # Tela de Dívidas
     ├── CadastroDividaActivity.java  # Cadastro de Dívida
@@ -158,6 +168,7 @@ app/src/main/java/com/example/controle_gastos/
 - `feat: padroniza gráfico de dívidas e conecta aba Lançar ao cadastro`
 - `feat: implementa Room e autenticação local`
 - `feat: integra telas de dívidas com Room`
+- `feat: adiciona campo nome, validações e exibe usuário logado nas telas`
 
 ---
 
@@ -168,6 +179,7 @@ app/src/main/java/com/example/controle_gastos/
 - Tela de gerenciamento de categorias
 - Exportação de dados (PDF/CSV)
 - Notificações de vencimento (AlarmManager ou WorkManager)
+- Simulador de pagamento com QR Code (para depois do MVP)
 - Autenticação em nuvem (Firebase Auth) – opcional para o MVP final
 - Sincronização entre dispositivos – opcional para o MVP final
 

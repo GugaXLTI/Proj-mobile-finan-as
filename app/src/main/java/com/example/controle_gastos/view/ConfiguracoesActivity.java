@@ -65,8 +65,10 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         itemCartoes.setOnClickListener(v ->
                 Toast.makeText(this, "Gerenciar cartões (em breve)", Toast.LENGTH_SHORT).show());
 
-        itemCategorias.setOnClickListener(v ->
-                Toast.makeText(this, "Gerenciar categorias (em breve)", Toast.LENGTH_SHORT).show());
+        itemCategorias.setOnClickListener(v -> {
+            Intent intent = new Intent(ConfiguracoesActivity.this, CategoriasActivity.class);
+            startActivity(intent);
+        });
 
         // BACKUP: agora serve como "Limpar Tudo" (para testes internos)
         itemBackup.setOnClickListener(v -> mostrarDialogoLimparTudo());

@@ -43,6 +43,7 @@
         <activity android:name=".view.CadastroDividaActivity" android:exported="false" />
         <activity android:name=".view.ConfiguracoesActivity" android:exported="false" />
         <activity android:name=".view.InicioActivity" android:exported="false" />
+        <activity android:name=".view.CategoriasActivity" android:exported="false" />
 
 
         <meta-data

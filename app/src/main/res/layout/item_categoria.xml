@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="16dp"
+    android:layout_marginVertical="4dp"
+    android:background="@color/card_bg">
+
+    <!-- Bolinha colorida -->
+    <View
+        android:id="@+id/viewCorCategoria"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:background="@drawable/bg_circulo_cor" />
+
+    <!-- Nome + contagem -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="12dp">
+
+        <TextView
+            android:id="@+id/tvNomeCategoria"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_white"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvContagemCategoria"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Botão Excluir (X) -->
+    <ImageView
+        android:id="@+id/btnExcluirCategoria"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        app:tint="#EF4444"
+        android:contentDescription="Excluir"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+</LinearLayout>

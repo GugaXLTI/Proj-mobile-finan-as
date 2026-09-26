@@ -15,7 +15,7 @@ import com.example.controle_gastos.model.Usuario;
 
 @Database(
         entities = {Usuario.class, Divida.class, Transacao.class, Categoria.class},
-        version = 3, // ⭐ MUDOU DE 2 PARA 3
+        version = 4, // ⭐ MUDOU DE 3 PARA 4
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -34,7 +34,7 @@ public abstract class AppDatabase extends RoomDatabase {
                             AppDatabase.class,
                             "controle_gastos_db"
                     )
-                    .fallbackToDestructiveMigration() // Apaga e recria o banco na migração (OK para MVP)
+                    .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()
                     .build();
         }

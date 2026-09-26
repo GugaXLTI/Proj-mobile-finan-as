@@ -30,7 +30,10 @@ public interface CategoriaDao {
     @Query("SELECT * FROM categorias WHERE usuarioId = :usuarioId AND nome = :nome LIMIT 1")
     Categoria buscarPorNome(int usuarioId, String nome);
 
-    // Conta quantas categorias o usuário tem (para saber se precisa popular)
     @Query("SELECT COUNT(*) FROM categorias WHERE usuarioId = :usuarioId")
     int contarPorUsuario(int usuarioId);
+
+    // ⭐ Conta quantas dívidas usam uma determinada categoria (pelo nome)
+    @Query("SELECT COUNT(*) FROM dividas WHERE usuarioId = :usuarioId AND categoria = :nomeCategoria")
+    int contarDividasPorCategoria(int usuarioId, String nomeCategoria);
 }

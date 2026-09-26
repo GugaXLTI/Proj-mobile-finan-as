@@ -4,16 +4,18 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import com.example.controle_gastos.dao.CategoriaDao;
 import com.example.controle_gastos.dao.DividaDao;
 import com.example.controle_gastos.dao.TransacaoDao;
 import com.example.controle_gastos.dao.UsuarioDao;
+import com.example.controle_gastos.model.Categoria;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.Transacao;
 import com.example.controle_gastos.model.Usuario;
 
 @Database(
-        entities = {Usuario.class, Divida.class, Transacao.class},
-        version = 2,  // ⭐ MUDOU DE 1 PARA 2 (por causa do usuarioId)
+        entities = {Usuario.class, Divida.class, Transacao.class, Categoria.class},
+        version = 3, // ⭐ MUDOU DE 2 PARA 3
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -21,6 +23,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract UsuarioDao usuarioDao();
     public abstract DividaDao dividaDao();
     public abstract TransacaoDao transacaoDao();
+    public abstract CategoriaDao categoriaDao();
 
     private static AppDatabase INSTANCE;
 
@@ -31,7 +34,7 @@ public abstract class AppDatabase extends RoomDatabase {
                             AppDatabase.class,
                             "controle_gastos_db"
                     )
-                    .fallbackToDestructiveMigration() // ⭐ Apaga e recria o banco na migração (OK para MVP)
+                    .fallbackToDestructiveMigration() // Apaga e recria o banco na migração (OK para MVP)
                     .allowMainThreadQueries()
                     .build();
         }

@@ -133,6 +133,98 @@ Tela que permite editar nome, e-mail e senha do usuário logado, além de exclui
 
 ---
 
+## 🔔 Sistema de Lembretes de Fatura (Notificações)
+
+### Data de implementação
+27/09/2026
+
+### Descrição
+
+Foi implementado um sistema de **notificações locais** que avisa o usuário **3 dias antes** do vencimento de cada dívida, às 9h da manhã.
+
+### Arquitetura
+
+O sistema é composto por 3 componentes principais que trabalham em conjunto:
+
+```
+┌──────────────────────┐
+│  CadastroDivida      │  → Agenda alarme ao salvar dívida
+│  Activity            │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│  AlarmeHelper        │  → Cria PendingIntent com dados da dívida
+│  (utils)             │     e agenda no AlarmManager
+└──────────┬───────────┘
+           │
+           ▼ (no horário agendado)
+┌──────────────────────┐
+│  LembreteReceiver    │  → Recebe o broadcast do Android
+│  (receiver)          │     e chama o NotificationHelper
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│  NotificationHelper  │  → Cria o canal e envia a notificação
+│  (utils)             │     visível para o usuário
+└──────────────────────┘
+```
+
+### Componentes
+
+#### 1. `NotificationHelper.java` (utils)
+- Cria o **canal de notificação** (`lembretes_fatura`) no Android 8+
+- Envia a notificação com título, valor e data de vencimento
+- Usa `NotificationCompat` para compatibilidade com todas as versões
+
+#### 2. `LembreteReceiver.java` (receiver)
+- `BroadcastReceiver` que escuta o alarme agendado
+- Extrai os dados da dívida do `Intent` (id, título, valor, vencimento)
+- Chama `NotificationHelper.mostrarNotificacao()`
+
+#### 3. `AlarmeHelper.java` (utils)
+- **Agenda** alarmes usando `AlarmManager.setExactAndAllowWhileIdle()`
+- **Cancela** alarmes quando a dívida é paga ou excluída
+- Gerencia o **estado do switch** de lembretes em `SharedPreferences`
+- Calcula a data do alarme: `vencimento - 3 dias, às 9h`
+
+### Fluxo de uso
+
+| Ação | Comportamento |
+|------|---------------|
+| Usuário cadastra dívida | Alarme agendado para 3 dias antes do vencimento |
+| Usuário paga dívida | Alarme cancelado (não notifica) |
+| Usuário exclui dívida | Alarme cancelado |
+| Usuário edita dívida | Alarme antigo cancelado + novo agendado |
+| Chegou o dia do alarme | Notificação aparece às 9h |
+| Usuário desliga o switch | Novos alarmes não são agendados |
+
+### Permissões necessárias
+
+```xml
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+<uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+```
+
+A permissão `POST_NOTIFICATIONS` (Android 13+) é solicitada automaticamente quando o usuário abre a tela **Início** pela primeira vez.
+
+### Tratamento de erros
+
+- Se a data do alarme já passou → **não agenda** (evita notificação imediata)
+- Se o dispositivo não tem permissão de alarme exato → cai para `alarmManager.set()` (não exato)
+- Se o usuário negou permissão de notificação → o app exibe um Toast informativo
+- Se a dívida está paga → **não agenda** alarme
+
+### Limitações conhecidas
+
+- **Não notifica se o app for forçado a parar** (limitação do Android)
+- **Não notifica se o celular for reiniciado** (alarmes são perdidos)
+- Para resolver isso no futuro, seria necessário um `BootReceiver` para reagendar após reinicialização
+
+---
+
 ## 🧪 Como testar o isolamento entre contas
 
 1. Desinstale o app (para limpar o banco antigo).
@@ -144,6 +236,19 @@ Tela que permite editar nome, e-mail e senha do usuário logado, além de exclui
 7. Faça logout → login como Tiago → **só os dados do Tiago aparecem**.
 
 Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
+
+---
+
+## 🧪 Como testar os lembretes de fatura
+
+1. Desinstale o app.
+2. Crie uma conta e faça login.
+3. **Permita as notificações** quando solicitado.
+4. Cadastre uma dívida com vencimento em **hoje + 4 dias** (ex: 01/10).
+5. **Para testar rapidamente**, mude o horário do celular para **hoje + 3 dias, às 08h59**.
+6. Aguarde 1 minuto → a notificação deve aparecer.
+7. Teste o cancelamento: pague a dívida antes do horário → notificação não aparece.
+8. Teste o switch: desligue em Configurações → nenhum alarme é agendado.
 
 ---
 
@@ -162,14 +267,17 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 | `database/AppDatabase.java` | Versão 4 + entidade `Categoria` |
 | `utils/SessionManager.java` | Método `atualizarNome()` |
 | `utils/CategoriaSeeder.java` | Categorias padrão na primeira execução |
+| `utils/NotificationHelper.java` | **Novo** – canal + envio de notificações |
+| `utils/AlarmeHelper.java` | **Novo** – agendamento/cancelamento de alarmes |
+| `receiver/LembreteReceiver.java` | **Novo** – BroadcastReceiver de notificações |
 | `view/SplashActivity.java` | Removida chamada ao seeder antigo |
-| `view/InicioActivity.java` | Filtro por usuário |
-| `view/DividasActivity.java` | Filtro por usuário |
+| `view/InicioActivity.java` | Filtro por usuário + permissão de notificação |
+| `view/DividasActivity.java` | Filtro por usuário + cancelamento de alarme |
 | `view/DashboardActivity.java` | Filtro por usuário |
-| `view/CadastroDividaActivity.java` | Salva com `usuarioId` + categorias dinâmicas |
+| `view/CadastroDividaActivity.java` | Salva com `usuarioId` + agendamento de alarme |
 | `view/CategoriasActivity.java` | CRUD de categorias filtrado por usuário |
 | `view/EditarPerfilActivity.java` | Edição de perfil e exclusão de conta |
-| `view/ConfiguracoesActivity.java` | Botão "Limpar Tudo" + acesso a Categorias/Editar Perfil |
+| `view/ConfiguracoesActivity.java` | Switch funcional de lembretes |
 | `adapter/DividaAdapter.java` | Listener recebe `Divida` |
 | `adapter/CategoriaAdapter.java` | Novo adapter com cor e contagem |
 | `layout/activity_categorias.xml` | Novo layout |
@@ -177,6 +285,7 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 | `layout/activity_editar_perfil.xml` | Novo layout |
 | `layout/activity_cadastro_divida.xml` | Ajustes visuais |
 | `layout/activity_cadastro.xml` | Campo "Nome" |
+| `AndroidManifest.xml` | Permissões de notificação + receiver |
 
 ## 🗑️ Arquivos removidos
 
@@ -189,6 +298,7 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 
 ## 🚧 Próximos passos
 
+- [ ] Criar `BootReceiver` para reagendar alarmes após reinicialização
 - [ ] Aplicar o mesmo padrão de isolamento caso novas entidades sejam criadas
 - [ ] Implementar `Migration` real (não destrutiva) quando houver usuários reais
 - [ ] Exportar/importar dados por usuário
@@ -202,3 +312,4 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 - Autor da descoberta: Gustavo Piteira
 - Data da resolução: 23/09/2026
 - Expansão para Categoria: 26/09/2026
+- Implementação dos Lembretes: 27/09/2026

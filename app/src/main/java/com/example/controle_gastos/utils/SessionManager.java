@@ -23,6 +23,12 @@ public class SessionManager {
         editor.apply();
     }
 
+    // ⭐ NOVO: atualiza o nome na sessão (usado ao editar perfil)
+    public void atualizarNome(String novoNome) {
+        editor.putString(KEY_USER_NOME, novoNome);
+        editor.apply();
+    }
+
     public boolean isLogado() {
         return prefs.getInt(KEY_USER_ID, -1) != -1;
     }

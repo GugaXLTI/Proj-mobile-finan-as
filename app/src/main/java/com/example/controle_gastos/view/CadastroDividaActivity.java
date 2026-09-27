@@ -11,11 +11,15 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
+import com.example.controle_gastos.model.Categoria;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.CategoriaSeeder;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 public class CadastroDividaActivity extends AppCompatActivity {
@@ -31,6 +35,9 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private int dividaId = -1;
     private Divida dividaEmEdicao = null;
 
+    // Lista de categorias carregada do banco
+    private List<Categoria> categoriasDoBanco = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +45,9 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
+
+        // Garante que as categorias padrão existem
+        CategoriaSeeder.popularSeVazio(this, session.getUserId());
 
         spinnerTipoDivida = findViewById(R.id.spinnerTipoDivida);
         spinnerBanco = findViewById(R.id.spinnerBanco);
@@ -87,8 +97,9 @@ public class CadastroDividaActivity extends AppCompatActivity {
             }
         }
 
-        for (int i = 0; i < spinnerCategoria.getAdapter().getCount(); i++) {
-            if (spinnerCategoria.getAdapter().getItem(i).toString().equals(d.getCategoria())) {
+        // ⭐ Seleciona a categoria no spinner dinâmico
+        for (int i = 0; i < categoriasDoBanco.size(); i++) {
+            if (categoriasDoBanco.get(i).getNome().equals(d.getCategoria())) {
                 spinnerCategoria.setSelection(i);
                 break;
             }
@@ -134,25 +145,51 @@ public class CadastroDividaActivity extends AppCompatActivity {
     }
 
     private void configurarSpinners() {
+        // Tipo de Dívida (fixo - não mudou)
         String[] tipos = {"Cartão de Crédito", "Empréstimo", "Fatura", "Boleto", "Outros"};
         ArrayAdapter<String> adapterTipo = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, tipos);
         adapterTipo.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTipoDivida.setAdapter(adapterTipo);
 
+        // Bancos (fixo - não mudou)
         String[] bancos = {"Nubank", "Itaú", "Banco Inter", "Bradesco", "Santander"};
         ArrayAdapter<String> adapterBanco = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, bancos);
         adapterBanco.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerBanco.setAdapter(adapterBanco);
 
-        String[] categorias = {"Alimentação", "Transporte", "Saúde", "Educação", "Lazer", "Moradia", "Outros"};
-        ArrayAdapter<String> adapterCategoria = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categorias);
-        adapterCategoria.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCategoria.setAdapter(adapterCategoria);
+        // ⭐ CATEGORIAS DINÂMICAS (do banco de dados)
+        carregarCategoriasDoBanco();
 
+        // Parcelas (fixo - não mudou)
         String[] parcelas = {"1x (À vista)", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x", "11x", "12x"};
         ArrayAdapter<String> adapterParcelas = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, parcelas);
         adapterParcelas.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerParcelas.setAdapter(adapterParcelas);
+    }
+
+    private void carregarCategoriasDoBanco() {
+        // Busca as categorias do usuário logado
+        categoriasDoBanco = db.categoriaDao().listarPorUsuario(session.getUserId());
+
+        // Extrai apenas os nomes para o spinner
+        List<String> nomesCategorias = new ArrayList<>();
+        for (Categoria c : categoriasDoBanco) {
+            nomesCategorias.add(c.getNome());
+        }
+
+        // Se o usuário não tiver nenhuma categoria, mostra mensagem
+        if (nomesCategorias.isEmpty()) {
+            nomesCategorias.add("Nenhuma categoria cadastrada");
+            Toast.makeText(this, "Cadastre uma categoria primeiro em Configurações!", Toast.LENGTH_LONG).show();
+        }
+
+        ArrayAdapter<String> adapterCategoria = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                nomesCategorias
+        );
+        adapterCategoria.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCategoria.setAdapter(adapterCategoria);
     }
 
     private void configurarDatePicker(EditText editText) {
@@ -172,6 +209,12 @@ public class CadastroDividaActivity extends AppCompatActivity {
     }
 
     private void salvarDivida() {
+        // Verifica se tem categorias
+        if (categoriasDoBanco.isEmpty()) {
+            Toast.makeText(this, "Cadastre uma categoria antes de lançar uma dívida!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         String banco = spinnerBanco.getSelectedItem().toString();
         String categoria = spinnerCategoria.getSelectedItem().toString();
         String parcelas = spinnerParcelas.getSelectedItem().toString();
@@ -203,7 +246,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
 
         if (dividaEmEdicao != null) {
-            // Modo edição: atualiza a dívida existente (mantém o usuarioId original)
+            // Modo edição
             dividaEmEdicao.titulo = descricao;
             dividaEmEdicao.valorTotal = valor;
             dividaEmEdicao.banco = banco;
@@ -214,9 +257,9 @@ public class CadastroDividaActivity extends AppCompatActivity {
             db.dividaDao().atualizar(dividaEmEdicao);
             Toast.makeText(this, "Dívida atualizada com sucesso!", Toast.LENGTH_SHORT).show();
         } else {
-            // Modo cadastro: cria nova dívida com o usuarioId do usuário logado
+            // Modo cadastro
             Divida novaDivida = new Divida(
-                    session.getUserId(), // ⭐ VINCULA AO USUÁRIO LOGADO
+                    session.getUserId(),
                     descricao,
                     valor,
                     0.0,

@@ -1,7 +1,7 @@
 # App Gestão de Finanças
 
 ## Status do Projeto
-🚀 **Em desenvolvimento – Sprint 4 (Persistência de Dados) – Room + Autenticação + Isolamento por Usuário** 🚀
+🚀 **Em desenvolvimento – Sprint 4 (Persistência de Dados) – Room + Autenticação + Categorias + Editar Perfil** 🚀
 
 - ✅ Splash Screen (com verificação de sessão)
 - ✅ Tela de Login (autenticação no Room)
@@ -11,6 +11,8 @@
 - ✅ Tela de Dívidas
 - ✅ Tela de Cadastro de Dívida
 - ✅ Tela de Configurações (com logout)
+- ✅ **Tela de Categorias (criar, listar e excluir)**
+- ✅ **Tela de Editar Perfil (nome, e-mail, senha e exclusão de conta)**
 - ✅ Bottom Navigation funcional
 - ✅ Persistência de dados com Room (SQLite)
 - ✅ Sessão persistente com SharedPreferences
@@ -19,6 +21,7 @@
 - ✅ **Editar dívida funcional**
 - ✅ **Confirmação ao excluir dívida**
 - ✅ **Máscara de valor automática (R$ 0,00)**
+- ✅ **Categorias dinâmicas no cadastro de dívida**
 - ✅ Validação de e-mail com Regex
 - ✅ Validação de nome e senha
 - ✅ Exibição dinâmica do usuário logado
@@ -37,6 +40,8 @@ O app permite ao usuário:
 - Visualizar o resumo de dívidas e vencimentos na tela de Início
 - Acompanhar gastos por categoria com gráfico de rosca
 - Gerenciar dívidas (cadastrar, editar, pagar, excluir)
+- **Criar e personalizar categorias com cores próprias**
+- **Editar perfil (nome, e-mail, senha) e excluir conta**
 - Manter seus dados isolados por conta (cada usuário vê apenas suas dívidas)
 - Configurar preferências do sistema (biometria, lembretes, backup)
 
@@ -92,7 +97,22 @@ Cards com título, valor restante, banco/categoria, parcela e vencimento. Resumo
 - **Pagar** – marca a dívida como paga e atualiza os totais
 
 ### Cadastro de Dívida
-Formulário com tipo de dívida, banco, devedor, descrição, categoria, valor (com máscara R$ 0,00), parcelas, data da compra e 1º vencimento. Salva a nova dívida diretamente no Room, vinculada ao usuário logado.
+Formulário com tipo de dívida, banco, devedor, descrição, **categoria (dinâmica – vem do banco)**, valor (com máscara R$ 0,00), parcelas, data da compra e 1º vencimento. Salva a nova dívida diretamente no Room, vinculada ao usuário logado.
+
+### Tela de Categorias
+- Exibe **8 categorias padrão** automaticamente (Alimentação, Transporte, Saúde, Educação, Lazer, Moradia, Assinaturas, Outros)
+- Usuário pode **criar** novas categorias com nome e **cor personalizada** (8 cores disponíveis)
+- **Prévia da tag** atualiza em tempo real enquanto digita
+- **Contagem de dívidas** por categoria
+- **Excluir** categoria com diálogo de confirmação (avisa se há dívidas usando)
+- Categorias criadas aparecem automaticamente no cadastro de dívidas
+
+### Editar Perfil
+- **Alterar nome completo** (validação: mínimo 2 letras, apenas letras)
+- **Alterar e-mail** (validação Regex + verificação de duplicado)
+- **Alterar senha** (opcional, requer senha atual + nova senha + confirmação)
+- **Eliminar conta** e apagar todos os dados (com confirmação)
+- Atualiza o nome exibido em todas as telas após edição
 
 ### Configurações
 Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de cartões e categorias, lembretes de fatura, biometria, limpeza de dados (para testes) e desconexão de sessão (logout limpa a sessão e redireciona para o Login).
@@ -130,30 +150,36 @@ app/src/main/java/com/example/controle_gastos/
 │   ├── Usuario.java            # Entidade de usuário (@Entity)
 │   ├── Divida.java             # Entidade de dívida (@Entity, com usuarioId)
 │   ├── Transacao.java          # Entidade de transação (@Entity, com usuarioId)
+│   ├── Categoria.java          # Entidade de categoria (@Entity, com usuarioId e cor)
 │   └── CategoriaResumo.java    # Resumo por categoria
 ├── dao/
-│   ├── UsuarioDao.java         # DAO de usuário (insert, login, buscarPorEmail, buscarPorId)
-│   ├── DividaDao.java          # DAO de dívidas (CRUD + filtros por usuário)
-│   └── TransacaoDao.java       # DAO de transações (CRUD + filtros por usuário)
+│   ├── UsuarioDao.java         # CRUD + login + buscarPorEmail + deletar
+│   ├── DividaDao.java          # CRUD + filtros por usuário
+│   ├── TransacaoDao.java       # CRUD + filtros por usuário
+│   └── CategoriaDao.java       # CRUD + contagem de dívidas por categoria
 ├── database/
-│   ├── AppDatabase.java        # Classe principal do Room (versão 2)
+│   ├── AppDatabase.java        # Classe principal do Room (versão 4)
 │   └── DatabaseClient.java     # Singleton de acesso ao banco
 ├── utils/
-│   └── SessionManager.java     # Gerenciamento de sessão (SharedPreferences)
+│   ├── SessionManager.java     # Sessão + atualização de nome
+│   └── CategoriaSeeder.java    # Categorias padrão na primeira execução
 ├── adapter/
 │   ├── LancamentoAdapter.java  # Adapter de lançamentos
 │   ├── LegendaAdapter.java     # Adapter de legendas
 │   ├── DividaAdapter.java      # Adapter de dívidas
-│   └── VencimentoAdapter.java  # Adapter de vencimentos (tela Início)
+│   ├── VencimentoAdapter.java  # Adapter de vencimentos (tela Início)
+│   └── CategoriaAdapter.java   # Adapter de categorias
 └── view/
-    ├── SplashActivity.java     # Tela de abertura (2s + verificação de sessão)
-    ├── LoginActivity.java      # Tela de Login (autenticação no Room)
-    ├── CadastroActivity.java   # Tela de Cadastro (validações)
-    ├── InicioActivity.java     # Tela de Início (Home com usuário logado)
-    ├── DashboardActivity.java  # Dashboard/Relatórios
-    ├── DividasActivity.java    # Tela de Dívidas
-    ├── CadastroDividaActivity.java  # Cadastro de Dívida (cadastro + edição)
-    └── ConfiguracoesActivity.java   # Configurações + Logout
+    ├── SplashActivity.java         # Tela de abertura (2s + verificação de sessão)
+    ├── LoginActivity.java          # Tela de Login
+    ├── CadastroActivity.java       # Tela de Cadastro
+    ├── InicioActivity.java         # Tela de Início (Home)
+    ├── DashboardActivity.java      # Dashboard/Relatórios
+    ├── DividasActivity.java        # Tela de Dívidas
+    ├── CadastroDividaActivity.java # Cadastro de Dívida (cadastro + edição)
+    ├── CategoriasActivity.java     # Gerenciamento de Categorias
+    ├── EditarPerfilActivity.java   # Edição de Perfil
+    └── ConfiguracoesActivity.java  # Configurações + Logout
 ```
 
 ---
@@ -176,15 +202,20 @@ app/src/main/java/com/example/controle_gastos/
 - `feat: integra telas de dívidas com Room`
 - `feat: adiciona campo nome, validações e exibe usuário logado nas telas`
 - `fix: vincula dívidas e transações ao usuário logado`
+- `feat: adiciona entidade Categoria, DAO e atualiza AppDatabase para v3`
+- `feat: cria CategoriaSeeder com categorias padrão`
+- `feat: implementa tela de Categorias com CRUD completo`
+- `feat: prepara back-end para edição de perfil`
+- `feat: implementa tela de Editar Perfil com validações e exclusão de conta`
 
 ---
 
 ## 🚧 Próximos Passos
 
+- Lembretes de fatura (notificações com AlarmManager)
 - Tela de gerenciamento de cartões e bancos
-- Tela de gerenciamento de categorias
 - Exportação de dados (PDF/CSV)
-- Notificações de vencimento (AlarmManager ou WorkManager)
+- Biometria real (BiometricPrompt)
 - Simulador de pagamento com QR Code (para depois do MVP)
 - Autenticação em nuvem (Firebase Auth) – opcional para o MVP final
 - Sincronização entre dispositivos – opcional para o MVP final

@@ -4,14 +4,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/fundo_escuro">
+    android:background="#0B1220">
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -21,13 +21,13 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Top Bar: Voltar -->
+            <!-- Top Bar -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="20dp">
+                android:layout_marginBottom="4dp">
 
                 <ImageView
                     android:id="@+id/btnVoltarPerfil"
@@ -40,14 +40,23 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
+                    android:layout_marginStart="12dp"
                     android:text="Editar Perfil"
                     android:textColor="@color/text_white"
                     android:textSize="20sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Card do Avatar -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="36dp"
+                android:layout_marginBottom="20dp"
+                android:text="Atualize suas informações pessoais"
+                android:textColor="#64748B"
+                android:textSize="12sp" />
+
+            <!-- Card 1: Foto de Perfil -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -59,43 +68,48 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="24dp">
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
 
                     <TextView
                         android:id="@+id/tvAvatarPerfil"
-                        android:layout_width="72dp"
-                        android:layout_height="72dp"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
                         android:background="@drawable/bg_avatar"
                         android:gravity="center"
                         android:text="I"
                         android:textColor="@color/brand_green"
-                        android:textSize="28sp"
+                        android:textSize="24sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/tvNomePerfil"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="Israel"
-                        android:textColor="@color/text_white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="16dp">
 
-                    <TextView
-                        android:id="@+id/tvEmailPerfil"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="israel@email.com"
-                        android:textColor="@color/text_gray"
-                        android:textSize="13sp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Foto de Perfil"
+                            android:textColor="@color/text_white"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Em breve: upload de foto"
+                            android:textColor="#64748B"
+                            android:textSize="11sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Card de Edição -->
+            <!-- Card 2: Formulário -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -110,56 +124,56 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Label Nome -->
+                    <!-- Nome Completo -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Nome"
-                        android:textColor="@color/text_gray"
-                        android:textSize="13sp"
-                        android:layout_marginBottom="8dp" />
+                        android:text="Nome Completo"
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp"
+                        android:layout_marginBottom="6dp" />
 
                     <EditText
                         android:id="@+id/editNomePerfil"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_campo_login"
-                        android:hint="Digite seu nome"
+                        android:hint="Digite seu nome completo"
                         android:inputType="textPersonName"
                         android:textColor="@color/text_white"
                         android:textColorHint="@color/text_hint"
                         android:paddingHorizontal="12dp"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Label E-mail -->
+                    <!-- E-mail -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="E-mail"
-                        android:textColor="@color/text_gray"
-                        android:textSize="13sp"
-                        android:layout_marginBottom="8dp" />
+                        android:text="E-mail de Notificação"
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp"
+                        android:layout_marginBottom="6dp" />
 
                     <EditText
                         android:id="@+id/editEmailPerfil"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_campo_login"
-                        android:hint="Digite seu e-mail"
+                        android:hint="seu@email.com"
                         android:inputType="textEmailAddress"
                         android:textColor="@color/text_white"
                         android:textColorHint="@color/text_hint"
                         android:paddingHorizontal="12dp"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Label Senha Atual -->
+                    <!-- Senha Atual -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Senha Atual (obrigatório para salvar)"
-                        android:textColor="@color/text_gray"
-                        android:textSize="13sp"
-                        android:layout_marginBottom="8dp" />
+                        android:text="Senha Atual (obrigatório)"
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp"
+                        android:layout_marginBottom="6dp" />
 
                     <EditText
                         android:id="@+id/editSenhaAtual"
@@ -170,71 +184,38 @@
                         android:inputType="textPassword"
                         android:textColor="@color/text_white"
                         android:textColorHint="@color/text_hint"
-                        android:paddingHorizontal="12dp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Card de Alterar Senha (opcional) -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="#131C2E"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔒 Alterar Senha (opcional)"
-                        android:textColor="@color/brand_green"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="4dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Preencha apenas se quiser trocar a senha"
-                        android:textColor="@color/text_gray"
-                        android:textSize="12sp"
+                        android:paddingHorizontal="12dp"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Label Nova Senha -->
+                    <!-- Nova Senha (opcional) -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Nova Senha"
-                        android:textColor="@color/text_gray"
-                        android:textSize="13sp"
-                        android:layout_marginBottom="8dp" />
+                        android:text="Nova Senha (opcional)"
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp"
+                        android:layout_marginBottom="6dp" />
 
                     <EditText
                         android:id="@+id/editNovaSenha"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_campo_login"
-                        android:hint="Digite a nova senha"
+                        android:hint="Deixe em branco para não alterar"
                         android:inputType="textPassword"
                         android:textColor="@color/text_white"
                         android:textColorHint="@color/text_hint"
                         android:paddingHorizontal="12dp"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Label Confirmar -->
+                    <!-- Confirmar Nova Senha -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Confirmar Nova Senha"
-                        android:textColor="@color/text_gray"
-                        android:textSize="13sp"
-                        android:layout_marginBottom="8dp" />
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp"
+                        android:layout_marginBottom="6dp" />
 
                     <EditText
                         android:id="@+id/editConfirmarNovaSenha"
@@ -260,9 +241,87 @@
                 android:textColor="#000000"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                app:cornerRadius="12dp" />
+                app:cornerRadius="12dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Link Excluir Conta -->
+            <TextView
+                android:id="@+id/btnEliminarConta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="Eliminar Conta e Limpar Registros"
+                android:textColor="#EF4444"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:padding="8dp" />
 
         </LinearLayout>
     </ScrollView>
+
+    <!-- Bottom Navigation -->
+    <LinearLayout
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:background="#0B1220"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/tabInicio"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⌂\nInício"
+            android:textColor="#64748B"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tabLancar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="+\nLançar"
+            android:textColor="#64748B"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tabDividas"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⊡\nDívidas"
+            android:textColor="#64748B"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tabRelatorios"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="◷\nRelatórios"
+            android:textColor="#64748B"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tabConfig"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⚙\nConfig"
+            android:textColor="@color/brand_green"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

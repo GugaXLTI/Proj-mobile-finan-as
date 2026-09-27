@@ -59,8 +59,10 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         // ======== AÇÕES DOS ITENS ========
 
-        tvEditar.setOnClickListener(v ->
-                Toast.makeText(this, "Editar perfil (em breve)", Toast.LENGTH_SHORT).show());
+        tvEditar.setOnClickListener(v -> {
+            Intent intent = new Intent(ConfiguracoesActivity.this, EditarPerfilActivity.class);
+            startActivity(intent);
+        });
 
         itemCartoes.setOnClickListener(v ->
                 Toast.makeText(this, "Gerenciar cartões (em breve)", Toast.LENGTH_SHORT).show());

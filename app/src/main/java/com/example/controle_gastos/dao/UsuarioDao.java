@@ -1,6 +1,7 @@
 package com.example.controle_gastos.dao;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
@@ -13,7 +14,10 @@ public interface UsuarioDao {
     long inserir(Usuario usuario);
 
     @Update
-    void atualizar(Usuario usuario); // ⭐ NOVO: método de atualização
+    void atualizar(Usuario usuario);
+
+    @Delete
+    void deletar(Usuario usuario); // ⭐ NOVO: para excluir conta
 
     @Query("SELECT * FROM usuarios WHERE email = :email AND senha = :senha LIMIT 1")
     Usuario login(String email, String senha);

@@ -9,6 +9,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
+import com.example.controle_gastos.utils.AlarmeHelper;
+import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -18,7 +20,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     private SwitchMaterial switchLembretes, switchBiometria;
     private TextView tvEditar, tvNomeUsuario, tvAvatar;
 
-    // Bottom Navigation
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     private SessionManager session;
@@ -29,11 +30,12 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_configuracoes);
 
-        // Inicializa a sessão e o banco
         session = new SessionManager(this);
         db = AppDatabase.getInstance(this);
 
-        // Vincula componentes
+        // Cria canal de notificação (para o caso de não ter sido criado na Inicio)
+        NotificationHelper.criarCanal(this);
+
         itemCartoes = findViewById(R.id.itemCartoes);
         itemCategorias = findViewById(R.id.itemCategorias);
         itemBackup = findViewById(R.id.itemBackup);
@@ -50,12 +52,14 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        // ======== MOSTRAR O NOME DO USUÁRIO LOGADO ========
         String nome = session.getNome();
         if (nome != null && !nome.isEmpty()) {
             tvNomeUsuario.setText(nome);
             tvAvatar.setText(String.valueOf(nome.charAt(0)).toUpperCase());
         }
+
+        // ⭐ CARREGA O ESTADO DO SWITCH DE LEMBRETES
+        switchLembretes.setChecked(AlarmeHelper.isLembretesAtivos(this));
 
         // ======== AÇÕES DOS ITENS ========
 
@@ -72,10 +76,11 @@ public class ConfiguracoesActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // BACKUP: agora serve como "Limpar Tudo" (para testes internos)
         itemBackup.setOnClickListener(v -> mostrarDialogoLimparTudo());
 
+        // ⭐ SWITCH DE LEMBRETES FUNCIONAL
         switchLembretes.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            AlarmeHelper.setLembretesAtivos(ConfiguracoesActivity.this, isChecked);
             String msg = isChecked ? "Lembretes ativados" : "Lembretes desativados";
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         });
@@ -85,7 +90,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         });
 
-        // DESCONECTAR / LIMPAR SESSÃO
         itemDesconectar.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
                     .setTitle("Desconectar")
@@ -131,7 +135,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
                 Toast.makeText(this, "Você já está em Configurações", Toast.LENGTH_SHORT).show());
     }
 
-    // ======== DIÁLOGO "LIMPAR TUDO" (para testes internos) ========
     private void mostrarDialogoLimparTudo() {
         new AlertDialog.Builder(this)
                 .setTitle("Limpar Tudo (Testes)")

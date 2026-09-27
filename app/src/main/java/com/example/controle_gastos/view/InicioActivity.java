@@ -1,17 +1,24 @@
 package com.example.controle_gastos.view;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.VencimentoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.SessionManager;
 
 import java.util.ArrayList;
@@ -19,6 +26,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class InicioActivity extends AppCompatActivity {
+
+    private static final int REQ_NOTIFICACAO = 100;
 
     private TextView tvAvatarInicio, tvNomeInicio, tvTotalDividasInicio, tvTotalPagoInicio, tvAlertaMes;
     private RecyclerView rvVencimentos;
@@ -38,6 +47,12 @@ public class InicioActivity extends AppCompatActivity {
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
 
+        // ⭐ Cria o canal de notificação
+        NotificationHelper.criarCanal(this);
+
+        // ⭐ Solicita permissão de notificação no Android 13+
+        solicitarPermissaoNotificacao();
+
         tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
         tvTotalDividasInicio = findViewById(R.id.tvTotalDividasInicio);
@@ -52,7 +67,6 @@ public class InicioActivity extends AppCompatActivity {
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        // ======== MOSTRAR O NOME DO USUÁRIO LOGADO ========
         String nome = session.getNome();
         if (nome != null && !nome.isEmpty()) {
             tvNomeInicio.setText(nome);
@@ -92,10 +106,35 @@ public class InicioActivity extends AppCompatActivity {
         });
     }
 
+    // ⭐ SOLICITA PERMISSÃO DE NOTIFICAÇÃO (Android 13+)
+    private void solicitarPermissaoNotificacao() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        REQ_NOTIFICACAO
+                );
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_NOTIFICACAO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Lembretes ativados!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Sem permissão, os lembretes não vão funcionar.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        // Atualiza o nome sempre que voltar para a tela
         String nome = session.getNome();
         if (nome != null && !nome.isEmpty()) {
             tvNomeInicio.setText(nome);
@@ -105,10 +144,8 @@ public class InicioActivity extends AppCompatActivity {
     }
 
     private void carregarDados() {
-        // ⭐ FILTRA POR USUÁRIO LOGADO
         dividas = db.dividaDao().listarPorUsuario(session.getUserId());
 
-        // Lista de vencimentos (não pagas, até 3)
         List<Divida> vencimentos = new ArrayList<>();
         for (Divida d : dividas) {
             if (!d.isPago()) vencimentos.add(d);

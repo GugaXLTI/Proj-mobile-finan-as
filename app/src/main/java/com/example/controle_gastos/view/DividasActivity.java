@@ -13,6 +13,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.SessionManager;
 
 import java.util.List;
@@ -93,7 +94,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     }
 
     private void carregarDividas() {
-        // ⭐ FILTRA POR USUÁRIO LOGADO
         dividas = db.dividaDao().listarPorUsuario(session.getUserId());
         adapter = new DividaAdapter(dividas, this);
         rvDividas.setAdapter(adapter);
@@ -119,14 +119,15 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         tvTotalGeral.setText(String.format(Locale.getDefault(), "R$ %.2f", totalGeral));
     }
 
-    // ========== Ações dos botões dos cards ==========
-
     @Override
     public void onExcluirClick(Divida divida) {
         new AlertDialog.Builder(this)
                 .setTitle("Excluir dívida")
                 .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?")
                 .setPositiveButton("Excluir", (dialog, which) -> {
+                    // ⭐ Cancela o alarme antes de deletar
+                    AlarmeHelper.cancelar(this, divida);
+
                     db.dividaDao().deletar(divida);
                     carregarDividas();
                     Toast.makeText(this, "Dívida excluída: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
@@ -144,6 +145,9 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
     @Override
     public void onPagarClick(Divida divida) {
+        // ⭐ Cancela o alarme (dívida paga, não precisa mais notificar)
+        AlarmeHelper.cancelar(this, divida);
+
         divida.setPago(true);
         db.dividaDao().atualizar(divida);
         carregarDividas();

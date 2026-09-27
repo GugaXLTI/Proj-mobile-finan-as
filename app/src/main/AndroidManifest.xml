@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ⭐ Permissões para notificações e alarmes -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -46,12 +51,14 @@
         <activity android:name=".view.CategoriasActivity" android:exported="false" />
         <activity android:name=".view.EditarPerfilActivity" android:exported="false" />
 
+        <!-- ⭐ Receiver de Lembretes de Fatura -->
+        <receiver
+            android:name=".receiver.LembreteReceiver"
+            android:exported="false" />
 
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
-
-
 
     </application>
 

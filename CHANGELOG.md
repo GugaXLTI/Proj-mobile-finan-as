@@ -9,8 +9,27 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 ## [Não lançado] – Sprint 4 (Persistência de Dados)
 
 ### Adicionado
+- **Tela de Categorias** com CRUD completo (criar, listar e excluir)
+  - Entidade `Categoria` com campos `usuarioId`, `nome` e `cor`
+  - `CategoriaDao` com métodos filtrados por usuário
+  - `CategoriaSeeder` com 8 categorias padrão (Alimentação, Transporte, Saúde, Educação, Lazer, Moradia, Assinaturas, Outros)
+  - Paleta com 8 cores de identificação
+  - Prévia da tag em tempo real
+  - Contagem de dívidas por categoria
+  - Confirmação ao excluir categoria
+- **Tela de Editar Perfil** completa
+  - Edição de nome, e-mail e senha
+  - Validação de senha atual obrigatória
+  - Campo opcional para alterar senha (nova senha + confirmação)
+  - Validação de nome (mínimo 2 letras, apenas letras)
+  - Validação de e-mail com Regex
+  - Verificação de e-mail duplicado
+  - Funcionalidade "Eliminar Conta e Limpar Registros"
 - Campo `usuarioId` nas entidades `Divida` e `Transacao`
 - Filtros por usuário nos DAOs (`listarPorUsuario`, `listarNaoPagasPorUsuario`)
+- Métodos `atualizar()` e `deletar()` no `UsuarioDao`
+- Método `atualizarNome()` no `SessionManager`
+- Setters no modelo `Usuario` (setNome, setEmail, setSenha)
 - Botão "Limpar Tudo" em Configurações (para testes internos)
 - Tela de edição de dívida (abre cadastro em modo edição)
 - Diálogo de confirmação ao excluir dívida
@@ -20,7 +39,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 - Documentação em `docs/ARQUITETURA.md`
 
 ### Modificado
-- `AppDatabase` atualizado para versão 2 com `fallbackToDestructiveMigration`
+- `AppDatabase` atualizado para versão 4 (adiciona `Categoria`)
+- `CadastroDividaActivity` agora carrega categorias **dinâmicas** do banco (antes era lista fixa)
+- Categorias do usuário aparecem automaticamente no spinner de cadastro de dívida
+- Botão "Editar" em Configurações agora abre a `EditarPerfilActivity` (antes era Toast)
+- `CategoriasActivity` registrada no `AndroidManifest.xml`
+- `EditarPerfilActivity` registrada no `AndroidManifest.xml`
 - Todas as Activities agora usam `session.getUserId()` para consultar dados
 - `DividaAdapter` agora passa objeto `Divida` em vez de `int position`
 - Layout do cadastro de dívida ajustado (label "Devedor" acima do campo)
@@ -35,6 +59,8 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 - **Problema de arquitetura:** dívidas e transações não estavam vinculadas ao usuário logado
   - Cada usuário agora vê apenas seus próprios dados
   - Isolamento completo entre contas diferentes
+- Nova categoria criada agora aparece imediatamente no cadastro de dívidas
+- Nome do usuário é atualizado em todas as telas após edição do perfil
 
 ---
 

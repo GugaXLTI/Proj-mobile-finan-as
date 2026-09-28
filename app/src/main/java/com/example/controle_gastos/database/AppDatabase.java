@@ -8,14 +8,21 @@ import com.example.controle_gastos.dao.CategoriaDao;
 import com.example.controle_gastos.dao.DividaDao;
 import com.example.controle_gastos.dao.TransacaoDao;
 import com.example.controle_gastos.dao.UsuarioDao;
+import com.example.controle_gastos.dao.CartaoDao;      // ⭐ NOVO
+import com.example.controle_gastos.dao.ChavePixDao;   // ⭐ NOVO
 import com.example.controle_gastos.model.Categoria;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.Transacao;
 import com.example.controle_gastos.model.Usuario;
+import com.example.controle_gastos.model.Cartao;      // ⭐ NOVO
+import com.example.controle_gastos.model.ChavePix;    // ⭐ NOVO
 
 @Database(
-        entities = {Usuario.class, Divida.class, Transacao.class, Categoria.class},
-        version = 5, // ⭐ MUDOU DE 4 PARA 5 (campo valorParcela)
+        entities = {
+                Usuario.class, Divida.class, Transacao.class, Categoria.class,
+                Cartao.class, ChavePix.class // ⭐ NOVAS ENTIDADES
+        },
+        version = 6, // ⭐ MUDOU DE 5 PARA 6
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -24,6 +31,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract DividaDao dividaDao();
     public abstract TransacaoDao transacaoDao();
     public abstract CategoriaDao categoriaDao();
+    public abstract CartaoDao cartaoDao();      // ⭐ NOVO
+    public abstract ChavePixDao chavePixDao();  // ⭐ NOVO
 
     private static AppDatabase INSTANCE;
 

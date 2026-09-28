@@ -68,8 +68,10 @@ public class ConfiguracoesActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        itemCartoes.setOnClickListener(v ->
-                Toast.makeText(this, "Gerenciar cartões (em breve)", Toast.LENGTH_SHORT).show());
+        itemCartoes.setOnClickListener(v -> {
+            Intent intent = new Intent(ConfiguracoesActivity.this, CartoesActivity.class);
+            startActivity(intent);
+        });
 
         itemCategorias.setOnClickListener(v -> {
             Intent intent = new Intent(ConfiguracoesActivity.this, CategoriasActivity.class);

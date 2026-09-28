@@ -15,7 +15,7 @@ import com.example.controle_gastos.model.Usuario;
 
 @Database(
         entities = {Usuario.class, Divida.class, Transacao.class, Categoria.class},
-        version = 4, // ⭐ MUDOU DE 3 PARA 4
+        version = 5, // ⭐ MUDOU DE 4 PARA 5 (campo valorParcela)
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {

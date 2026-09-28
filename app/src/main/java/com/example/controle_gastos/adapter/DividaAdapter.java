@@ -42,12 +42,14 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         Divida d = dividas.get(position);
 
         holder.tvTitulo.setText(d.getTitulo());
-        holder.tvValorRestante.setText("Falta: R$ " + String.format(Locale.getDefault(), "%.2f", d.getValorRestante()));
+
+        // ⭐ Exibe o valor da PARCELA (não o total)
+        holder.tvValorRestante.setText("Falta: R$ " + String.format(Locale.getDefault(), "%.2f", d.getValorParcela()));
+
         holder.tvDetalhe.setText(d.getBanco() + " • " + d.getCategoria());
         holder.tvParcela.setText("Parcela " + d.getParcela());
         holder.tvVencimento.setText("Vencimento: " + d.getVencimento());
 
-        // Ações - passando o objeto Divida (não a posição)
         holder.btnExcluir.setOnClickListener(v -> {
             if (listener != null) listener.onExcluirClick(d);
         });

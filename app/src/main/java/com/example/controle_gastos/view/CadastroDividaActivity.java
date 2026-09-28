@@ -197,6 +197,21 @@ public class CadastroDividaActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * ⭐ Extrai o número de parcelas de uma string como "10x" ou "1x (À vista)".
+     * Retorna 1 se não conseguir extrair.
+     */
+    private int extrairNumeroParcelas(String parcela) {
+        try {
+            String numeros = parcela.replaceAll("[^0-9]", "");
+            if (numeros.isEmpty()) return 1;
+            int n = Integer.parseInt(numeros);
+            return n > 0 ? n : 1;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
     private void salvarDivida() {
         if (categoriasDoBanco.isEmpty()) {
             Toast.makeText(this, "Cadastre uma categoria antes de lançar uma dívida!", Toast.LENGTH_LONG).show();
@@ -233,12 +248,17 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
+        // ⭐ Calcula o valor da parcela
+        int numParcelas = extrairNumeroParcelas(parcelas);
+        double valorParcela = valor / numParcelas;
+
         if (dividaEmEdicao != null) {
             // Modo edição: cancela o alarme antigo
             AlarmeHelper.cancelar(this, dividaEmEdicao);
 
             dividaEmEdicao.titulo = descricao;
             dividaEmEdicao.valorTotal = valor;
+            dividaEmEdicao.valorParcela = valorParcela;
             dividaEmEdicao.banco = banco;
             dividaEmEdicao.categoria = categoria;
             dividaEmEdicao.parcela = parcelas;
@@ -246,7 +266,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
             db.dividaDao().atualizar(dividaEmEdicao);
 
-            // ⭐ Reagenda com os novos dados
             AlarmeHelper.agendar(this, dividaEmEdicao);
 
             Toast.makeText(this, "Dívida atualizada com sucesso!", Toast.LENGTH_SHORT).show();
@@ -255,6 +274,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
                     session.getUserId(),
                     descricao,
                     valor,
+                    valorParcela, // ⭐ Passa o valor da parcela
                     0.0,
                     banco,
                     categoria,
@@ -266,7 +286,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
             long idGerado = db.dividaDao().inserir(novaDivida);
 
             if (idGerado > 0) {
-                // ⭐ Define o ID gerado e agenda o alarme
                 novaDivida.id = (int) idGerado;
                 AlarmeHelper.agendar(this, novaDivida);
 

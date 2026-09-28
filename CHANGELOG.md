@@ -37,6 +37,7 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
   - Verificação de e-mail duplicado
   - Funcionalidade "Eliminar Conta e Limpar Registros"
 - Campo `usuarioId` nas entidades `Divida` e `Transacao`
+- Campo `valorParcela` na entidade `Divida` (cálculo automático do valor de cada parcela)
 - Filtros por usuário nos DAOs (`listarPorUsuario`, `listarNaoPagasPorUsuario`)
 - Métodos `atualizar()` e `deletar()` no `UsuarioDao`
 - Método `atualizarNome()` no `SessionManager`
@@ -47,14 +48,17 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 - Máscara de valor automática (R$ 0,00)
 - Campo Nome no cadastro com validação (mínimo 2 letras)
 - Validação de e-mail com Regex
+- Documento `docs/BUGS.md` para registro de bugs encontrados e corrigidos
 - Documentação em `docs/ARQUITETURA.md`
 
 ### Modificado
-- `AppDatabase` atualizado para versão 4 (adiciona `Categoria`)
+- `AppDatabase` atualizado para versão 5 (adiciona `valorParcela` em `Divida`)
 - `CadastroDividaActivity` agora carrega categorias **dinâmicas** do banco (antes era lista fixa)
+- `CadastroDividaActivity` agora **calcula o valor da parcela** ao salvar/editar dívida
 - Categorias do usuário aparecem automaticamente no spinner de cadastro de dívida
 - `CadastroDividaActivity` agora **agenda notificação** ao salvar/editar dívida
 - `DividasActivity` agora **cancela notificação** ao pagar/excluir dívida
+- `DividaAdapter` agora exibe o **valor da parcela** (não o valor total)
 - `ConfiguracoesActivity` tem **switch funcional** de lembretes (antes era só Toast)
 - `InicioActivity` agora **solicita permissão** de notificação no Android 13+
 - Botão "Editar" em Configurações agora abre a `EditarPerfilActivity` (antes era Toast)
@@ -75,6 +79,10 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 - **Problema de arquitetura:** dívidas e transações não estavam vinculadas ao usuário logado
   - Cada usuário agora vê apenas seus próprios dados
   - Isolamento completo entre contas diferentes
+- **BUG-001:** valor da parcela não era dividido em dívidas parceladas
+  - Adicionado campo `valorParcela` na entidade `Divida`
+  - `CadastroDividaActivity` calcula o valor da parcela ao salvar
+  - `DividaAdapter` exibe o valor da parcela (ex: R$ 2.000 em 10x → R$ 200,00 por parcela)
 - Nova categoria criada agora aparece imediatamente no cadastro de dívidas
 - Nome do usuário é atualizado em todas as telas após edição do perfil
 

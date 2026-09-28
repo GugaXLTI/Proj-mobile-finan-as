@@ -1,7 +1,7 @@
 # App Gestão de Finanças
 
 ## Status do Projeto
-🚀 **Em desenvolvimento – Sprint 4 (Persistência de Dados) – Room + Autenticação + Categorias + Editar Perfil** 🚀
+🚀 **Em desenvolvimento – Sprint 4 (Persistência de Dados) – Room + Autenticação + Categorias + Editar Perfil + Lembretes** 🚀
 
 - ✅ Splash Screen (com verificação de sessão)
 - ✅ Tela de Login (autenticação no Room)
@@ -13,6 +13,7 @@
 - ✅ Tela de Configurações (com logout)
 - ✅ **Tela de Categorias (criar, listar e excluir)**
 - ✅ **Tela de Editar Perfil (nome, e-mail, senha e exclusão de conta)**
+- ✅ **Lembretes de Fatura (notificações 3 dias antes do vencimento)**
 - ✅ Bottom Navigation funcional
 - ✅ Persistência de dados com Room (SQLite)
 - ✅ Sessão persistente com SharedPreferences
@@ -42,6 +43,7 @@ O app permite ao usuário:
 - Gerenciar dívidas (cadastrar, editar, pagar, excluir)
 - **Criar e personalizar categorias com cores próprias**
 - **Editar perfil (nome, e-mail, senha) e excluir conta**
+- **Receber notificações 3 dias antes do vencimento das faturas**
 - Manter seus dados isolados por conta (cada usuário vê apenas suas dívidas)
 - Configurar preferências do sistema (biometria, lembretes, backup)
 
@@ -53,7 +55,7 @@ O app permite ao usuário:
 - **Versionamento:** Git + GitHub
 - **Sistema Operacional:** Android (mínimo API 24 – Android 7.0)
 - **Design:** Figma (protótipos desenvolvidos pela equipe)
-- **Bibliotecas:** Room (SQLite), MPAndroidChart, Material Design Components, RecyclerView, CardView, SharedPreferences
+- **Bibliotecas:** Room (SQLite), MPAndroidChart, Material Design Components, RecyclerView, CardView, SharedPreferences, AlarmManager
 
 ---
 
@@ -85,19 +87,19 @@ Formulário com campos de **nome**, e-mail, senha e confirmação de senha. Vali
 - Verificação de e-mail duplicado no banco
 
 ### Tela de Início (Home)
-Resumo de dívidas acumuladas, total já pago, alerta de faturas do mês e lista dos próximos vencimentos lidos do Room. Exibe o **nome e avatar do usuário logado** no topo. **Mostra apenas as dívidas do usuário logado.**
+Resumo de dívidas acumuladas, total já pago, alerta de faturas do mês e lista dos próximos vencimentos lidos do Room. Exibe o **nome e avatar do usuário logado** no topo. Solicita **permissão de notificação** no Android 13+ e cria o canal de notificação na primeira execução.
 
 ### Dashboard (Relatórios)
-Gráfico de rosca (MPAndroidChart) com distribuição de dívidas por categoria, cores personalizadas do Figma, percentuais dentro das fatias, total no centro, filtros em formato de pílula e lista de dívidas não pagas – tudo lido do banco de dados e filtrado pelo usuário logado.
+Gráfico de rosca (MPAndroidChart) com distribuição de dívidas por categoria, cores personalizadas do Figma, percentuais dentro das fatias, total no centro, filtros em formato de pílula e lista de dívidas não pagas – tudo lido do banco e filtrado pelo usuário logado.
 
 ### Tela de Dívidas
 Cards com título, valor restante, banco/categoria, parcela e vencimento. Resumo com totais (a pagar, pago, geral) e botões de ação:
-- **Excluir** – com diálogo de confirmação ("Tem certeza?")
-- **Editar** – abre a tela de cadastro em modo edição com dados preenchidos
-- **Pagar** – marca a dívida como paga e atualiza os totais
+- **Excluir** – com diálogo de confirmação + cancelamento do alarme
+- **Editar** – abre a tela de cadastro em modo edição
+- **Pagar** – marca a dívida como paga, cancela o alarme e atualiza os totais
 
 ### Cadastro de Dívida
-Formulário com tipo de dívida, banco, devedor, descrição, **categoria (dinâmica – vem do banco)**, valor (com máscara R$ 0,00), parcelas, data da compra e 1º vencimento. Salva a nova dívida diretamente no Room, vinculada ao usuário logado.
+Formulário com tipo de dívida, banco, devedor, descrição, **categoria (dinâmica – vem do banco)**, valor (com máscara R$ 0,00), parcelas, data da compra e 1º vencimento. **Agenda uma notificação 3 dias antes do vencimento** automaticamente.
 
 ### Tela de Categorias
 - Exibe **8 categorias padrão** automaticamente (Alimentação, Transporte, Saúde, Educação, Lazer, Moradia, Assinaturas, Outros)
@@ -105,20 +107,25 @@ Formulário com tipo de dívida, banco, devedor, descrição, **categoria (dinâ
 - **Prévia da tag** atualiza em tempo real enquanto digita
 - **Contagem de dívidas** por categoria
 - **Excluir** categoria com diálogo de confirmação (avisa se há dívidas usando)
-- Categorias criadas aparecem automaticamente no cadastro de dívidas
 
 ### Editar Perfil
 - **Alterar nome completo** (validação: mínimo 2 letras, apenas letras)
 - **Alterar e-mail** (validação Regex + verificação de duplicado)
 - **Alterar senha** (opcional, requer senha atual + nova senha + confirmação)
 - **Eliminar conta** e apagar todos os dados (com confirmação)
-- Atualiza o nome exibido em todas as telas após edição
+
+### Lembretes de Fatura
+- **Notificações 3 dias antes do vencimento** de cada dívida, às 9h da manhã
+- Solicita **permissão** automaticamente no Android 13+
+- Alarme é **cancelado automaticamente** quando a dívida é paga ou excluída
+- **Switch em Configurações** permite ativar/desativar todos os lembretes
+- Funciona **offline** (usa AlarmManager local)
 
 ### Configurações
-Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de cartões e categorias, lembretes de fatura, biometria, limpeza de dados (para testes) e desconexão de sessão (logout limpa a sessão e redireciona para o Login).
+Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de cartões e categorias, **switch funcional de lembretes**, biometria, limpeza de dados (para testes) e desconexão de sessão.
 
 ### Bottom Navigation
-Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – com navegação funcional entre as telas. A aba "Lançar" abre o cadastro de dívida.
+Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – com navegação funcional entre as telas.
 
 ---
 
@@ -147,39 +154,43 @@ Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – co
 ```
 app/src/main/java/com/example/controle_gastos/
 ├── model/
-│   ├── Usuario.java            # Entidade de usuário (@Entity)
-│   ├── Divida.java             # Entidade de dívida (@Entity, com usuarioId)
-│   ├── Transacao.java          # Entidade de transação (@Entity, com usuarioId)
-│   ├── Categoria.java          # Entidade de categoria (@Entity, com usuarioId e cor)
-│   └── CategoriaResumo.java    # Resumo por categoria
+│   ├── Usuario.java              # Entidade de usuário (@Entity)
+│   ├── Divida.java               # Entidade de dívida (@Entity, com usuarioId)
+│   ├── Transacao.java            # Entidade de transação (@Entity, com usuarioId)
+│   ├── Categoria.java            # Entidade de categoria (@Entity, com usuarioId e cor)
+│   └── CategoriaResumo.java      # Resumo por categoria
 ├── dao/
-│   ├── UsuarioDao.java         # CRUD + login + buscarPorEmail + deletar
-│   ├── DividaDao.java          # CRUD + filtros por usuário
-│   ├── TransacaoDao.java       # CRUD + filtros por usuário
-│   └── CategoriaDao.java       # CRUD + contagem de dívidas por categoria
+│   ├── UsuarioDao.java           # CRUD + login + buscarPorEmail + deletar
+│   ├── DividaDao.java            # CRUD + filtros por usuário
+│   ├── TransacaoDao.java         # CRUD + filtros por usuário
+│   └── CategoriaDao.java         # CRUD + contagem de dívidas por categoria
 ├── database/
-│   ├── AppDatabase.java        # Classe principal do Room (versão 4)
-│   └── DatabaseClient.java     # Singleton de acesso ao banco
+│   ├── AppDatabase.java          # Classe principal do Room (versão 4)
+│   └── DatabaseClient.java       # Singleton de acesso ao banco
 ├── utils/
-│   ├── SessionManager.java     # Sessão + atualização de nome
-│   └── CategoriaSeeder.java    # Categorias padrão na primeira execução
+│   ├── SessionManager.java       # Sessão + atualização de nome
+│   ├── CategoriaSeeder.java      # Categorias padrão na primeira execução
+│   ├── NotificationHelper.java   # Canal + envio de notificações
+│   └── AlarmeHelper.java         # Agendamento/cancelamento de alarmes
+├── receiver/
+│   └── LembreteReceiver.java     # BroadcastReceiver para notificações
 ├── adapter/
-│   ├── LancamentoAdapter.java  # Adapter de lançamentos
-│   ├── LegendaAdapter.java     # Adapter de legendas
-│   ├── DividaAdapter.java      # Adapter de dívidas
-│   ├── VencimentoAdapter.java  # Adapter de vencimentos (tela Início)
-│   └── CategoriaAdapter.java   # Adapter de categorias
+│   ├── LancamentoAdapter.java    # Adapter de lançamentos
+│   ├── LegendaAdapter.java       # Adapter de legendas
+│   ├── DividaAdapter.java        # Adapter de dívidas
+│   ├── VencimentoAdapter.java    # Adapter de vencimentos (tela Início)
+│   └── CategoriaAdapter.java     # Adapter de categorias
 └── view/
-    ├── SplashActivity.java         # Tela de abertura (2s + verificação de sessão)
-    ├── LoginActivity.java          # Tela de Login
-    ├── CadastroActivity.java       # Tela de Cadastro
-    ├── InicioActivity.java         # Tela de Início (Home)
-    ├── DashboardActivity.java      # Dashboard/Relatórios
-    ├── DividasActivity.java        # Tela de Dívidas
-    ├── CadastroDividaActivity.java # Cadastro de Dívida (cadastro + edição)
-    ├── CategoriasActivity.java     # Gerenciamento de Categorias
-    ├── EditarPerfilActivity.java   # Edição de Perfil
-    └── ConfiguracoesActivity.java  # Configurações + Logout
+    ├── SplashActivity.java           # Tela de abertura (2s + verificação de sessão)
+    ├── LoginActivity.java            # Tela de Login
+    ├── CadastroActivity.java         # Tela de Cadastro
+    ├── InicioActivity.java           # Tela de Início (Home)
+    ├── DashboardActivity.java        # Dashboard/Relatórios
+    ├── DividasActivity.java          # Tela de Dívidas
+    ├── CadastroDividaActivity.java   # Cadastro de Dívida (cadastro + edição)
+    ├── CategoriasActivity.java       # Gerenciamento de Categorias
+    ├── EditarPerfilActivity.java     # Edição de Perfil
+    └── ConfiguracoesActivity.java    # Configurações + Logout
 ```
 
 ---
@@ -207,15 +218,16 @@ app/src/main/java/com/example/controle_gastos/
 - `feat: implementa tela de Categorias com CRUD completo`
 - `feat: prepara back-end para edição de perfil`
 - `feat: implementa tela de Editar Perfil com validações e exclusão de conta`
+- `feat: implementa lembretes de fatura com notificações`
 
 ---
 
 ## 🚧 Próximos Passos
 
-- Lembretes de fatura (notificações com AlarmManager)
-- Tela de gerenciamento de cartões e bancos
+- Tela de gerenciamento de cartões e chaves Pix
 - Exportação de dados (PDF/CSV)
 - Biometria real (BiometricPrompt)
+- `BootReceiver` para reagendar alarmes após reinicialização
 - Simulador de pagamento com QR Code (para depois do MVP)
 - Autenticação em nuvem (Firebase Auth) – opcional para o MVP final
 - Sincronização entre dispositivos – opcional para o MVP final
@@ -226,6 +238,7 @@ app/src/main/java/com/example/controle_gastos/
 
 - **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)** – Documentação técnica sobre a arquitetura e decisões de projeto
 - **[CHANGELOG.md](CHANGELOG.md)** – Histórico detalhado de mudanças por versão/Sprint
+- **[Protótipo no Figma](https://www.figma.com/design/BED5loI0pi57B5nkPPufij/ORG---TELA?node-id=71-1192&t=CZH8LT7ObgHAeZla-1)** – Design e protótipo navegável do app
 
 ---
 

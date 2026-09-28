@@ -9,6 +9,17 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 ## [Não lançado] – Sprint 4 (Persistência de Dados)
 
 ### Adicionado
+- **Sistema de Lembretes de Fatura (Notificações)**
+  - `NotificationHelper` para criar canal de notificação e enviar avisos
+  - `LembreteReceiver` (BroadcastReceiver) para receber os alarmes agendados
+  - `AlarmeHelper` para agendar e cancelar alarmes com `AlarmManager`
+  - Notificação **3 dias antes do vencimento**, às 9h da manhã
+  - Solicita permissão `POST_NOTIFICATIONS` automaticamente no Android 13+
+  - Cancela o alarme ao pagar ou excluir uma dívida
+  - Reagenda automaticamente ao editar uma dívida
+  - **Switch funcional de lembretes** em Configurações (ativar/desativar)
+  - Permissões `SCHEDULE_EXACT_ALARM` e `USE_EXACT_ALARM` no Manifest
+  - Funciona totalmente **offline** (usa alarmes locais)
 - **Tela de Categorias** com CRUD completo (criar, listar e excluir)
   - Entidade `Categoria` com campos `usuarioId`, `nome` e `cor`
   - `CategoriaDao` com métodos filtrados por usuário
@@ -42,9 +53,14 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 - `AppDatabase` atualizado para versão 4 (adiciona `Categoria`)
 - `CadastroDividaActivity` agora carrega categorias **dinâmicas** do banco (antes era lista fixa)
 - Categorias do usuário aparecem automaticamente no spinner de cadastro de dívida
+- `CadastroDividaActivity` agora **agenda notificação** ao salvar/editar dívida
+- `DividasActivity` agora **cancela notificação** ao pagar/excluir dívida
+- `ConfiguracoesActivity` tem **switch funcional** de lembretes (antes era só Toast)
+- `InicioActivity` agora **solicita permissão** de notificação no Android 13+
 - Botão "Editar" em Configurações agora abre a `EditarPerfilActivity` (antes era Toast)
 - `CategoriasActivity` registrada no `AndroidManifest.xml`
 - `EditarPerfilActivity` registrada no `AndroidManifest.xml`
+- `LembreteReceiver` registrado no `AndroidManifest.xml`
 - Todas as Activities agora usam `session.getUserId()` para consultar dados
 - `DividaAdapter` agora passa objeto `Divida` em vez de `int position`
 - Layout do cadastro de dívida ajustado (label "Devedor" acima do campo)

@@ -74,18 +74,19 @@ List<Transacao> listarPorUsuario(int usuarioId);
 List<Categoria> listarPorUsuario(int usuarioId);
 ```
 
-### 3. AppDatabase atualizado para versão 4
+### 3. AppDatabase atualizado para versão 5
 
 Evolução das versões:
 - **v1** → App funcional com Room básico
 - **v2** → Adicionado `usuarioId` em `Divida` e `Transacao`
 - **v3** → Adicionada entidade `Categoria`
 - **v4** → Adicionado campo `cor` em `Categoria`
+- **v5** → Adicionado campo `valorParcela` em `Divida` (correção de bug)
 
 ```java
 @Database(
         entities = {Usuario.class, Divida.class, Transacao.class, Categoria.class},
-        version = 4,
+        version = 5,
         exportSchema = false
 )
 ```
@@ -130,6 +131,31 @@ Para testes internos, foi adicionado um diálogo em Configurações que apaga **
 ### 8. Editar Perfil
 
 Tela que permite editar nome, e-mail e senha do usuário logado, além de excluir a conta completamente. Requer senha atual para confirmar alterações.
+
+---
+
+## 🐛 Correção do Cálculo de Parcelas (BUG-001)
+
+### Data da correção
+27/09/2026
+
+### Descrição do problema
+
+Ao cadastrar uma dívida parcelada (ex: R$ 2.000 em 10x), o card na tela de Dívidas exibia o **valor total** em vez do **valor de cada parcela**, induzindo o usuário ao erro.
+
+### Solução implementada
+
+- Adicionado campo `valorParcela` na entidade `Divida`
+- `CadastroDividaActivity` agora calcula `valorParcela = valorTotal / numParcelas` ao salvar
+- `DividaAdapter` passou a exibir o `valorParcela` no card
+- `AppDatabase` atualizado para versão 5
+
+### Impacto
+
+| Antes | Depois |
+|-------|--------|
+| Card exibia "Falta: R$ 2.000,00" (total) | Card exibe "Falta: R$ 200,00" (parcela) |
+| Usuário poderia achar que era uma cobrança de R$ 2.000/mês | Valor correto por parcela |
 
 ---
 
@@ -256,7 +282,7 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 
 | Arquivo | Mudança |
 |---------|---------|
-| `model/Divida.java` | Campo `usuarioId` |
+| `model/Divida.java` | Campo `usuarioId` + campo `valorParcela` |
 | `model/Transacao.java` | Campo `usuarioId` |
 | `model/Categoria.java` | Campo `usuarioId` + `cor` |
 | `model/Usuario.java` | Setters para edição de perfil |
@@ -264,7 +290,7 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 | `dao/TransacaoDao.java` | Métodos filtrados por usuário |
 | `dao/CategoriaDao.java` | CRUD + contagem de dívidas por categoria |
 | `dao/UsuarioDao.java` | Métodos `atualizar()` e `deletar()` |
-| `database/AppDatabase.java` | Versão 4 + entidade `Categoria` |
+| `database/AppDatabase.java` | Versão 5 + entidade `Categoria` + `valorParcela` |
 | `utils/SessionManager.java` | Método `atualizarNome()` |
 | `utils/CategoriaSeeder.java` | Categorias padrão na primeira execução |
 | `utils/NotificationHelper.java` | **Novo** – canal + envio de notificações |
@@ -274,11 +300,11 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 | `view/InicioActivity.java` | Filtro por usuário + permissão de notificação |
 | `view/DividasActivity.java` | Filtro por usuário + cancelamento de alarme |
 | `view/DashboardActivity.java` | Filtro por usuário |
-| `view/CadastroDividaActivity.java` | Salva com `usuarioId` + agendamento de alarme |
+| `view/CadastroDividaActivity.java` | Salva com `usuarioId` + agendamento de alarme + cálculo de parcela |
 | `view/CategoriasActivity.java` | CRUD de categorias filtrado por usuário |
 | `view/EditarPerfilActivity.java` | Edição de perfil e exclusão de conta |
 | `view/ConfiguracoesActivity.java` | Switch funcional de lembretes |
-| `adapter/DividaAdapter.java` | Listener recebe `Divida` |
+| `adapter/DividaAdapter.java` | Listener recebe `Divida` + exibe valor da parcela |
 | `adapter/CategoriaAdapter.java` | Novo adapter com cor e contagem |
 | `layout/activity_categorias.xml` | Novo layout |
 | `layout/item_categoria.xml` | Novo layout |
@@ -313,3 +339,4 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 - Data da resolução: 23/09/2026
 - Expansão para Categoria: 26/09/2026
 - Implementação dos Lembretes: 27/09/2026
+- Correção do Cálculo de Parcelas: 27/09/2026

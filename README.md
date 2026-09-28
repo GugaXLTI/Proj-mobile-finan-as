@@ -23,6 +23,7 @@
 - ✅ **Confirmação ao excluir dívida**
 - ✅ **Máscara de valor automática (R$ 0,00)**
 - ✅ **Categorias dinâmicas no cadastro de dívida**
+- ✅ **Cálculo automático do valor das parcelas**
 - ✅ Validação de e-mail com Regex
 - ✅ Validação de nome e senha
 - ✅ Exibição dinâmica do usuário logado
@@ -93,13 +94,13 @@ Resumo de dívidas acumuladas, total já pago, alerta de faturas do mês e lista
 Gráfico de rosca (MPAndroidChart) com distribuição de dívidas por categoria, cores personalizadas do Figma, percentuais dentro das fatias, total no centro, filtros em formato de pílula e lista de dívidas não pagas – tudo lido do banco e filtrado pelo usuário logado.
 
 ### Tela de Dívidas
-Cards com título, valor restante, banco/categoria, parcela e vencimento. Resumo com totais (a pagar, pago, geral) e botões de ação:
+Cards com título, **valor da parcela** (calculado automaticamente), banco/categoria, número da parcela e vencimento. Resumo com totais (a pagar, pago, geral) e botões de ação:
 - **Excluir** – com diálogo de confirmação + cancelamento do alarme
 - **Editar** – abre a tela de cadastro em modo edição
 - **Pagar** – marca a dívida como paga, cancela o alarme e atualiza os totais
 
 ### Cadastro de Dívida
-Formulário com tipo de dívida, banco, devedor, descrição, **categoria (dinâmica – vem do banco)**, valor (com máscara R$ 0,00), parcelas, data da compra e 1º vencimento. **Agenda uma notificação 3 dias antes do vencimento** automaticamente.
+Formulário com tipo de dívida, banco, devedor, descrição, **categoria (dinâmica – vem do banco)**, valor (com máscara R$ 0,00), parcelas, data da compra e 1º vencimento. **Calcula automaticamente o valor de cada parcela** e **agenda uma notificação 3 dias antes do vencimento**.
 
 ### Tela de Categorias
 - Exibe **8 categorias padrão** automaticamente (Alimentação, Transporte, Saúde, Educação, Lazer, Moradia, Assinaturas, Outros)
@@ -155,7 +156,7 @@ Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – co
 app/src/main/java/com/example/controle_gastos/
 ├── model/
 │   ├── Usuario.java              # Entidade de usuário (@Entity)
-│   ├── Divida.java               # Entidade de dívida (@Entity, com usuarioId)
+│   ├── Divida.java               # Entidade de dívida (@Entity, com usuarioId e valorParcela)
 │   ├── Transacao.java            # Entidade de transação (@Entity, com usuarioId)
 │   ├── Categoria.java            # Entidade de categoria (@Entity, com usuarioId e cor)
 │   └── CategoriaResumo.java      # Resumo por categoria
@@ -165,7 +166,7 @@ app/src/main/java/com/example/controle_gastos/
 │   ├── TransacaoDao.java         # CRUD + filtros por usuário
 │   └── CategoriaDao.java         # CRUD + contagem de dívidas por categoria
 ├── database/
-│   ├── AppDatabase.java          # Classe principal do Room (versão 4)
+│   ├── AppDatabase.java          # Classe principal do Room (versão 5)
 │   └── DatabaseClient.java       # Singleton de acesso ao banco
 ├── utils/
 │   ├── SessionManager.java       # Sessão + atualização de nome
@@ -219,6 +220,7 @@ app/src/main/java/com/example/controle_gastos/
 - `feat: prepara back-end para edição de perfil`
 - `feat: implementa tela de Editar Perfil com validações e exclusão de conta`
 - `feat: implementa lembretes de fatura com notificações`
+- `fix: corrige cálculo do valor das parcelas nas dívidas`
 
 ---
 
@@ -237,6 +239,7 @@ app/src/main/java/com/example/controle_gastos/
 ## 📄 Documentação Adicional
 
 - **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)** – Documentação técnica sobre a arquitetura e decisões de projeto
+- **[docs/BUGS.md](docs/BUGS.md)** – Registro de bugs encontrados e corrigidos
 - **[CHANGELOG.md](CHANGELOG.md)** – Histórico detalhado de mudanças por versão/Sprint
 - **[Protótipo no Figma](https://www.figma.com/design/BED5loI0pi57B5nkPPufij/ORG---TELA?node-id=71-1192&t=CZH8LT7ObgHAeZla-1)** – Design e protótipo navegável do app
 

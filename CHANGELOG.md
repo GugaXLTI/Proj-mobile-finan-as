@@ -6,6 +6,56 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
+## [Não lançado] – Sprint 5 (Cartões & Chaves Pix)
+
+### Adicionado
+- **Tela de Cartões & Chaves Pix** com navegação por abas (`TabLayout` + `ViewPager2`)
+  - Entidade `Cartao` com campos `usuarioId`, `instituicao`, `apelido`, `ultimos4Digitos`, `diaVencimento`, `limite`, `bandeira` e `tipo` (Crédito/Débito)
+  - Entidade `ChavePix` com campos `usuarioId`, `tipoChave`, `chave`, `nomeFavorecido`, `banco` e `apelidoDivida`
+  - `CartaoDao` e `ChavePixDao` com CRUD completo e filtros por usuário
+  - Fragments `CartoesFragment` e `ChavesPixFragment` para gerenciar cada aba
+  - Adapters `CartaoAdapter`, `ChavePixAdapter` e `ChipSelecaoAdapter`
+  - Layouts `activity_cartoes.xml`, `item_cartao.xml`, `item_chave_pix.xml`, `fragment_cartoes.xml`, `fragment_chaves_pix.xml` e `item_chip_selecao.xml`
+  - Cadastro de cartão com **tipo Crédito/Débito**, instituição, apelido, últimos 4 dígitos e dia de vencimento
+  - Cadastro de chave Pix com **tipo** (CNPJ/CPF, Celular, E-mail, Chave Aleatória), chave e nome do favorecido
+  - Card de cartão em formato de crédito (bandeira, número mascarado, titular e vencimento)
+  - Card de chave Pix com fundo verde (degradê) e badge "Pix Direto"
+  - Botão **"Copiar Chave"** que envia a chave Pix para a área de transferência
+  - Sigla da bandeira gerada automaticamente (ex: Nubank → NU)
+- **Integração da tela de Lançar Dívida com Cartões e Chaves Pix**
+  - Filtro dinâmico: ao escolher "Cartão de Crédito", mostra apenas cartões de crédito cadastrados
+  - Ao escolher "Cartão de Débito", mostra apenas cartões de débito cadastrados
+  - Ao escolher "Pix", mostra apenas as chaves Pix cadastradas
+  - Empty State com mensagem específica e botão **"Cadastrar agora"** quando não há itens
+  - Botão de atalho **"+ Novo"** no cabeçalho da seleção
+  - Link **"+ Nova Categoria"** no label de categoria
+- **Redesign do layout `activity_cadastro_divida.xml`** fiel ao protótipo do Figma
+  - Campos **Valor/Parcelas** e **Data da Compra/1º Vencimento** lado a lado
+  - Seleção de cartões/Pix em **chips horizontais** com estado de seleção visual
+  - Link **"+ Nova Categoria"** alinhado à direita do label
+- **Drawables personalizados**
+  - `bg_form_field.xml` (fundo de campos e spinners)
+  - `bg_button_green.xml` (fundo dos botões verdes)
+  - `bg_card_pix.xml` (degradê verde dos cards de chave Pix)
+
+### Modificado
+- `AppDatabase` atualizado para versão 6 (adiciona `Cartao` e `ChavePix`)
+- `AppDatabase` atualizado para versão 7 (adiciona campo `tipo` em `Cartao`)
+- `CadastroDividaActivity` agora integra com cartões e chaves Pix cadastrados
+- `CadastroDividaActivity` agora filtra cartões por tipo (Crédito/Débito)
+- `CartoesFragment` agora permite escolher o **tipo do cartão** (Crédito/Débito)
+- `CartaoAdapter` agora exibe o tipo do cartão junto ao nome do banco
+- `CartaoAdapter` recebe o `nomeUsuario` no construtor para exibir como titular
+- `ConfiguracoesActivity` agora abre a tela `CartoesActivity` no item "Meus Cartões & Bancos"
+- `CartoesActivity` registrada no `AndroidManifest.xml`
+- Ajuste nas cores dos layouts para usar o padrão do projeto (`brand_green`, `text_gray`, `bg_screen`, etc.)
+
+### Corrigido
+- Layout `activity_cartoes.xml` e `item_cartao.xml` ajustados para evitar erro `Android resource linking failed`
+- Substituído `ImageView` por `TextView` com seta unicode no botão voltar (evita erro de `app:tint`)
+
+---
+
 ## [Não lançado] – Sprint 4 (Persistência de Dados)
 
 ### Adicionado

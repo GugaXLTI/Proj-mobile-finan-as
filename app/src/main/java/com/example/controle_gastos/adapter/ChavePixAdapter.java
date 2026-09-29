@@ -17,21 +17,28 @@ import java.util.List;
 
 public class ChavePixAdapter extends RecyclerView.Adapter<ChavePixAdapter.ViewHolder> {
 
-    // ⭐ Interface para o clique longo (excluir)
     public interface OnItemLongClickListener {
         void onItemLongClick(ChavePix chave);
     }
 
+    public interface OnItemClickListener {
+        void onItemClick(ChavePix chave);
+    }
+
     private List<ChavePix> listaChaves;
     private OnItemLongClickListener longClickListener;
+    private OnItemClickListener clickListener;
 
     public ChavePixAdapter(List<ChavePix> listaChaves) {
         this.listaChaves = listaChaves;
     }
 
-    // ⭐ Setter para o listener (chamado pelo Fragment)
     public void setOnItemLongClickListener(OnItemLongClickListener listener) {
         this.longClickListener = listener;
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.clickListener = listener;
     }
 
     @NonNull
@@ -58,7 +65,14 @@ public class ChavePixAdapter extends RecyclerView.Adapter<ChavePixAdapter.ViewHo
             }
         });
 
-        // ⭐ Clique longo para excluir
+        // ⭐ Clique normal = editar
+        holder.itemView.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onItemClick(chave);
+            }
+        });
+
+        // ⭐ Clique longo = excluir
         holder.itemView.setOnLongClickListener(v -> {
             if (longClickListener != null) {
                 longClickListener.onItemLongClick(chave);

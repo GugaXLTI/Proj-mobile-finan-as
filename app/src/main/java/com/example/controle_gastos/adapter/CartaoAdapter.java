@@ -12,23 +12,32 @@ import java.util.List;
 
 public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder> {
 
-    // ⭐ Interface para o clique longo (excluir)
+    // ⭐ Clique longo = excluir
     public interface OnItemLongClickListener {
         void onItemLongClick(Cartao cartao);
+    }
+
+    // ⭐ Clique normal = editar
+    public interface OnItemClickListener {
+        void onItemClick(Cartao cartao);
     }
 
     private List<Cartao> listaCartoes;
     private String nomeUsuario;
     private OnItemLongClickListener longClickListener;
+    private OnItemClickListener clickListener;
 
     public CartaoAdapter(List<Cartao> listaCartoes, String nomeUsuario) {
         this.listaCartoes = listaCartoes;
         this.nomeUsuario = nomeUsuario;
     }
 
-    // ⭐ Setter para o listener (chamado pelo Fragment)
     public void setOnItemLongClickListener(OnItemLongClickListener listener) {
         this.longClickListener = listener;
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.clickListener = listener;
     }
 
     @NonNull
@@ -45,7 +54,6 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
 
         String tipo = (cartao.tipo != null) ? cartao.tipo : "Crédito";
         holder.tvNomeCartao.setText(cartao.instituicao + " • " + tipo);
-
         holder.tvNumeroCartao.setText("•••• •••• " + cartao.ultimos4Digitos);
         holder.tvTitular.setText(nomeUsuario.toUpperCase());
         holder.tvVencimento.setText("Dia " + cartao.diaVencimento);
@@ -57,7 +65,14 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
             holder.tvBandeira.setText(sigla.toUpperCase());
         }
 
-        // ⭐ Clique longo para excluir
+        // ⭐ Clique normal = editar
+        holder.itemView.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onItemClick(cartao);
+            }
+        });
+
+        // ⭐ Clique longo = excluir
         holder.itemView.setOnLongClickListener(v -> {
             if (longClickListener != null) {
                 longClickListener.onItemLongClick(cartao);

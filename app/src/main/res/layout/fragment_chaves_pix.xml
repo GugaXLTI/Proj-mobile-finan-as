@@ -67,7 +67,19 @@
             android:background="@drawable/bg_button_green"
             android:textColor="@color/black"
             android:textStyle="bold"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="8dp" />
+
+        <!-- ⭐ NOVO: Botão Cancelar Edição (escondido por padrão) -->
+        <Button
+            android:id="@+id/btnCancelarEdicaoPix"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="✕ Cancelar edição"
+            android:background="#2A3A5A"
+            android:textColor="@color/text_white"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"
+            android:visibility="gone" />
 
         <TextView
             android:layout_width="wrap_content"

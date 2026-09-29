@@ -11,7 +11,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog; // ⭐ NOVO
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,7 +33,10 @@ public class CartoesFragment extends Fragment {
 
     private Spinner spinnerTipoCartao, spinnerInstituicao;
     private EditText etApelido, etUltimos4, etDiaVencimento;
-    private Button btnGuardar;
+    private Button btnGuardar, btnCancelarEdicao;
+
+    // ⭐ Variável que guarda o cartão em edição (null = modo cadastro)
+    private Cartao cartaoEmEdicao = null;
 
     @Nullable
     @Override
@@ -52,6 +55,7 @@ public class CartoesFragment extends Fragment {
         etUltimos4 = view.findViewById(R.id.etUltimos4);
         etDiaVencimento = view.findViewById(R.id.etDiaVencimento);
         btnGuardar = view.findViewById(R.id.btnGuardarCartao);
+        btnCancelarEdicao = view.findViewById(R.id.btnCancelarEdicaoCartao);
 
         String[] tipos = {"Crédito", "Débito"};
         ArrayAdapter<String> adapterTipo = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, tipos);
@@ -64,6 +68,7 @@ public class CartoesFragment extends Fragment {
         spinnerInstituicao.setAdapter(spinnerAdapter);
 
         btnGuardar.setOnClickListener(v -> salvarCartao());
+        btnCancelarEdicao.setOnClickListener(v -> cancelarEdicao());
 
         carregarCartoes();
         return view;
@@ -72,33 +77,89 @@ public class CartoesFragment extends Fragment {
     private void salvarCartao() {
         String tipo = spinnerTipoCartao.getSelectedItem().toString();
         String instituicao = spinnerInstituicao.getSelectedItem().toString();
-        String apelido = etApelido.getText().toString();
-        String ultimos4 = etUltimos4.getText().toString();
-        String vencimento = etDiaVencimento.getText().toString();
+        String apelido = etApelido.getText().toString().trim();
+        String ultimos4 = etUltimos4.getText().toString().trim();
+        String vencimento = etDiaVencimento.getText().toString().trim();
 
         if (apelido.isEmpty() || ultimos4.isEmpty() || vencimento.isEmpty()) {
             Toast.makeText(getContext(), "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Cartao cartao = new Cartao();
-        cartao.usuarioId = session.getUserId();
-        cartao.instituicao = instituicao;
-        cartao.apelido = apelido;
-        cartao.ultimos4Digitos = ultimos4;
-        cartao.diaVencimento = vencimento;
-        cartao.tipo = tipo;
+        // ⭐ Se está editando, atualiza; senão, insere novo
+        if (cartaoEmEdicao != null) {
+            cartaoEmEdicao.tipo = tipo;
+            cartaoEmEdicao.instituicao = instituicao;
+            cartaoEmEdicao.apelido = apelido;
+            cartaoEmEdicao.ultimos4Digitos = ultimos4;
+            cartaoEmEdicao.diaVencimento = vencimento;
 
-        new Thread(() -> {
-            db.cartaoDao().inserir(cartao);
-            requireActivity().runOnUiThread(() -> {
-                Toast.makeText(getContext(), "Cartão salvo!", Toast.LENGTH_SHORT).show();
-                etApelido.setText("");
-                etUltimos4.setText("");
-                etDiaVencimento.setText("");
-                carregarCartoes();
-            });
-        }).start();
+            new Thread(() -> {
+                db.cartaoDao().atualizar(cartaoEmEdicao);
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(getContext(), "Cartão atualizado!", Toast.LENGTH_SHORT).show();
+                    cancelarEdicao();
+                    carregarCartoes();
+                });
+            }).start();
+        } else {
+            Cartao cartao = new Cartao();
+            cartao.usuarioId = session.getUserId();
+            cartao.instituicao = instituicao;
+            cartao.apelido = apelido;
+            cartao.ultimos4Digitos = ultimos4;
+            cartao.diaVencimento = vencimento;
+            cartao.tipo = tipo;
+
+            new Thread(() -> {
+                db.cartaoDao().inserir(cartao);
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(getContext(), "Cartão salvo!", Toast.LENGTH_SHORT).show();
+                    limparCampos();
+                    carregarCartoes();
+                });
+            }).start();
+        }
+    }
+
+    // ⭐ Entra no modo edição
+    private void entrarModoEdicao(Cartao cartao) {
+        cartaoEmEdicao = cartao;
+
+        // Preenche os campos
+        String tipo = (cartao.tipo != null) ? cartao.tipo : "Crédito";
+        int posTipo = ((ArrayAdapter<String>) spinnerTipoCartao.getAdapter()).getPosition(tipo);
+        spinnerTipoCartao.setSelection(Math.max(posTipo, 0));
+
+        int posInstituicao = ((ArrayAdapter<String>) spinnerInstituicao.getAdapter()).getPosition(cartao.instituicao);
+        spinnerInstituicao.setSelection(Math.max(posInstituicao, 0));
+
+        etApelido.setText(cartao.apelido);
+        etUltimos4.setText(cartao.ultimos4Digitos);
+        etDiaVencimento.setText(cartao.diaVencimento);
+
+        // Muda o botão principal e mostra o botão de cancelar
+        btnGuardar.setText("✓ Atualizar Cartão");
+        btnCancelarEdicao.setVisibility(View.VISIBLE);
+
+        // Rola para o topo do formulário
+        rvCartoes.smoothScrollToPosition(0);
+    }
+
+    // ⭐ Cancela a edição
+    private void cancelarEdicao() {
+        cartaoEmEdicao = null;
+        limparCampos();
+        btnGuardar.setText("+ Guardar Cartão");
+        btnCancelarEdicao.setVisibility(View.GONE);
+    }
+
+    private void limparCampos() {
+        etApelido.setText("");
+        etUltimos4.setText("");
+        etDiaVencimento.setText("");
+        spinnerTipoCartao.setSelection(0);
+        spinnerInstituicao.setSelection(0);
     }
 
     private void carregarCartoes() {
@@ -107,17 +168,17 @@ public class CartoesFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
                 adapter = new CartaoAdapter(listaCartoes, session.getNome());
 
-                // ⭐ Configura o listener de clique longo
-                adapter.setOnItemLongClickListener(cartao -> {
-                    mostrarDialogoExcluir(cartao);
-                });
+                // ⭐ Clique normal = editar
+                adapter.setOnItemClickListener(cartao -> entrarModoEdicao(cartao));
+
+                // ⭐ Clique longo = excluir
+                adapter.setOnItemLongClickListener(cartao -> mostrarDialogoExcluir(cartao));
 
                 rvCartoes.setAdapter(adapter);
             });
         }).start();
     }
 
-    // ⭐ Diálogo de confirmação para excluir o cartão
     private void mostrarDialogoExcluir(Cartao cartao) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Excluir cartão")
@@ -133,6 +194,10 @@ public class CartoesFragment extends Fragment {
             db.cartaoDao().deletar(cartao);
             requireActivity().runOnUiThread(() -> {
                 Toast.makeText(getContext(), "Cartão excluído!", Toast.LENGTH_SHORT).show();
+                // Se estava editando este cartão, cancela a edição
+                if (cartaoEmEdicao != null && cartaoEmEdicao.id == cartao.id) {
+                    cancelarEdicao();
+                }
                 carregarCartoes();
             });
         }).start();

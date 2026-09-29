@@ -11,6 +11,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog; // ⭐ NOVO
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -52,13 +53,11 @@ public class CartoesFragment extends Fragment {
         etDiaVencimento = view.findViewById(R.id.etDiaVencimento);
         btnGuardar = view.findViewById(R.id.btnGuardarCartao);
 
-        // ⭐ Spinner de tipo
         String[] tipos = {"Crédito", "Débito"};
         ArrayAdapter<String> adapterTipo = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, tipos);
         adapterTipo.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTipoCartao.setAdapter(adapterTipo);
 
-        // Spinner de instituição
         String[] instituicoes = {"Nubank", "Inter", "Itaú", "Bradesco", "Santander", "Caixa"};
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, instituicoes);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -88,7 +87,7 @@ public class CartoesFragment extends Fragment {
         cartao.apelido = apelido;
         cartao.ultimos4Digitos = ultimos4;
         cartao.diaVencimento = vencimento;
-        cartao.tipo = tipo; // ⭐ Salva o tipo
+        cartao.tipo = tipo;
 
         new Thread(() -> {
             db.cartaoDao().inserir(cartao);
@@ -107,7 +106,34 @@ public class CartoesFragment extends Fragment {
             listaCartoes = db.cartaoDao().listarPorUsuario(session.getUserId());
             requireActivity().runOnUiThread(() -> {
                 adapter = new CartaoAdapter(listaCartoes, session.getNome());
+
+                // ⭐ Configura o listener de clique longo
+                adapter.setOnItemLongClickListener(cartao -> {
+                    mostrarDialogoExcluir(cartao);
+                });
+
                 rvCartoes.setAdapter(adapter);
+            });
+        }).start();
+    }
+
+    // ⭐ Diálogo de confirmação para excluir o cartão
+    private void mostrarDialogoExcluir(Cartao cartao) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Excluir cartão")
+                .setMessage("Tem certeza que deseja excluir o cartão " +
+                        cartao.instituicao + " (final " + cartao.ultimos4Digitos + ")?")
+                .setPositiveButton("Sim, excluir", (dialog, which) -> excluirCartao(cartao))
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void excluirCartao(Cartao cartao) {
+        new Thread(() -> {
+            db.cartaoDao().deletar(cartao);
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(getContext(), "Cartão excluído!", Toast.LENGTH_SHORT).show();
+                carregarCartoes();
             });
         }).start();
     }

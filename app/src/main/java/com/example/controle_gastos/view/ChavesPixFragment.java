@@ -11,6 +11,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog; // ⭐ NOVO
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -76,7 +77,7 @@ public class ChavesPixFragment extends Fragment {
         novaChave.tipoChave = tipo;
         novaChave.chave = chave;
         novaChave.nomeFavorecido = nome;
-        novaChave.banco = "Inter"; // Pode ser dinâmico depois
+        novaChave.banco = "Inter";
         novaChave.apelidoDivida = "Dívida";
 
         new Thread(() -> {
@@ -95,7 +96,33 @@ public class ChavesPixFragment extends Fragment {
             listaChaves = db.chavePixDao().listarPorUsuario(session.getUserId());
             requireActivity().runOnUiThread(() -> {
                 adapter = new ChavePixAdapter(listaChaves);
+
+                // ⭐ Configura o listener de clique longo
+                adapter.setOnItemLongClickListener(chave -> {
+                    mostrarDialogoExcluir(chave);
+                });
+
                 rvChaves.setAdapter(adapter);
+            });
+        }).start();
+    }
+
+    // ⭐ Diálogo de confirmação para excluir a chave Pix
+    private void mostrarDialogoExcluir(ChavePix chave) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Excluir chave Pix")
+                .setMessage("Tem certeza que deseja excluir a chave de " + chave.nomeFavorecido + "?")
+                .setPositiveButton("Sim, excluir", (dialog, which) -> excluirChave(chave))
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void excluirChave(ChavePix chave) {
+        new Thread(() -> {
+            db.chavePixDao().deletar(chave);
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(getContext(), "Chave Pix excluída!", Toast.LENGTH_SHORT).show();
+                carregarChaves();
             });
         }).start();
     }

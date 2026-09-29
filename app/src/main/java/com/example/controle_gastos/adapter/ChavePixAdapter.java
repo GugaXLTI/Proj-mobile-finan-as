@@ -17,10 +17,21 @@ import java.util.List;
 
 public class ChavePixAdapter extends RecyclerView.Adapter<ChavePixAdapter.ViewHolder> {
 
+    // ⭐ Interface para o clique longo (excluir)
+    public interface OnItemLongClickListener {
+        void onItemLongClick(ChavePix chave);
+    }
+
     private List<ChavePix> listaChaves;
+    private OnItemLongClickListener longClickListener;
 
     public ChavePixAdapter(List<ChavePix> listaChaves) {
         this.listaChaves = listaChaves;
+    }
+
+    // ⭐ Setter para o listener (chamado pelo Fragment)
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+        this.longClickListener = listener;
     }
 
     @NonNull
@@ -35,13 +46,9 @@ public class ChavePixAdapter extends RecyclerView.Adapter<ChavePixAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChavePix chave = listaChaves.get(position);
 
-        // Exibe apenas a chave em si (Ex: financeiro@mecanicasilva.com.br)
         holder.tvChavePix.setText(chave.chave);
-
-        // Nome do Favorecido (Ex: Mecânica Silva Ltda)
         holder.tvNomeFavorecido.setText(chave.nomeFavorecido);
 
-        // Lógica para copiar a chave ao clicar no botão
         holder.btnCopiarPix.setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) v.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
             ClipData clip = ClipData.newPlainText("Chave Pix", chave.chave);
@@ -49,6 +56,15 @@ public class ChavePixAdapter extends RecyclerView.Adapter<ChavePixAdapter.ViewHo
                 clipboard.setPrimaryClip(clip);
                 Toast.makeText(v.getContext(), "Chave copiada!", Toast.LENGTH_SHORT).show();
             }
+        });
+
+        // ⭐ Clique longo para excluir
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onItemLongClick(chave);
+                return true;
+            }
+            return false;
         });
     }
 

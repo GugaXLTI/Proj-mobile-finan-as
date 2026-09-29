@@ -12,13 +12,23 @@ import java.util.List;
 
 public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder> {
 
-    private List<Cartao> listaCartoes;
-    private String nomeUsuario; // ⭐ NOVO: Nome do titular para exibir no cartão
+    // ⭐ Interface para o clique longo (excluir)
+    public interface OnItemLongClickListener {
+        void onItemLongClick(Cartao cartao);
+    }
 
-    // ⭐ Construtor atualizado para receber o nome do usuário logado
+    private List<Cartao> listaCartoes;
+    private String nomeUsuario;
+    private OnItemLongClickListener longClickListener;
+
     public CartaoAdapter(List<Cartao> listaCartoes, String nomeUsuario) {
         this.listaCartoes = listaCartoes;
         this.nomeUsuario = nomeUsuario;
+    }
+
+    // ⭐ Setter para o listener (chamado pelo Fragment)
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+        this.longClickListener = listener;
     }
 
     @NonNull
@@ -33,7 +43,6 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Cartao cartao = listaCartoes.get(position);
 
-        // Nome do Banco + Tipo (Ex: Nubank • Crédito)
         String tipo = (cartao.tipo != null) ? cartao.tipo : "Crédito";
         holder.tvNomeCartao.setText(cartao.instituicao + " • " + tipo);
 
@@ -47,6 +56,15 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
             String sigla = cartao.instituicao.length() >= 2 ? cartao.instituicao.substring(0, 2) : cartao.instituicao;
             holder.tvBandeira.setText(sigla.toUpperCase());
         }
+
+        // ⭐ Clique longo para excluir
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onItemLongClick(cartao);
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override
@@ -55,7 +73,6 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        // ⭐ IDs atualizados conforme o novo layout item_cartao.xml
         TextView tvNomeCartao, tvBandeira, tvNumeroCartao, tvTitular, tvVencimento;
 
         public ViewHolder(@NonNull View itemView) {

@@ -1,7 +1,7 @@
 # App Gestão de Finanças
 
 ## Status do Projeto
-🚀 **Em desenvolvimento – Sprint 4 (Persistência de Dados) – Room + Autenticação + Categorias + Editar Perfil + Lembretes** 🚀
+🚀 **Em desenvolvimento – Sprint 5 (Cartões, Chaves Pix e Integração) – Room + Autenticação + Categorias + Editar Perfil + Lembretes + Cartões + Chaves Pix** 🚀
 
 - ✅ Splash Screen (com verificação de sessão)
 - ✅ Tela de Login (autenticação no Room)
@@ -11,19 +11,25 @@
 - ✅ Tela de Dívidas
 - ✅ Tela de Cadastro de Dívida
 - ✅ Tela de Configurações (com logout)
-- ✅ **Tela de Categorias (criar, listar e excluir)**
-- ✅ **Tela de Editar Perfil (nome, e-mail, senha e exclusão de conta)**
-- ✅ **Lembretes de Fatura (notificações 3 dias antes do vencimento)**
+- ✅ Tela de Categorias (criar, listar e excluir)
+- ✅ Tela de Editar Perfil (nome, e-mail, senha e exclusão de conta)
+- ✅ Lembretes de Fatura (notificações 3 dias antes do vencimento)
+- ✅ **Tela de Cartões & Chaves Pix (com abas e CRUD completo)**
+- ✅ **Cadastro de Cartão com tipo Crédito/Débito**
+- ✅ **Cadastro de Chave Pix com tipo (CPF, Celular, E-mail, Aleatória)**
+- ✅ **Integração da tela Lançar Dívida com Cartões e Chaves Pix**
+- ✅ **Filtro dinâmico: cartões de crédito, débito ou chaves Pix conforme tipo de dívida**
+- ✅ **Empty State com botão "Cadastrar agora" quando não há itens**
 - ✅ Bottom Navigation funcional
 - ✅ Persistência de dados com Room (SQLite)
 - ✅ Sessão persistente com SharedPreferences
 - ✅ CRUD completo de dívidas no banco
-- ✅ **Isolamento por usuário (cada conta vê apenas seus dados)**
-- ✅ **Editar dívida funcional**
-- ✅ **Confirmação ao excluir dívida**
-- ✅ **Máscara de valor automática (R$ 0,00)**
-- ✅ **Categorias dinâmicas no cadastro de dívida**
-- ✅ **Cálculo automático do valor das parcelas**
+- ✅ Isolamento por usuário (cada conta vê apenas seus dados)
+- ✅ Editar dívida funcional
+- ✅ Confirmação ao excluir dívida
+- ✅ Máscara de valor automática (R$ 0,00)
+- ✅ Categorias dinâmicas no cadastro de dívida
+- ✅ Cálculo automático do valor das parcelas
 - ✅ Validação de e-mail com Regex
 - ✅ Validação de nome e senha
 - ✅ Exibição dinâmica do usuário logado
@@ -42,10 +48,14 @@ O app permite ao usuário:
 - Visualizar o resumo de dívidas e vencimentos na tela de Início
 - Acompanhar gastos por categoria com gráfico de rosca
 - Gerenciar dívidas (cadastrar, editar, pagar, excluir)
-- **Criar e personalizar categorias com cores próprias**
-- **Editar perfil (nome, e-mail, senha) e excluir conta**
-- **Receber notificações 3 dias antes do vencimento das faturas**
-- Manter seus dados isolados por conta (cada usuário vê apenas suas dívidas)
+- Criar e personalizar categorias com cores próprias
+- Editar perfil (nome, e-mail, senha) e excluir conta
+- Receber notificações 3 dias antes do vencimento das faturas
+- **Cadastrar cartões de crédito/débito com bandeira, limite e vencimento**
+- **Cadastrar chaves Pix de credores (CPF/CNPJ, Celular, E-mail ou Aleatória)**
+- **Copiar chave Pix com um toque (área de transferência)**
+- **Selecionar o cartão ou chave Pix ao lançar uma nova dívida**
+- Manter seus dados isolados por conta (cada usuário vê apenas seus dados)
 - Configurar preferências do sistema (biometria, lembretes, backup)
 
 ---
@@ -56,7 +66,7 @@ O app permite ao usuário:
 - **Versionamento:** Git + GitHub
 - **Sistema Operacional:** Android (mínimo API 24 – Android 7.0)
 - **Design:** Figma (protótipos desenvolvidos pela equipe)
-- **Bibliotecas:** Room (SQLite), MPAndroidChart, Material Design Components, RecyclerView, CardView, SharedPreferences, AlarmManager
+- **Bibliotecas:** Room (SQLite), MPAndroidChart, Material Design Components, RecyclerView, CardView, ViewPager2, SharedPreferences, AlarmManager
 
 ---
 
@@ -100,7 +110,14 @@ Cards com título, **valor da parcela** (calculado automaticamente), banco/categ
 - **Pagar** – marca a dívida como paga, cancela o alarme e atualiza os totais
 
 ### Cadastro de Dívida
-Formulário com tipo de dívida, banco, devedor, descrição, **categoria (dinâmica – vem do banco)**, valor (com máscara R$ 0,00), parcelas, data da compra e 1º vencimento. **Calcula automaticamente o valor de cada parcela** e **agenda uma notificação 3 dias antes do vencimento**.
+Formulário redesenhado fiel ao Figma com:
+- **Tipo de dívida** (Cartão de Crédito, Cartão de Débito, Pix, Empréstimo, Fatura, Boleto, Outros)
+- **Seleção visual em chips** dos cartões ou chaves Pix cadastrados (filtrados pelo tipo escolhido)
+- **Empty State** com mensagem e botão "Cadastrar agora" quando não há itens
+- Botão de atalho **"+ Novo"** e link **"+ Nova Categoria"**
+- Campos **Valor/Parcelas** e **Data da Compra/1º Vencimento** lado a lado
+- **Cálculo automático do valor de cada parcela**
+- **Agendamento de notificação** 3 dias antes do vencimento
 
 ### Tela de Categorias
 - Exibe **8 categorias padrão** automaticamente (Alimentação, Transporte, Saúde, Educação, Lazer, Moradia, Assinaturas, Outros)
@@ -108,6 +125,19 @@ Formulário com tipo de dívida, banco, devedor, descrição, **categoria (dinâ
 - **Prévia da tag** atualiza em tempo real enquanto digita
 - **Contagem de dívidas** por categoria
 - **Excluir** categoria com diálogo de confirmação (avisa se há dívidas usando)
+
+### Tela de Cartões & Chaves Pix ⭐ NOVO
+Tela com navegação por abas (TabLayout + ViewPager2):
+
+**Aba "Cartão Crédito/Débito":**
+- Cadastro de cartão com **tipo** (Crédito/Débito), instituição, apelido, últimos 4 dígitos, dia de vencimento
+- Lista de cartões em formato de cartão de crédito (com bandeira, número mascarado, titular e vencimento)
+- Sigla da bandeira gerada automaticamente (ex: Nubank → NU)
+
+**Aba "Chave Pix de Dívida":**
+- Cadastro de chave Pix com **tipo** (CNPJ/CPF, Celular, E-mail, Chave Aleatória), chave, nome do favorecido
+- Lista de chaves com fundo verde (degradê) e badge "Pix Direto"
+- Botão **"Copiar Chave"** que envia para a área de transferência
 
 ### Editar Perfil
 - **Alterar nome completo** (validação: mínimo 2 letras, apenas letras)
@@ -123,7 +153,7 @@ Formulário com tipo de dívida, banco, devedor, descrição, **categoria (dinâ
 - Funciona **offline** (usa AlarmManager local)
 
 ### Configurações
-Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de cartões e categorias, **switch funcional de lembretes**, biometria, limpeza de dados (para testes) e desconexão de sessão.
+Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de **cartões e chaves Pix**, categorias, **switch funcional de lembretes**, biometria, limpeza de dados (para testes) e desconexão de sessão.
 
 ### Bottom Navigation
 Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – com navegação funcional entre as telas.
@@ -159,14 +189,18 @@ app/src/main/java/com/example/controle_gastos/
 │   ├── Divida.java               # Entidade de dívida (@Entity, com usuarioId e valorParcela)
 │   ├── Transacao.java            # Entidade de transação (@Entity, com usuarioId)
 │   ├── Categoria.java            # Entidade de categoria (@Entity, com usuarioId e cor)
+│   ├── Cartao.java               # ⭐ NOVO: Entidade de cartão (@Entity, com tipo Crédito/Débito)
+│   ├── ChavePix.java             # ⭐ NOVO: Entidade de chave Pix (@Entity)
 │   └── CategoriaResumo.java      # Resumo por categoria
 ├── dao/
 │   ├── UsuarioDao.java           # CRUD + login + buscarPorEmail + deletar
 │   ├── DividaDao.java            # CRUD + filtros por usuário
 │   ├── TransacaoDao.java         # CRUD + filtros por usuário
-│   └── CategoriaDao.java         # CRUD + contagem de dívidas por categoria
+│   ├── CategoriaDao.java         # CRUD + contagem de dívidas por categoria
+│   ├── CartaoDao.java            # ⭐ NOVO: CRUD de cartões
+│   └── ChavePixDao.java          # ⭐ NOVO: CRUD de chaves Pix
 ├── database/
-│   ├── AppDatabase.java          # Classe principal do Room (versão 5)
+│   ├── AppDatabase.java          # Classe principal do Room (versão 7)
 │   └── DatabaseClient.java       # Singleton de acesso ao banco
 ├── utils/
 │   ├── SessionManager.java       # Sessão + atualização de nome
@@ -180,7 +214,10 @@ app/src/main/java/com/example/controle_gastos/
 │   ├── LegendaAdapter.java       # Adapter de legendas
 │   ├── DividaAdapter.java        # Adapter de dívidas
 │   ├── VencimentoAdapter.java    # Adapter de vencimentos (tela Início)
-│   └── CategoriaAdapter.java     # Adapter de categorias
+│   ├── CategoriaAdapter.java     # Adapter de categorias
+│   ├── CartaoAdapter.java        # ⭐ NOVO: Adapter de cartões
+│   ├── ChavePixAdapter.java      # ⭐ NOVO: Adapter de chaves Pix
+│   └── ChipSelecaoAdapter.java   # ⭐ NOVO: Adapter de seleção em chips
 └── view/
     ├── SplashActivity.java           # Tela de abertura (2s + verificação de sessão)
     ├── LoginActivity.java            # Tela de Login
@@ -188,10 +225,13 @@ app/src/main/java/com/example/controle_gastos/
     ├── InicioActivity.java           # Tela de Início (Home)
     ├── DashboardActivity.java        # Dashboard/Relatórios
     ├── DividasActivity.java          # Tela de Dívidas
-    ├── CadastroDividaActivity.java   # Cadastro de Dívida (cadastro + edição)
+    ├── CadastroDividaActivity.java   # Cadastro de Dívida (integrado com Cartões/Pix)
     ├── CategoriasActivity.java       # Gerenciamento de Categorias
     ├── EditarPerfilActivity.java     # Edição de Perfil
-    └── ConfiguracoesActivity.java    # Configurações + Logout
+    ├── ConfiguracoesActivity.java    # Configurações + Logout
+    ├── CartoesActivity.java          # ⭐ NOVO: Tela de Cartões & Chaves Pix (com abas)
+    ├── CartoesFragment.java          # ⭐ NOVO: Fragment da aba de Cartões
+    └── ChavesPixFragment.java        # ⭐ NOVO: Fragment da aba de Chaves Pix
 ```
 
 ---
@@ -221,15 +261,18 @@ app/src/main/java/com/example/controle_gastos/
 - `feat: implementa tela de Editar Perfil com validações e exclusão de conta`
 - `feat: implementa lembretes de fatura com notificações`
 - `fix: corrige cálculo do valor das parcelas nas dívidas`
+- `feat: adiciona entidades Cartao e ChavePix, DAOs e atualiza AppDatabase para v6`
+- `feat: implementa tela de Cartões e Chaves Pix com abas e CRUD completo`
+- `feat: adiciona tipo ao Cartão e integra tela de Lançar Dívida com Cartões/Pix`
 
 ---
 
 ## 🚧 Próximos Passos
 
-- Tela de gerenciamento de cartões e chaves Pix
+- `BootReceiver` para reagendar alarmes após reinicialização
+- Tela de gerenciamento de cartões com opção de editar e excluir
 - Exportação de dados (PDF/CSV)
 - Biometria real (BiometricPrompt)
-- `BootReceiver` para reagendar alarmes após reinicialização
 - Simulador de pagamento com QR Code (para depois do MVP)
 - Autenticação em nuvem (Firebase Auth) – opcional para o MVP final
 - Sincronização entre dispositivos – opcional para o MVP final

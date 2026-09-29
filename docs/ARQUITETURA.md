@@ -56,7 +56,7 @@ public class Divida {
 }
 ```
 
-O mesmo foi feito nas entidades `Transacao` e `Categoria`.
+O mesmo foi feito nas entidades `Transacao`, `Categoria`, `Cartao` e `ChavePix`.
 
 ### 2. DAOs atualizados para filtrar por usuário
 
@@ -72,9 +72,15 @@ List<Transacao> listarPorUsuario(int usuarioId);
 
 @Query("SELECT * FROM categorias WHERE usuarioId = :usuarioId ORDER BY nome ASC")
 List<Categoria> listarPorUsuario(int usuarioId);
+
+@Query("SELECT * FROM cartoes WHERE usuarioId = :usuarioId ORDER BY id DESC")
+List<Cartao> listarPorUsuario(int usuarioId);
+
+@Query("SELECT * FROM chaves_pix WHERE usuarioId = :usuarioId ORDER BY id DESC")
+List<ChavePix> listarPorUsuario(int usuarioId);
 ```
 
-### 3. AppDatabase atualizado para versão 5
+### 3. AppDatabase atualizado para versão 7
 
 Evolução das versões:
 - **v1** → App funcional com Room básico
@@ -82,11 +88,14 @@ Evolução das versões:
 - **v3** → Adicionada entidade `Categoria`
 - **v4** → Adicionado campo `cor` em `Categoria`
 - **v5** → Adicionado campo `valorParcela` em `Divida` (correção de bug)
+- **v6** → Adicionadas entidades `Cartao` e `ChavePix`
+- **v7** → Adicionado campo `tipo` em `Cartao` (Crédito/Débito)
 
 ```java
 @Database(
-        entities = {Usuario.class, Divida.class, Transacao.class, Categoria.class},
-        version = 5,
+        entities = {Usuario.class, Divida.class, Transacao.class, Categoria.class,
+                    Cartao.class, ChavePix.class},
+        version = 7,
         exportSchema = false
 )
 ```
@@ -103,6 +112,8 @@ Todas as telas que consultam dados do banco agora usam `session.getUserId()`:
 - `CadastroDividaActivity` → salva com `session.getUserId()` + categorias dinâmicas
 - `CategoriasActivity` → CRUD de categorias filtrado por usuário
 - `EditarPerfilActivity` → busca e atualiza usuário por `session.getUserId()`
+- `CartoesFragment` → lista cartões por usuário
+- `ChavesPixFragment` → lista chaves Pix por usuário
 
 ### 5. Remoção do `DatabaseSeeder` e `DadosMock`
 
@@ -278,7 +289,166 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 
 ---
 
-## 📌 Arquivos modificados nesta correção
+## 💳 Integração de Cartões e Chaves Pix
+
+### Data da implementação
+28/09/2026
+
+### Descrição
+
+Foi implementada a **Tela de Cartões & Chaves Pix**, com navegação por abas e CRUD completo. Além disso, foi feita a **integração dessa tela com o Cadastro de Dívida**, permitindo que o usuário selecione o cartão ou chave Pix ao lançar uma nova dívida.
+
+### Arquitetura da tela
+
+A tela usa **TabLayout + ViewPager2** para alternar entre duas abas:
+
+```
+┌────────────────────────────────────────┐
+│   CartoesActivity (TabLayout + VP2)   │
+├────────────────┬───────────────────────┤
+│ CartoesFragment│ ChavesPixFragment     │
+├────────────────┼───────────────────────┤
+│ Cadastro +     │ Cadastro +            │
+│ Lista de       │ Lista de              │
+│ Cartões        │ Chaves Pix            │
+└────────────────┴───────────────────────┘
+```
+
+Cada Fragment possui:
+- Um **formulário de cadastro** (topo)
+- Uma **lista (RecyclerView)** de itens cadastrados (embaixo)
+
+### Fluxo de integração com Dívida
+
+```
+┌──────────────────────────┐
+│ CadastroDividaActivity   │
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│ Spinner "Tipo de Dívida" │
+└──────────┬───────────────┘
+           │
+   ┌───────┼────────┬──────────────┐
+   ▼       ▼        ▼              ▼
+Crédito  Débito   Pix         Outros
+   │       │        │              │
+   ▼       ▼        ▼              ▼
+CartaoDao  CartaoDao  ChavePixDao  (Genérico)
+(filtro    (filtro    (todas as
+ "Crédito") "Débito")  chaves)
+   │       │        │
+   └───────┴────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│ ChipSelecaoAdapter       │
+│ (lista horizontal)       │
+└──────────┬───────────────┘
+           │
+   ┌───────┴───────┐
+   ▼               ▼
+Tem itens?     Não tem?
+   │               │
+   ▼               ▼
+Mostra chips   Empty State +
+de seleção     botão "Cadastrar agora"
+```
+
+### Componentes criados
+
+#### 1. `model/Cartao.java` (@Entity)
+- Campos: `id`, `usuarioId`, `instituicao`, `apelido`, `ultimos4Digitos`, `diaVencimento`, `limite`, `bandeira`, `tipo`
+- Campo `tipo` diferencia **Crédito** de **Débito** (usado no filtro da tela de dívida)
+
+#### 2. `model/ChavePix.java` (@Entity)
+- Campos: `id`, `usuarioId`, `tipoChave`, `chave`, `nomeFavorecido`, `banco`, `apelidoDivida`
+
+#### 3. `dao/CartaoDao.java` e `dao/ChavePixDao.java`
+- CRUD completo com filtros por `usuarioId`
+
+#### 4. `ChipSelecaoAdapter.java`
+- Adapter de lista horizontal que renderiza os chips de seleção
+- Mantém o estado da posição selecionada
+- Expõe o item selecionado via `getItemSelecionado()`
+
+#### 5. `CartoesActivity.java`
+- Orquestra o `TabLayoutMediator` entre as abas
+- Botão "Voltar" fecha a Activity
+
+#### 6. `CartoesFragment.java` e `ChavesPixFragment.java`
+- Cada um gerencia seu próprio formulário e lista
+- Salvam no Room em threads separadas
+- Recarregam a lista automaticamente após cadastro
+
+### Fluxo do usuário
+
+| Ação | Comportamento |
+|------|---------------|
+| Usuário abre Configurações → Meus Cartões & Bancos | Vai para `CartoesActivity` |
+| Cadastra um cartão de Crédito | Salvo no Room com `tipo = "Crédito"` |
+| Cadastra um cartão de Débito | Salvo no Room com `tipo = "Débito"` |
+| Cadastra uma chave Pix | Salvo no Room com `tipoChave` e `chave` |
+| Volta para Lançar Dívida e escolhe "Cartão de Crédito" | Mostra apenas cartões com `tipo = "Crédito"` |
+| Escolhe "Pix" | Mostra apenas as chaves Pix cadastradas |
+| Não tem nenhum item do tipo selecionado | Mostra Empty State + botão "Cadastrar agora" |
+
+### Arquivos criados nesta implementação
+
+| Arquivo | Tipo |
+|---------|------|
+| `model/Cartao.java` | Entidade |
+| `model/ChavePix.java` | Entidade |
+| `dao/CartaoDao.java` | DAO |
+| `dao/ChavePixDao.java` | DAO |
+| `view/CartoesActivity.java` | Activity |
+| `view/CartoesFragment.java` | Fragment |
+| `view/ChavesPixFragment.java` | Fragment |
+| `adapter/CartaoAdapter.java` | Adapter |
+| `adapter/ChavePixAdapter.java` | Adapter |
+| `adapter/ChipSelecaoAdapter.java` | Adapter |
+| `layout/activity_cartoes.xml` | Layout |
+| `layout/item_cartao.xml` | Layout |
+| `layout/item_chave_pix.xml` | Layout |
+| `layout/fragment_cartoes.xml` | Layout |
+| `layout/fragment_chaves_pix.xml` | Layout |
+| `layout/item_chip_selecao.xml` | Layout |
+| `drawable/bg_form_field.xml` | Drawable |
+| `drawable/bg_button_green.xml` | Drawable |
+| `drawable/bg_card_pix.xml` | Drawable |
+
+### Arquivos modificados nesta implementação
+
+| Arquivo | Mudança |
+|---------|---------|
+| `database/AppDatabase.java` | Versão 7 + entidades `Cartao` e `ChavePix` |
+| `view/CadastroDividaActivity.java` | Integração com Cartões/Pix + filtro por tipo |
+| `view/ConfiguracoesActivity.java` | Abre `CartoesActivity` no item "Meus Cartões & Bancos" |
+| `view/CartoesFragment.java` | Adiciona seletor de tipo (Crédito/Débito) |
+| `adapter/CartaoAdapter.java` | Recebe `nomeUsuario` + exibe `tipo` |
+| `layout/fragment_cartoes.xml` | Adiciona `spinnerTipoCartao` |
+| `layout/activity_cadastro_divida.xml` | Redesign fiel ao Figma |
+| `AndroidManifest.xml` | Registra `CartoesActivity` |
+
+### Como testar a integração
+
+1. Faça login no app.
+2. Vá em **Configurações → Meus Cartões & Bancos**.
+3. Cadastre um cartão de **Crédito** (ex: Nubank 4892).
+4. Cadastre um cartão de **Débito** (ex: Itaú 1234).
+5. Mude para a aba **Chave Pix de Dívida** e cadastre uma chave (ex: CNPJ).
+6. Volte para **Lançar Dívida**.
+7. Escolha o tipo **"Cartão de Crédito"** → deve mostrar **apenas o Nubank**.
+8. Escolha **"Cartão de Débito"** → deve mostrar **apenas o Itaú**.
+9. Escolha **"Pix"** → deve mostrar a chave cadastrada.
+10. Desinstale e reinstale o app → faça login → escolha **"Cartão de Crédito"** sem ter cadastrado nada → deve mostrar a **Empty State** com botão "Cadastrar agora".
+
+Se todos esses passos funcionarem, a integração está correta. ✅
+
+---
+
+## 📌 Arquivos modificados na Sprint 4
 
 | Arquivo | Mudança |
 |---------|---------|
@@ -340,3 +510,5 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 - Expansão para Categoria: 26/09/2026
 - Implementação dos Lembretes: 27/09/2026
 - Correção do Cálculo de Parcelas: 27/09/2026
+- Implementação de Cartões e Chaves Pix: 28/09/2026
+- Integração de Cartões/Pix com Lançar Dívida: 28/09/2026

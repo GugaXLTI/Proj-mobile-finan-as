@@ -20,9 +20,9 @@ import com.example.controle_gastos.model.ChavePix;    // ⭐ NOVO
 @Database(
         entities = {
                 Usuario.class, Divida.class, Transacao.class, Categoria.class,
-                Cartao.class, ChavePix.class // ⭐ NOVAS ENTIDADES
+                Cartao.class, ChavePix.class
         },
-        version = 6, // ⭐ MUDOU DE 5 PARA 6
+        version = 7, // ⭐ MUDOU DE 6 PARA 7 (campo tipo em Cartao)
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {

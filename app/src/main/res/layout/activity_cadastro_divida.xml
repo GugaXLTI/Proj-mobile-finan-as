@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/fundo_escuro"
+    android:background="@color/bg_screen"
     android:fillViewport="true">
 
     <LinearLayout
@@ -22,7 +22,6 @@
             android:textColor="@color/text_white"
             android:layout_marginBottom="4dp" />
 
-        <!-- Subtítulo -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -37,45 +36,100 @@
             android:layout_height="wrap_content"
             android:text="Tipo de Dívida"
             android:textColor="@color/text_gray"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:layout_marginBottom="8dp" />
 
         <Spinner
             android:id="@+id/spinnerTipoDivida"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:padding="12dp"
-            android:textColor="@color/text_white"
+            android:background="@drawable/bg_form_field"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:popupBackground="@color/card_bg"
             android:layout_marginBottom="16dp" />
 
-        <!-- Selecione o Cartão/Banco -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Selecione o Cartão / Banco"
-            android:textColor="@color/text_gray"
-            android:textSize="14sp"
-            android:layout_marginBottom="8dp" />
-
-        <Spinner
-            android:id="@+id/spinnerBanco"
+        <!-- Container de Seleção (Cartão/Pix) -->
+        <LinearLayout
+            android:id="@+id/containerSelecao"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:padding="12dp"
-            android:textColor="@color/text_white"
-            android:popupBackground="@color/card_bg"
-            android:layout_marginBottom="16dp" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
 
-        <!-- Devedor / Responsável (LABEL ANTES DO CAMPO) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:id="@+id/tvTituloSelecao"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Selecione o Cartão / Banco"
+                    android:textColor="@color/text_gray"
+                    android:textSize="13sp" />
+                <TextView
+                    android:id="@+id/btnNovoItem"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+ Novo"
+                    android:textColor="@color/brand_green"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:padding="4dp" />
+            </LinearLayout>
+
+            <!-- Lista horizontal de chips -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvSelecao"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:clipToPadding="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+            <!-- Empty State (some quando tem itens) -->
+            <LinearLayout
+                android:id="@+id/containerVazio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="24dp"
+                android:visibility="gone"
+                android:background="@drawable/bg_form_field">
+
+                <TextView
+                    android:id="@+id/tvMensagemVazio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nenhum cartão cadastrado"
+                    android:textColor="@color/text_gray"
+                    android:textSize="13sp"
+                    android:gravity="center"
+                    android:layout_marginBottom="12dp" />
+
+                <Button
+                    android:id="@+id/btnCadastrarAgora"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cadastrar agora"
+                    android:background="@drawable/bg_button_green"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:paddingHorizontal="24dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Devedor -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Devedor / Responsável"
             android:textColor="@color/text_gray"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:layout_marginBottom="8dp" />
 
         <EditText
@@ -83,149 +137,198 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_campo_login"
+            android:background="@drawable/bg_form_field"
             android:hint="Ex: Israel (Próprio)"
-            android:padding="12dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:textColor="@color/text_white"
             android:textColorHint="@color/text_hint" />
 
-        <!-- Descrição da Despesa -->
+        <!-- Descrição -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Descrição da Despesa"
             android:textColor="@color/text_gray"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:layout_marginBottom="8dp" />
 
         <EditText
             android:id="@+id/editDescricao"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:hint="Ex: Compra Mercado, Fatura Cartão, Empréstimo"
+            android:background="@drawable/bg_form_field"
+            android:hint="Ex: Compra Mercado, Fatura Cartão"
             android:textColor="@color/text_white"
             android:textColorHint="@color/text_hint"
-            android:padding="12dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:layout_marginBottom="16dp" />
 
-        <!-- Categoria -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Categoria com "+ Nova Categoria" à direita -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Categoria"
-            android:textColor="@color/text_gray"
-            android:textSize="14sp"
-            android:layout_marginBottom="8dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Categoria"
+                android:textColor="@color/text_gray"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/btnNovaCategoria"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+ Nova Categoria"
+                android:textColor="@color/brand_green"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:padding="4dp" />
+        </LinearLayout>
 
         <Spinner
             android:id="@+id/spinnerCategoria"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:padding="12dp"
-            android:textColor="@color/text_white"
+            android:background="@drawable/bg_form_field"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:popupBackground="@color/card_bg"
             android:layout_marginBottom="16dp" />
 
-        <!-- Valor Total -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Valor Total (R$)"
-            android:textColor="@color/text_gray"
-            android:textSize="14sp"
-            android:layout_marginBottom="8dp" />
-
-        <EditText
-            android:id="@+id/editValor"
+        <!-- Valor Total + Parcelas (lado a lado) -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:hint="0,00"
-            android:inputType="number"
-            android:textColor="@color/text_white"
-            android:textColorHint="@color/text_hint"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Parcelas -->
-        <TextView
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Parcelas"
-            android:textColor="@color/text_gray"
-            android:textSize="14sp"
-            android:layout_marginBottom="8dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
 
-        <Spinner
-            android:id="@+id/spinnerParcelas"
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Valor Total (R$)"
+                    android:textColor="@color/text_gray"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="8dp" />
+                <EditText
+                    android:id="@+id/editValor"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_form_field"
+                    android:hint="R$ 0,00"
+                    android:inputType="number"
+                    android:textColor="@color/brand_green"
+                    android:textColorHint="@color/text_hint"
+                    android:textStyle="bold"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Parcelas"
+                    android:textColor="@color/text_gray"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="8dp" />
+                <Spinner
+                    android:id="@+id/spinnerParcelas"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_form_field"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:popupBackground="@color/card_bg" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Data Compra + Vencimento (lado a lado) -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:padding="12dp"
-            android:textColor="@color/text_white"
-            android:popupBackground="@color/card_bg"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Data da Compra -->
-        <TextView
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Data da Compra"
-            android:textColor="@color/text_gray"
-            android:textSize="14sp"
-            android:layout_marginBottom="8dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
 
-        <EditText
-            android:id="@+id/editDataCompra"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:hint="06/09/2026"
-            android:inputType="date"
-            android:textColor="@color/text_white"
-            android:textColorHint="@color/text_hint"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"
-            android:focusable="false"
-            android:clickable="true" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Data da Compra"
+                    android:textColor="@color/text_gray"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="8dp" />
+                <EditText
+                    android:id="@+id/editDataCompra"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_form_field"
+                    android:hint="06/09/2026"
+                    android:textColor="@color/text_white"
+                    android:textColorHint="@color/text_hint"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:focusable="false"
+                    android:clickable="true" />
+            </LinearLayout>
 
-        <!-- 1º Vencimento -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="1º Vencimento"
-            android:textColor="@color/text_gray"
-            android:textSize="14sp"
-            android:layout_marginBottom="8dp" />
-
-        <EditText
-            android:id="@+id/editVencimento"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:hint="10/10/2026"
-            android:inputType="date"
-            android:textColor="@color/text_white"
-            android:textColorHint="@color/text_hint"
-            android:padding="12dp"
-            android:layout_marginBottom="24dp"
-            android:focusable="false"
-            android:clickable="true" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1º Vencimento"
+                    android:textColor="@color/text_gray"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="8dp" />
+                <EditText
+                    android:id="@+id/editVencimento"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_form_field"
+                    android:hint="10/10/2026"
+                    android:textColor="@color/text_white"
+                    android:textColorHint="@color/text_hint"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:focusable="false"
+                    android:clickable="true" />
+            </LinearLayout>
+        </LinearLayout>
 
         <!-- Botão Salvar -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSalvarDivida"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
+            android:layout_height="56dp"
             android:backgroundTint="@color/brand_green"
             android:text="Salvar Lançamento"
             android:textAllCaps="false"
             android:textColor="#000000"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:cornerRadius="8dp" />
+            app:cornerRadius="12dp" />
 
     </LinearLayout>
 </ScrollView>

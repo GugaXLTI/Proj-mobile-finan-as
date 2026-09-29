@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bg_screen"
     android:padding="16dp">
 
     <LinearLayout
@@ -10,79 +10,123 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- FORMULÁRIO DE CADASTRO -->
+        <!-- ⭐ NOVO: Tipo do Cartão (Crédito/Débito) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tipo do Cartão"
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
+        <Spinner
+            android:id="@+id/spinnerTipoCartao"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_form_field"
+            android:layout_marginBottom="16dp" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Instituição Bancária"
-            android:textColor="@color/text_gray" />
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
         <Spinner
             android:id="@+id/spinnerInstituicao"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:layout_marginBottom="12dp" />
+            android:background="@drawable/bg_form_field"
+            android:layout_marginBottom="16dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Apelido do Cartão"
-            android:textColor="@color/text_gray" />
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
         <EditText
             android:id="@+id/etApelidoCartao"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_form_field"
+            android:layout_marginBottom="16dp"
             android:hint="Ex: Cartão Principal"
             android:textColorHint="@color/text_hint"
-            android:textColor="@color/text_white" />
+            android:textColor="@color/text_white"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
-            <EditText
-                android:id="@+id/etUltimos4"
+            android:layout_marginBottom="24dp">
+            <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@drawable/bg_campo_login"
-                android:hint="Últimos 4 dígitos"
-                android:textColorHint="@color/text_hint"
-                android:textColor="@color/text_white"
-                android:inputType="number"
-                android:maxLength="4" />
-            <EditText
-                android:id="@+id/etDiaVencimento"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Últimos 4 Dígitos"
+                    android:textColor="@color/text_gray"
+                    android:textSize="12sp" />
+                <EditText
+                    android:id="@+id/etUltimos4"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_form_field"
+                    android:hint="4892"
+                    android:textColorHint="@color/text_hint"
+                    android:textColor="@color/text_white"
+                    android:inputType="number"
+                    android:maxLength="4"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
+            </LinearLayout>
+            <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_campo_login"
-                android:hint="Dia Venc."
-                android:textColorHint="@color/text_hint"
-                android:textColor="@color/text_white"
-                android:inputType="number" />
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dia Vencimento"
+                    android:textColor="@color/text_gray"
+                    android:textSize="12sp" />
+                <EditText
+                    android:id="@+id/etDiaVencimento"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_form_field"
+                    android:hint="15"
+                    android:textColorHint="@color/text_hint"
+                    android:textColor="@color/text_white"
+                    android:inputType="number"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
+            </LinearLayout>
         </LinearLayout>
 
         <Button
             android:id="@+id/btnGuardarCartao"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="+ Guardar Cartão de Crédito"
-            android:backgroundTint="@color/brand_green"
+            android:layout_height="56dp"
+            android:text="+ Guardar Cartão"
+            android:background="@drawable/bg_button_green"
             android:textColor="@color/black"
+            android:textStyle="bold"
             android:layout_marginBottom="24dp" />
 
-        <!-- LISTA DE CARTÕES -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="CARTÕES ATIVOS"
             android:textColor="@color/text_gray"
             android:textSize="12sp"
+            android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
         <androidx.recyclerview.widget.RecyclerView

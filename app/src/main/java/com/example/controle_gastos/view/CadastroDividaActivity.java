@@ -1,17 +1,27 @@
 package com.example.controle_gastos.view;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
+import com.example.controle_gastos.adapter.ChipSelecaoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
+import com.example.controle_gastos.model.Cartao;
 import com.example.controle_gastos.model.Categoria;
+import com.example.controle_gastos.model.ChavePix;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.CategoriaSeeder;
@@ -25,17 +35,24 @@ import java.util.Locale;
 
 public class CadastroDividaActivity extends AppCompatActivity {
 
-    private Spinner spinnerTipoDivida, spinnerBanco, spinnerCategoria, spinnerParcelas;
+    private Spinner spinnerTipoDivida, spinnerCategoria, spinnerParcelas;
     private EditText editDevedor, editDescricao, editValor, editDataCompra, editVencimento;
     private MaterialButton btnSalvar;
+    private RecyclerView rvSelecao;
+    private LinearLayout containerVazio;
+    private TextView btnNovoItem, btnNovaCategoria, tvTituloSelecao;
+    private Button btnCadastrarAgora;
 
     private AppDatabase db;
     private SessionManager session;
+    private ChipSelecaoAdapter chipAdapter;
 
     private int dividaId = -1;
     private Divida dividaEmEdicao = null;
-
     private List<Categoria> categoriasDoBanco = new ArrayList<>();
+
+    // Lista de itens para o chip: [sigla, nome, valorReal]
+    private List<String[]> itensSelecao = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,8 +64,8 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         CategoriaSeeder.popularSeVazio(this, session.getUserId());
 
+        // Bind views
         spinnerTipoDivida = findViewById(R.id.spinnerTipoDivida);
-        spinnerBanco = findViewById(R.id.spinnerBanco);
         spinnerCategoria = findViewById(R.id.spinnerCategoria);
         spinnerParcelas = findViewById(R.id.spinnerParcelas);
         editDevedor = findViewById(R.id.editDevedor);
@@ -57,12 +74,51 @@ public class CadastroDividaActivity extends AppCompatActivity {
         editDataCompra = findViewById(R.id.editDataCompra);
         editVencimento = findViewById(R.id.editVencimento);
         btnSalvar = findViewById(R.id.btnSalvarDivida);
+        rvSelecao = findViewById(R.id.rvSelecao);
+        containerVazio = findViewById(R.id.containerVazio);
+        btnNovoItem = findViewById(R.id.btnNovoItem);
+        btnNovaCategoria = findViewById(R.id.btnNovaCategoria);
+        tvTituloSelecao = findViewById(R.id.tvTituloSelecao);
+        btnCadastrarAgora = findViewById(R.id.btnCadastrarAgora);
+
+        // Configurar RecyclerView horizontal
+        rvSelecao.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
         configurarSpinners();
         configurarDatePicker(editDataCompra);
         configurarDatePicker(editVencimento);
         configurarMascaraValor(editValor);
 
+        // Ações dos botões de atalho
+        btnNovaCategoria.setOnClickListener(v -> {
+            startActivity(new Intent(this, CategoriasActivity.class));
+        });
+
+        btnNovoItem.setOnClickListener(v -> {
+            String tipo = spinnerTipoDivida.getSelectedItem().toString();
+            if (tipo.equals("Pix")) {
+                startActivity(new Intent(this, CartoesActivity.class));
+            } else {
+                startActivity(new Intent(this, CartoesActivity.class));
+            }
+        });
+
+        btnCadastrarAgora.setOnClickListener(v -> {
+            startActivity(new Intent(this, CartoesActivity.class));
+        });
+
+        // Listener do tipo de dívida para atualizar os chips
+        spinnerTipoDivida.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                atualizarSelecao();
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) { }
+        });
+
+        // Modo edição
         if (getIntent().hasExtra("divida_id")) {
             dividaId = getIntent().getIntExtra("divida_id", -1);
             if (dividaId != -1) {
@@ -77,60 +133,76 @@ public class CadastroDividaActivity extends AppCompatActivity {
         btnSalvar.setOnClickListener(v -> salvarDivida());
     }
 
-    private void preencherCampos(Divida d) {
-        editDevedor.setText(d.getBanco());
-        editDescricao.setText(d.getTitulo());
+    /**
+     * Atualiza a lista de chips conforme o tipo de dívida selecionado.
+     */
+    private void atualizarSelecao() {
+        String tipo = spinnerTipoDivida.getSelectedItem().toString();
+        itensSelecao.clear();
 
-        String valorFormatado = String.format(Locale.getDefault(), "R$ %.2f", d.getValorTotal());
-        editValor.setText(valorFormatado);
-        editValor.setSelection(valorFormatado.length());
-
-        editVencimento.setText(d.getVencimento());
-
-        for (int i = 0; i < spinnerBanco.getAdapter().getCount(); i++) {
-            if (spinnerBanco.getAdapter().getItem(i).toString().equals(d.getBanco())) {
-                spinnerBanco.setSelection(i);
-                break;
+        if (tipo.equals("Cartão de Crédito") || tipo.equals("Cartão de Débito")) {
+            String tipoCartaoFiltro = tipo.equals("Cartão de Crédito") ? "Crédito" : "Débito";
+            tvTituloSelecao.setText("Selecione o Cartão");
+            List<Cartao> cartoes = db.cartaoDao().listarPorUsuario(session.getUserId());
+            for (Cartao c : cartoes) {
+                if (c.tipo != null && c.tipo.equals(tipoCartaoFiltro)) {
+                    String sigla = c.instituicao.length() >= 2 ? c.instituicao.substring(0, 2).toUpperCase() : c.instituicao;
+                    itensSelecao.add(new String[]{sigla, c.instituicao + " " + c.ultimos4Digitos, c.instituicao});
+                }
             }
+        } else if (tipo.equals("Pix")) {
+            tvTituloSelecao.setText("Selecione a Chave Pix");
+            List<ChavePix> chaves = db.chavePixDao().listarPorUsuario(session.getUserId());
+            for (ChavePix p : chaves) {
+                String sigla = p.nomeFavorecido.length() >= 2 ? p.nomeFavorecido.substring(0, 2).toUpperCase() : "PX";
+                itensSelecao.add(new String[]{sigla, p.nomeFavorecido, p.chave});
+            }
+        } else {
+            // Boleto, Empréstimo, Outros - não usa chips
+            tvTituloSelecao.setText("Selecione o Banco / Origem");
+            itensSelecao.add(new String[]{"GE", "Genérico", "Genérico"});
         }
 
-        for (int i = 0; i < categoriasDoBanco.size(); i++) {
-            if (categoriasDoBanco.get(i).getNome().equals(d.getCategoria())) {
-                spinnerCategoria.setSelection(i);
-                break;
-            }
-        }
+        // Mostrar empty state ou lista
+        if (itensSelecao.isEmpty()) {
+            rvSelecao.setVisibility(View.GONE);
+            containerVazio.setVisibility(View.VISIBLE);
 
-        for (int i = 0; i < spinnerParcelas.getAdapter().getCount(); i++) {
-            if (spinnerParcelas.getAdapter().getItem(i).toString().equals(d.getParcela())) {
-                spinnerParcelas.setSelection(i);
-                break;
+            String msg;
+            if (tipo.equals("Pix")) {
+                msg = "Nenhuma chave Pix cadastrada.\nCadastre uma chave para continuar.";
+            } else if (tipo.equals("Cartão de Crédito")) {
+                msg = "Nenhum cartão de crédito cadastrado.\nCadastre um cartão para continuar.";
+            } else if (tipo.equals("Cartão de Débito")) {
+                msg = "Nenhum cartão de débito cadastrado.\nCadastre um cartão para continuar.";
+            } else {
+                msg = "Nenhum banco cadastrado.";
             }
+            ((TextView) findViewById(R.id.tvMensagemVazio)).setText(msg);
+            btnCadastrarAgora.setVisibility(View.VISIBLE);
+        } else {
+            rvSelecao.setVisibility(View.VISIBLE);
+            containerVazio.setVisibility(View.GONE);
+            chipAdapter = new ChipSelecaoAdapter(itensSelecao, position -> { });
+            rvSelecao.setAdapter(chipAdapter);
         }
     }
 
     private void configurarMascaraValor(EditText editText) {
         editText.addTextChangedListener(new TextWatcher() {
             private boolean isUpdating = false;
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) { }
-
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
             @Override
             public void afterTextChanged(Editable s) {
                 if (isUpdating) return;
                 isUpdating = true;
-
                 String text = s.toString().replaceAll("[^0-9]", "");
                 if (text.isEmpty()) {
                     editText.setText("");
                     isUpdating = false;
                     return;
                 }
-
                 double valor = Double.parseDouble(text) / 100.0;
                 String formatted = String.format(Locale.getDefault(), "R$ %.2f", valor);
                 editText.setText(formatted);
@@ -141,15 +213,10 @@ public class CadastroDividaActivity extends AppCompatActivity {
     }
 
     private void configurarSpinners() {
-        String[] tipos = {"Cartão de Crédito", "Empréstimo", "Fatura", "Boleto", "Outros"};
+        String[] tipos = {"Cartão de Crédito", "Cartão de Débito", "Pix", "Empréstimo", "Fatura", "Boleto", "Outros"};
         ArrayAdapter<String> adapterTipo = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, tipos);
         adapterTipo.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTipoDivida.setAdapter(adapterTipo);
-
-        String[] bancos = {"Nubank", "Itaú", "Banco Inter", "Bradesco", "Santander"};
-        ArrayAdapter<String> adapterBanco = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, bancos);
-        adapterBanco.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerBanco.setAdapter(adapterBanco);
 
         carregarCategoriasDoBanco();
 
@@ -161,22 +228,15 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
     private void carregarCategoriasDoBanco() {
         categoriasDoBanco = db.categoriaDao().listarPorUsuario(session.getUserId());
-
         List<String> nomesCategorias = new ArrayList<>();
         for (Categoria c : categoriasDoBanco) {
             nomesCategorias.add(c.getNome());
         }
-
         if (nomesCategorias.isEmpty()) {
             nomesCategorias.add("Nenhuma categoria cadastrada");
-            Toast.makeText(this, "Cadastre uma categoria primeiro em Configurações!", Toast.LENGTH_LONG).show();
         }
-
         ArrayAdapter<String> adapterCategoria = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                nomesCategorias
-        );
+                this, android.R.layout.simple_spinner_item, nomesCategorias);
         adapterCategoria.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategoria.setAdapter(adapterCategoria);
     }
@@ -184,23 +244,38 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private void configurarDatePicker(EditText editText) {
         editText.setOnClickListener(v -> {
             final Calendar calendar = Calendar.getInstance();
-            int year = calendar.get(Calendar.YEAR);
-            int month = calendar.get(Calendar.MONTH);
-            int day = calendar.get(Calendar.DAY_OF_MONTH);
-
-            DatePickerDialog datePicker = new DatePickerDialog(this,
-                    (view, year1, month1, dayOfMonth) -> {
-                        String data = String.format(Locale.getDefault(), "%02d/%02d/%04d", dayOfMonth, month1 + 1, year1);
+            new DatePickerDialog(this,
+                    (view, year, month, day) -> {
+                        String data = String.format(Locale.getDefault(), "%02d/%02d/%04d", day, month + 1, year);
                         editText.setText(data);
-                    }, year, month, day);
-            datePicker.show();
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)).show();
         });
     }
 
-    /**
-     * ⭐ Extrai o número de parcelas de uma string como "10x" ou "1x (À vista)".
-     * Retorna 1 se não conseguir extrair.
-     */
+    private void preencherCampos(Divida d) {
+        editDescricao.setText(d.getTitulo());
+        String valorFormatado = String.format(Locale.getDefault(), "R$ %.2f", d.getValorTotal());
+        editValor.setText(valorFormatado);
+        editValor.setSelection(valorFormatado.length());
+        editVencimento.setText(d.getVencimento());
+
+        for (int i = 0; i < categoriasDoBanco.size(); i++) {
+            if (categoriasDoBanco.get(i).getNome().equals(d.getCategoria())) {
+                spinnerCategoria.setSelection(i);
+                break;
+            }
+        }
+        for (int i = 0; i < spinnerParcelas.getAdapter().getCount(); i++) {
+            if (spinnerParcelas.getAdapter().getItem(i).toString().equals(d.getParcela())) {
+                spinnerParcelas.setSelection(i);
+                break;
+            }
+        }
+    }
+
     private int extrairNumeroParcelas(String parcela) {
         try {
             String numeros = parcela.replaceAll("[^0-9]", "");
@@ -218,17 +293,23 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        String banco = spinnerBanco.getSelectedItem().toString();
+        String tipoDivida = spinnerTipoDivida.getSelectedItem().toString();
         String categoria = spinnerCategoria.getSelectedItem().toString();
         String parcelas = spinnerParcelas.getSelectedItem().toString();
         String devedor = editDevedor.getText().toString().trim();
         String descricao = editDescricao.getText().toString().trim();
         String valorStr = editValor.getText().toString().trim()
-                .replace("R$ ", "")
-                .replace(".", "")
-                .replace(",", ".");
+                .replace("R$ ", "").replace(".", "").replace(",", ".");
         String dataCompra = editDataCompra.getText().toString().trim();
         String vencimento = editVencimento.getText().toString().trim();
+
+        // Pega o item selecionado no chip
+        String bancoSelecionado;
+        if (chipAdapter != null && chipAdapter.getItemSelecionado() != null) {
+            bancoSelecionado = chipAdapter.getItemSelecionado()[2];
+        } else {
+            bancoSelecionado = tipoDivida;
+        }
 
         if (devedor.isEmpty() || descricao.isEmpty() || valorStr.isEmpty() || vencimento.isEmpty()) {
             Toast.makeText(this, "Preencha todos os campos obrigatórios!", Toast.LENGTH_SHORT).show();
@@ -248,54 +329,36 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        // ⭐ Calcula o valor da parcela
         int numParcelas = extrairNumeroParcelas(parcelas);
         double valorParcela = valor / numParcelas;
 
         if (dividaEmEdicao != null) {
-            // Modo edição: cancela o alarme antigo
             AlarmeHelper.cancelar(this, dividaEmEdicao);
-
             dividaEmEdicao.titulo = descricao;
             dividaEmEdicao.valorTotal = valor;
             dividaEmEdicao.valorParcela = valorParcela;
-            dividaEmEdicao.banco = banco;
+            dividaEmEdicao.banco = bancoSelecionado;
             dividaEmEdicao.categoria = categoria;
             dividaEmEdicao.parcela = parcelas;
             dividaEmEdicao.vencimento = vencimento;
-
             db.dividaDao().atualizar(dividaEmEdicao);
-
             AlarmeHelper.agendar(this, dividaEmEdicao);
-
             Toast.makeText(this, "Dívida atualizada com sucesso!", Toast.LENGTH_SHORT).show();
         } else {
             Divida novaDivida = new Divida(
-                    session.getUserId(),
-                    descricao,
-                    valor,
-                    valorParcela, // ⭐ Passa o valor da parcela
-                    0.0,
-                    banco,
-                    categoria,
-                    parcelas,
-                    vencimento,
-                    false
+                    session.getUserId(), descricao, valor, valorParcela, 0.0,
+                    bancoSelecionado, categoria, parcelas, vencimento, false
             );
-
             long idGerado = db.dividaDao().inserir(novaDivida);
-
             if (idGerado > 0) {
                 novaDivida.id = (int) idGerado;
                 AlarmeHelper.agendar(this, novaDivida);
-
                 Toast.makeText(this, "Dívida cadastrada com sucesso!", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Erro ao cadastrar. Tente novamente.", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
-
         finish();
     }
 }

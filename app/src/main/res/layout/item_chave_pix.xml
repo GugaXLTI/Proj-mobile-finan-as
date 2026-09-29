@@ -4,47 +4,90 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@color/card_bg"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    android:background="@drawable/bg_card_pix">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:padding="20dp">
 
+        <!-- Topo: Badge "Pix Direto" -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginBottom="16dp">
             <TextView
-                android:id="@+id/tvNomeFavorecido"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Mecânica Silva (Peças Carro)"
-                android:textColor="@color/text_white"
+                android:text="● Pix Direto"
+                android:textColor="#00C980"
+                android:textSize="12sp"
+                android:background="#1A3D35"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvChavePix"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="CNPJ: 42.123... • Banco Inter"
-                android:textColor="@color/text_gray"
-                android:textSize="12sp" />
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCopiarPix"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        <!-- Meio: Chave Pix -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Copiar"
-            android:textColor="@color/brand_green"
-            app:strokeColor="@color/brand_green" />
+            android:text="CHAVE PRINCIPAL DE QUITAÇÃO"
+            android:textColor="@color/text_gray"
+            android:textSize="10sp"
+            android:layout_marginBottom="4dp" />
+        <TextView
+            android:id="@+id/tvChavePix"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="financeiro@mecanicasilva.com.br"
+            android:textColor="@color/text_white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Base: Favorecido e Botão Copiar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Favorecido:"
+                    android:textColor="@color/text_gray"
+                    android:textSize="10sp" />
+                <TextView
+                    android:id="@+id/tvNomeFavorecido"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mecânica Silva Ltda"
+                    android:textColor="@color/text_white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCopiarPix"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Copiar Chave"
+                android:textColor="#00C980"
+                app:strokeColor="#00C980"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

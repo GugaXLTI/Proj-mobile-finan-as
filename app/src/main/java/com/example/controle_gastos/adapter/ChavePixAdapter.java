@@ -35,8 +35,11 @@ public class ChavePixAdapter extends RecyclerView.Adapter<ChavePixAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChavePix chave = listaChaves.get(position);
 
-        holder.tvNomeFavorecido.setText(chave.nomeFavorecido + " (" + chave.apelidoDivida + ")");
-        holder.tvChavePix.setText(chave.tipoChave + ": " + chave.chave + " • " + chave.banco);
+        // Exibe apenas a chave em si (Ex: financeiro@mecanicasilva.com.br)
+        holder.tvChavePix.setText(chave.chave);
+
+        // Nome do Favorecido (Ex: Mecânica Silva Ltda)
+        holder.tvNomeFavorecido.setText(chave.nomeFavorecido);
 
         // Lógica para copiar a chave ao clicar no botão
         holder.btnCopiarPix.setOnClickListener(v -> {

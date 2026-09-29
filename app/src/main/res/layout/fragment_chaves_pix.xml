@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bg_screen"
     android:padding="16dp">
 
     <LinearLayout
@@ -10,65 +10,72 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- FORMULÁRIO DE CADASTRO -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tipo de Chave Pix"
-            android:textColor="@color/text_gray" />
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
         <Spinner
             android:id="@+id/spinnerTipoChave"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:layout_marginBottom="12dp" />
+            android:background="@drawable/bg_form_field"
+            android:layout_marginBottom="16dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Chave Pix do Credor"
-            android:textColor="@color/text_gray" />
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
         <EditText
             android:id="@+id/etChavePix"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_form_field"
+            android:layout_marginBottom="16dp"
             android:hint="Ex: 42.123.456/0001-89"
             android:textColorHint="@color/text_hint"
-            android:textColor="@color/text_white" />
+            android:textColor="@color/text_white"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Nome do Favorecido"
-            android:textColor="@color/text_gray" />
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
         <EditText
             android:id="@+id/etNomeFavorecido"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="@drawable/bg_campo_login"
-            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_form_field"
+            android:layout_marginBottom="24dp"
             android:hint="Ex: Mecânica Silva"
             android:textColorHint="@color/text_hint"
-            android:textColor="@color/text_white" />
+            android:textColor="@color/text_white"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
 
         <Button
             android:id="@+id/btnCadastrarPix"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:text="+ Cadastrar Chave Pix para Dívidas"
-            android:backgroundTint="@color/brand_green"
+            android:background="@drawable/bg_button_green"
             android:textColor="@color/black"
+            android:textStyle="bold"
             android:layout_marginBottom="24dp" />
 
-        <!-- LISTA DE CHAVES -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="CHAVES DE CREDORES SALVAS"
             android:textColor="@color/text_gray"
             android:textSize="12sp"
+            android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
         <androidx.recyclerview.widget.RecyclerView

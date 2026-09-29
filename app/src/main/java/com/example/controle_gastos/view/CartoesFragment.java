@@ -30,7 +30,7 @@ public class CartoesFragment extends Fragment {
     private SessionManager session;
     private List<Cartao> listaCartoes = new ArrayList<>();
 
-    private Spinner spinnerInstituicao;
+    private Spinner spinnerTipoCartao, spinnerInstituicao;
     private EditText etApelido, etUltimos4, etDiaVencimento;
     private Button btnGuardar;
 
@@ -45,13 +45,20 @@ public class CartoesFragment extends Fragment {
         rvCartoes = view.findViewById(R.id.rvCartoes);
         rvCartoes.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        spinnerTipoCartao = view.findViewById(R.id.spinnerTipoCartao);
         spinnerInstituicao = view.findViewById(R.id.spinnerInstituicao);
         etApelido = view.findViewById(R.id.etApelidoCartao);
         etUltimos4 = view.findViewById(R.id.etUltimos4);
         etDiaVencimento = view.findViewById(R.id.etDiaVencimento);
         btnGuardar = view.findViewById(R.id.btnGuardarCartao);
 
-        // Configurar Spinner simples (você pode personalizar depois)
+        // ⭐ Spinner de tipo
+        String[] tipos = {"Crédito", "Débito"};
+        ArrayAdapter<String> adapterTipo = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, tipos);
+        adapterTipo.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerTipoCartao.setAdapter(adapterTipo);
+
+        // Spinner de instituição
         String[] instituicoes = {"Nubank", "Inter", "Itaú", "Bradesco", "Santander", "Caixa"};
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, instituicoes);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -64,6 +71,7 @@ public class CartoesFragment extends Fragment {
     }
 
     private void salvarCartao() {
+        String tipo = spinnerTipoCartao.getSelectedItem().toString();
         String instituicao = spinnerInstituicao.getSelectedItem().toString();
         String apelido = etApelido.getText().toString();
         String ultimos4 = etUltimos4.getText().toString();
@@ -80,6 +88,7 @@ public class CartoesFragment extends Fragment {
         cartao.apelido = apelido;
         cartao.ultimos4Digitos = ultimos4;
         cartao.diaVencimento = vencimento;
+        cartao.tipo = tipo; // ⭐ Salva o tipo
 
         new Thread(() -> {
             db.cartaoDao().inserir(cartao);
@@ -97,7 +106,7 @@ public class CartoesFragment extends Fragment {
         new Thread(() -> {
             listaCartoes = db.cartaoDao().listarPorUsuario(session.getUserId());
             requireActivity().runOnUiThread(() -> {
-                adapter = new CartaoAdapter(listaCartoes);
+                adapter = new CartaoAdapter(listaCartoes, session.getNome());
                 rvCartoes.setAdapter(adapter);
             });
         }).start();

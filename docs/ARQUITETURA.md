@@ -257,8 +257,79 @@ A permissão `POST_NOTIFICATIONS` (Android 13+) é solicitada automaticamente qu
 ### Limitações conhecidas
 
 - **Não notifica se o app for forçado a parar** (limitação do Android)
-- **Não notifica se o celular for reiniciado** (alarmes são perdidos)
-- Para resolver isso no futuro, seria necessário um `BootReceiver` para reagendar após reinicialização
+- ~~Não notifica se o celular for reiniciado~~ ✅ **RESOLVIDO:** Agora o `BootReceiver` reagenda automaticamente os alarmes das dívidas não pagas quando o celular é reiniciado ou o app é atualizado.
+
+---
+
+## 🆕 BootReceiver (Reagendamento Automático)
+
+### Data de implementação
+29/09/2026
+
+### Descrição
+
+Foi criado o `BootReceiver` para resolver a limitação de perda de alarmes ao reiniciar o celular.
+
+### Como funciona
+
+1. **Escuta os eventos** `BOOT_COMPLETED` e `MY_PACKAGE_REPLACED`
+2. **Verifica** se os lembretes estão ativos (respeita o switch de Configurações)
+3. **Verifica** se há usuário logado (via `SessionManager`)
+4. **Busca** todas as dívidas não pagas do usuário logado
+5. **Reagenda** cada uma usando `AlarmeHelper.agendar()` em thread separada
+
+### Permissões necessárias
+
+```xml
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+```
+
+### Registro no Manifest
+
+```xml
+<receiver
+    android:name=".receiver.BootReceiver"
+    android:enabled="true"
+    android:exported="true">
+    <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+    </intent-filter>
+</receiver>
+```
+
+### Fluxo
+
+```
+┌──────────────────────────┐
+│ Celular é reiniciado     │
+│ ou App é atualizado      │
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│ BootReceiver.onReceive() │
+└──────────┬───────────────┘
+           │
+   ┌───────┴────────┐
+   ▼                ▼
+Lembretes       Usuário logado?
+ativos?              │
+   │                 │
+   └────────┬────────┘
+            │
+            ▼
+┌──────────────────────────┐
+│ DividaDao.listarNao      │
+│ PagasPorUsuario(userId)  │
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│ AlarmeHelper.agendar()   │
+│ para cada dívida         │
+└──────────────────────────┘
+```
 
 ---
 
@@ -286,6 +357,7 @@ Se todos esses passos funcionarem, o isolamento por usuário está correto. ✅
 6. Aguarde 1 minuto → a notificação deve aparecer.
 7. Teste o cancelamento: pague a dívida antes do horário → notificação não aparece.
 8. Teste o switch: desligue em Configurações → nenhum alarme é agendado.
+9. Teste o **BootReceiver**: reinicie o celular → a notificação deve continuar funcionando.
 
 ---
 
@@ -381,6 +453,8 @@ de seleção     botão "Cadastrar agora"
 - Cada um gerencia seu próprio formulário e lista
 - Salvam no Room em threads separadas
 - Recarregam a lista automaticamente após cadastro
+- **Modo edição** (clique normal): preenche o formulário com os dados do item
+- **Modo exclusão** (clique longo): abre diálogo de confirmação
 
 ### Fluxo do usuário
 
@@ -390,6 +464,10 @@ de seleção     botão "Cadastrar agora"
 | Cadastra um cartão de Crédito | Salvo no Room com `tipo = "Crédito"` |
 | Cadastra um cartão de Débito | Salvo no Room com `tipo = "Débito"` |
 | Cadastra uma chave Pix | Salvo no Room com `tipoChave` e `chave` |
+| **Clique normal em um cartão** | **Entra em modo edição (formulário preenchido)** |
+| **Clique normal em uma chave Pix** | **Entra em modo edição (formulário preenchido)** |
+| **Clique longo em um cartão** | **Abre diálogo de confirmação para excluir** |
+| **Clique longo em uma chave Pix** | **Abre diálogo de confirmação para excluir** |
 | Volta para Lançar Dívida e escolhe "Cartão de Crédito" | Mostra apenas cartões com `tipo = "Crédito"` |
 | Escolhe "Pix" | Mostra apenas as chaves Pix cadastradas |
 | Não tem nenhum item do tipo selecionado | Mostra Empty State + botão "Cadastrar agora" |
@@ -425,11 +503,14 @@ de seleção     botão "Cadastrar agora"
 | `database/AppDatabase.java` | Versão 7 + entidades `Cartao` e `ChavePix` |
 | `view/CadastroDividaActivity.java` | Integração com Cartões/Pix + filtro por tipo |
 | `view/ConfiguracoesActivity.java` | Abre `CartoesActivity` no item "Meus Cartões & Bancos" |
-| `view/CartoesFragment.java` | Adiciona seletor de tipo (Crédito/Débito) |
-| `adapter/CartaoAdapter.java` | Recebe `nomeUsuario` + exibe `tipo` |
-| `layout/fragment_cartoes.xml` | Adiciona `spinnerTipoCartao` |
+| `view/CartoesFragment.java` | Adiciona seletor de tipo (Crédito/Débito) + modo edição + exclusão |
+| `view/ChavesPixFragment.java` | Adiciona modo edição + exclusão |
+| `adapter/CartaoAdapter.java` | Recebe `nomeUsuario` + exibe `tipo` + listener de clique |
+| `adapter/ChavePixAdapter.java` | Adiciona listener de clique normal e longo |
+| `layout/fragment_cartoes.xml` | Adiciona `spinnerTipoCartao` + botão "Cancelar edição" |
+| `layout/fragment_chaves_pix.xml` | Adiciona botão "Cancelar edição" |
 | `layout/activity_cadastro_divida.xml` | Redesign fiel ao Figma |
-| `AndroidManifest.xml` | Registra `CartoesActivity` |
+| `AndroidManifest.xml` | Registra `CartoesActivity` e `BootReceiver` + permissão de boot |
 
 ### Como testar a integração
 
@@ -492,9 +573,40 @@ Se todos esses passos funcionarem, a integração está correta. ✅
 
 ---
 
+## 🧪 Plano de Testes
+
+### Arquivo `docs/TESTES.md`
+
+Foi criado um plano de testes completo no arquivo `docs/TESTES.md`, contendo:
+
+- **Objetivo e escopo** dos testes
+- **Ambiente de teste** (dispositivo, versão do Android, pré-requisitos)
+- **Tipos de testes** (Funcional, Integração, Regressão, Usabilidade, Borda)
+- **13 categorias de casos de teste (CT-01 a CT-13)** cobrindo:
+  - Splash Screen e Sessão
+  - Cadastro e Login
+  - Tela Início
+  - Cadastro de Dívida (com Integração)
+  - Tela de Dívidas
+  - Cartões & Chaves Pix (CRUD completo)
+  - Dashboard / Relatórios
+  - Categorias
+  - Editar Perfil
+  - Lembretes de Fatura
+  - BootReceiver (Reagendamento)
+  - Isolamento por Usuário
+  - Configurações
+- **Critérios de aceitação** para release
+- **Fluxo de reporte de bugs** (integração com `docs/BUGS.md`)
+- **Histórico de execuções** de testes
+- **Referências acadêmicas** sobre Gerência de Projetos de Software
+
+---
+
 ## 🚧 Próximos passos
 
-- [ ] Criar `BootReceiver` para reagendar alarmes após reinicialização
+- [x] Criar `BootReceiver` para reagendar alarmes após reinicialização ✅
+- [x] Implementar edição e exclusão de Cartões e Chaves Pix ✅
 - [ ] Aplicar o mesmo padrão de isolamento caso novas entidades sejam criadas
 - [ ] Implementar `Migration` real (não destrutiva) quando houver usuários reais
 - [ ] Exportar/importar dados por usuário
@@ -512,3 +624,6 @@ Se todos esses passos funcionarem, a integração está correta. ✅
 - Correção do Cálculo de Parcelas: 27/09/2026
 - Implementação de Cartões e Chaves Pix: 28/09/2026
 - Integração de Cartões/Pix com Lançar Dívida: 28/09/2026
+- Implementação do BootReceiver: 29/09/2026
+- CRUD Completo de Cartões/Pix: 29/09/2026
+- Plano de Testes: 29/09/2026

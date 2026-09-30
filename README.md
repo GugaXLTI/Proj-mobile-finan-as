@@ -1,7 +1,7 @@
 # App Gestão de Finanças
 
 ## Status do Projeto
-🚀 **Em desenvolvimento – Sprint 5 (Cartões, Chaves Pix e Integração) – Room + Autenticação + Categorias + Editar Perfil + Lembretes + Cartões + Chaves Pix** 🚀
+🚀 **Em desenvolvimento – Sprint 5 (Cartões, Chaves Pix, Integração, BootReceiver e CRUD Completo) – Room + Autenticação + Categorias + Editar Perfil + Lembretes + Cartões + Chaves Pix** 🚀
 
 - ✅ Splash Screen (com verificação de sessão)
 - ✅ Tela de Login (autenticação no Room)
@@ -14,9 +14,11 @@
 - ✅ Tela de Categorias (criar, listar e excluir)
 - ✅ Tela de Editar Perfil (nome, e-mail, senha e exclusão de conta)
 - ✅ Lembretes de Fatura (notificações 3 dias antes do vencimento)
+- ✅ **BootReceiver (reagenda alarmes após reiniciar o celular)**
 - ✅ **Tela de Cartões & Chaves Pix (com abas e CRUD completo)**
 - ✅ **Cadastro de Cartão com tipo Crédito/Débito**
 - ✅ **Cadastro de Chave Pix com tipo (CPF, Celular, E-mail, Aleatória)**
+- ✅ **Editar e excluir cartões e chaves Pix (clique normal = editar, clique longo = excluir)**
 - ✅ **Integração da tela Lançar Dívida com Cartões e Chaves Pix**
 - ✅ **Filtro dinâmico: cartões de crédito, débito ou chaves Pix conforme tipo de dívida**
 - ✅ **Empty State com botão "Cadastrar agora" quando não há itens**
@@ -33,6 +35,7 @@
 - ✅ Validação de e-mail com Regex
 - ✅ Validação de nome e senha
 - ✅ Exibição dinâmica do usuário logado
+- ✅ **Plano de Testes documentado (docs/TESTES.md)**
 
 > **Observação:** o MVP final será entregue no Sprint 6, com autenticação em nuvem e sincronização.
 
@@ -51,8 +54,9 @@ O app permite ao usuário:
 - Criar e personalizar categorias com cores próprias
 - Editar perfil (nome, e-mail, senha) e excluir conta
 - Receber notificações 3 dias antes do vencimento das faturas
-- **Cadastrar cartões de crédito/débito com bandeira, limite e vencimento**
-- **Cadastrar chaves Pix de credores (CPF/CNPJ, Celular, E-mail ou Aleatória)**
+- **Receber notificações mesmo após reiniciar o celular (BootReceiver)**
+- **Cadastrar, editar e excluir cartões de crédito/débito**
+- **Cadastrar, editar e excluir chaves Pix de credores**
 - **Copiar chave Pix com um toque (área de transferência)**
 - **Selecionar o cartão ou chave Pix ao lançar uma nova dívida**
 - Manter seus dados isolados por conta (cada usuário vê apenas seus dados)
@@ -133,11 +137,16 @@ Tela com navegação por abas (TabLayout + ViewPager2):
 - Cadastro de cartão com **tipo** (Crédito/Débito), instituição, apelido, últimos 4 dígitos, dia de vencimento
 - Lista de cartões em formato de cartão de crédito (com bandeira, número mascarado, titular e vencimento)
 - Sigla da bandeira gerada automaticamente (ex: Nubank → NU)
+- **Clique normal** = entra em modo edição (botão muda para "Atualizar Cartão")
+- **Clique longo** = excluir com diálogo de confirmação
+- Botão **"Cancelar edição"** aparece somente no modo edição
 
 **Aba "Chave Pix de Dívida":**
 - Cadastro de chave Pix com **tipo** (CNPJ/CPF, Celular, E-mail, Chave Aleatória), chave, nome do favorecido
 - Lista de chaves com fundo verde (degradê) e badge "Pix Direto"
 - Botão **"Copiar Chave"** que envia para a área de transferência
+- **Clique normal** = entra em modo edição
+- **Clique longo** = excluir com diálogo de confirmação
 
 ### Editar Perfil
 - **Alterar nome completo** (validação: mínimo 2 letras, apenas letras)
@@ -151,6 +160,7 @@ Tela com navegação por abas (TabLayout + ViewPager2):
 - Alarme é **cancelado automaticamente** quando a dívida é paga ou excluída
 - **Switch em Configurações** permite ativar/desativar todos os lembretes
 - Funciona **offline** (usa AlarmManager local)
+- **BootReceiver** reagenda automaticamente os alarmes após reiniciar o celular
 
 ### Configurações
 Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de **cartões e chaves Pix**, categorias, **switch funcional de lembretes**, biometria, limpeza de dados (para testes) e desconexão de sessão.
@@ -189,16 +199,16 @@ app/src/main/java/com/example/controle_gastos/
 │   ├── Divida.java               # Entidade de dívida (@Entity, com usuarioId e valorParcela)
 │   ├── Transacao.java            # Entidade de transação (@Entity, com usuarioId)
 │   ├── Categoria.java            # Entidade de categoria (@Entity, com usuarioId e cor)
-│   ├── Cartao.java               # ⭐ NOVO: Entidade de cartão (@Entity, com tipo Crédito/Débito)
-│   ├── ChavePix.java             # ⭐ NOVO: Entidade de chave Pix (@Entity)
+│   ├── Cartao.java               # Entidade de cartão (@Entity, com tipo Crédito/Débito)
+│   ├── ChavePix.java             # Entidade de chave Pix (@Entity)
 │   └── CategoriaResumo.java      # Resumo por categoria
 ├── dao/
 │   ├── UsuarioDao.java           # CRUD + login + buscarPorEmail + deletar
 │   ├── DividaDao.java            # CRUD + filtros por usuário
 │   ├── TransacaoDao.java         # CRUD + filtros por usuário
 │   ├── CategoriaDao.java         # CRUD + contagem de dívidas por categoria
-│   ├── CartaoDao.java            # ⭐ NOVO: CRUD de cartões
-│   └── ChavePixDao.java          # ⭐ NOVO: CRUD de chaves Pix
+│   ├── CartaoDao.java            # CRUD de cartões
+│   └── ChavePixDao.java          # CRUD de chaves Pix
 ├── database/
 │   ├── AppDatabase.java          # Classe principal do Room (versão 7)
 │   └── DatabaseClient.java       # Singleton de acesso ao banco
@@ -208,16 +218,17 @@ app/src/main/java/com/example/controle_gastos/
 │   ├── NotificationHelper.java   # Canal + envio de notificações
 │   └── AlarmeHelper.java         # Agendamento/cancelamento de alarmes
 ├── receiver/
-│   └── LembreteReceiver.java     # BroadcastReceiver para notificações
+│   ├── LembreteReceiver.java     # BroadcastReceiver para notificações
+│   └── BootReceiver.java         # ⭐ NOVO: Reagenda alarmes após reinicialização
 ├── adapter/
 │   ├── LancamentoAdapter.java    # Adapter de lançamentos
 │   ├── LegendaAdapter.java       # Adapter de legendas
 │   ├── DividaAdapter.java        # Adapter de dívidas
 │   ├── VencimentoAdapter.java    # Adapter de vencimentos (tela Início)
 │   ├── CategoriaAdapter.java     # Adapter de categorias
-│   ├── CartaoAdapter.java        # ⭐ NOVO: Adapter de cartões
-│   ├── ChavePixAdapter.java      # ⭐ NOVO: Adapter de chaves Pix
-│   └── ChipSelecaoAdapter.java   # ⭐ NOVO: Adapter de seleção em chips
+│   ├── CartaoAdapter.java        # Adapter de cartões
+│   ├── ChavePixAdapter.java      # Adapter de chaves Pix
+│   └── ChipSelecaoAdapter.java   # Adapter de seleção em chips
 └── view/
     ├── SplashActivity.java           # Tela de abertura (2s + verificação de sessão)
     ├── LoginActivity.java            # Tela de Login
@@ -229,9 +240,9 @@ app/src/main/java/com/example/controle_gastos/
     ├── CategoriasActivity.java       # Gerenciamento de Categorias
     ├── EditarPerfilActivity.java     # Edição de Perfil
     ├── ConfiguracoesActivity.java    # Configurações + Logout
-    ├── CartoesActivity.java          # ⭐ NOVO: Tela de Cartões & Chaves Pix (com abas)
-    ├── CartoesFragment.java          # ⭐ NOVO: Fragment da aba de Cartões
-    └── ChavesPixFragment.java        # ⭐ NOVO: Fragment da aba de Chaves Pix
+    ├── CartoesActivity.java          # Tela de Cartões & Chaves Pix (com abas)
+    ├── CartoesFragment.java          # Fragment da aba de Cartões
+    └── ChavesPixFragment.java        # Fragment da aba de Chaves Pix
 ```
 
 ---
@@ -264,13 +275,16 @@ app/src/main/java/com/example/controle_gastos/
 - `feat: adiciona entidades Cartao e ChavePix, DAOs e atualiza AppDatabase para v6`
 - `feat: implementa tela de Cartões e Chaves Pix com abas e CRUD completo`
 - `feat: adiciona tipo ao Cartão e integra tela de Lançar Dívida com Cartões/Pix`
+- `feat: adiciona BootReceiver para reagendar alarmes após reinicialização`
+- `feat: adiciona exclusão de Cartões e Chaves Pix com clique longo`
+- `feat: adiciona edição de Cartões e Chaves Pix (CRUD completo)`
+- `docs: adiciona plano de testes completo (casos de teste e critérios de aceitação)`
 
 ---
 
 ## 🚧 Próximos Passos
 
-- `BootReceiver` para reagendar alarmes após reinicialização
-- Tela de gerenciamento de cartões com opção de editar e excluir
+- Tela de gerenciamento de cartões com opção de editar e excluir (✅ concluído)
 - Exportação de dados (PDF/CSV)
 - Biometria real (BiometricPrompt)
 - Simulador de pagamento com QR Code (para depois do MVP)
@@ -281,6 +295,7 @@ app/src/main/java/com/example/controle_gastos/
 
 ## 📄 Documentação Adicional
 
+- **[docs/TESTES.md](docs/TESTES.md)** – Plano de testes, casos de teste e critérios de aceitação
 - **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)** – Documentação técnica sobre a arquitetura e decisões de projeto
 - **[docs/BUGS.md](docs/BUGS.md)** – Registro de bugs encontrados e corrigidos
 - **[CHANGELOG.md](CHANGELOG.md)** – Histórico detalhado de mudanças por versão/Sprint

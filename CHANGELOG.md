@@ -6,9 +6,17 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
-## [Não lançado] – Sprint 5 (Cartões & Chaves Pix)
+## [Não lançado] – Sprint 5 (Cartões, Chaves Pix, Integração, BootReceiver e CRUD Completo)
 
 ### Adicionado
+- **Sistema de BootReceiver (Reagendamento de Alarmes)**
+  - `BootReceiver` (BroadcastReceiver) que escuta os eventos `BOOT_COMPLETED` e `MY_PACKAGE_REPLACED`
+  - Reagenda automaticamente os alarmes das dívidas não pagas após reiniciar o celular ou atualizar o app
+  - Respeita o estado do switch de lembretes (não reagenda se estiver desligado)
+  - Verifica se há usuário logado antes de buscar as dívidas no banco
+  - Executa a busca no Room em thread separada (evita travar a main thread)
+  - Permissão `RECEIVE_BOOT_COMPLETED` adicionada ao Manifest
+  - `BootReceiver` registrado no Manifest com os filtros de intent
 - **Tela de Cartões & Chaves Pix** com navegação por abas (`TabLayout` + `ViewPager2`)
   - Entidade `Cartao` com campos `usuarioId`, `instituicao`, `apelido`, `ultimos4Digitos`, `diaVencimento`, `limite`, `bandeira` e `tipo` (Crédito/Débito)
   - Entidade `ChavePix` com campos `usuarioId`, `tipoChave`, `chave`, `nomeFavorecido`, `banco` e `apelidoDivida`
@@ -22,6 +30,20 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
   - Card de chave Pix com fundo verde (degradê) e badge "Pix Direto"
   - Botão **"Copiar Chave"** que envia a chave Pix para a área de transferência
   - Sigla da bandeira gerada automaticamente (ex: Nubank → NU)
+- **Edição de Cartões e Chaves Pix (CRUD Completo)**
+  - Adicionado `OnItemClickListener` nos adapters de Cartão e Chave Pix
+  - Clique normal em um card = entra em modo edição
+  - Campos do formulário são preenchidos com os dados do item selecionado
+  - Botão principal muda de "+ Guardar" para "✓ Atualizar" quando em edição
+  - Botão **"✕ Cancelar edição"** aparece somente no modo edição
+  - Chama `atualizar()` no DAO ao salvar em modo edição
+  - Cancela a edição automaticamente se o item em edição for excluído
+- **Exclusão de Cartões e Chaves Pix**
+  - Adicionado `OnItemLongClickListener` nos adapters de Cartão e Chave Pix
+  - Clique longo em um card = abre diálogo de confirmação de exclusão
+  - Exclui o item do banco (Room) após confirmação
+  - Recarrega a lista automaticamente após exclusão
+  - Exibe Toast informativo de sucesso
 - **Integração da tela de Lançar Dívida com Cartões e Chaves Pix**
   - Filtro dinâmico: ao escolher "Cartão de Crédito", mostra apenas cartões de crédito cadastrados
   - Ao escolher "Cartão de Débito", mostra apenas cartões de débito cadastrados
@@ -37,6 +59,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
   - `bg_form_field.xml` (fundo de campos e spinners)
   - `bg_button_green.xml` (fundo dos botões verdes)
   - `bg_card_pix.xml` (degradê verde dos cards de chave Pix)
+- **Documentação de Testes**
+  - Arquivo `docs/TESTES.md` com plano de testes completo
+  - 13 categorias de casos de teste (CT-01 a CT-13)
+  - Critérios de aceitação para release
+  - Fluxo de reporte de bugs (integração com `docs/BUGS.md`)
+  - Template de histórico de execuções
 
 ### Modificado
 - `AppDatabase` atualizado para versão 6 (adiciona `Cartao` e `ChavePix`)
@@ -44,15 +72,22 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 - `CadastroDividaActivity` agora integra com cartões e chaves Pix cadastrados
 - `CadastroDividaActivity` agora filtra cartões por tipo (Crédito/Débito)
 - `CartoesFragment` agora permite escolher o **tipo do cartão** (Crédito/Débito)
+- `CartoesFragment` agora gerencia modo edição e exclusão com clique longo
+- `ChavesPixFragment` agora gerencia modo edição e exclusão com clique longo
 - `CartaoAdapter` agora exibe o tipo do cartão junto ao nome do banco
 - `CartaoAdapter` recebe o `nomeUsuario` no construtor para exibir como titular
+- `CartaoAdapter` agora suporta clique normal (editar) e clique longo (excluir)
+- `ChavePixAdapter` agora suporta clique normal (editar) e clique longo (excluir)
 - `ConfiguracoesActivity` agora abre a tela `CartoesActivity` no item "Meus Cartões & Bancos"
 - `CartoesActivity` registrada no `AndroidManifest.xml`
+- `AndroidManifest.xml` agora inclui permissão `RECEIVE_BOOT_COMPLETED`
+- `AndroidManifest.xml` agora registra o `BootReceiver`
 - Ajuste nas cores dos layouts para usar o padrão do projeto (`brand_green`, `text_gray`, `bg_screen`, etc.)
 
 ### Corrigido
 - Layout `activity_cartoes.xml` e `item_cartao.xml` ajustados para evitar erro `Android resource linking failed`
 - Substituído `ImageView` por `TextView` com seta unicode no botão voltar (evita erro de `app:tint`)
+- ~~Limitação: alarmes eram perdidos após reiniciar o celular~~ ✅ Resolvido com o `BootReceiver`
 
 ---
 

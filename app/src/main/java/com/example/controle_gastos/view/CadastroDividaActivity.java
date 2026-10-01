@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
+import com.example.controle_gastos.adapter.CategoriaSpinnerAdapter;
 import com.example.controle_gastos.adapter.ChipSelecaoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Cartao;
@@ -36,7 +37,7 @@ import java.util.Locale;
 public class CadastroDividaActivity extends AppCompatActivity {
 
     private Spinner spinnerTipoDivida, spinnerCategoria, spinnerParcelas;
-    private EditText editDevedor, editDescricao, editValor, editDataCompra, editVencimento;
+    private EditText editDescricao, editValor, editDataCompra, editVencimento;
     private MaterialButton btnSalvar;
     private RecyclerView rvSelecao;
     private LinearLayout containerVazio;
@@ -51,7 +52,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private Divida dividaEmEdicao = null;
     private List<Categoria> categoriasDoBanco = new ArrayList<>();
 
-    // Lista de itens para o chip: [sigla, nome, valorReal]
     private List<String[]> itensSelecao = new ArrayList<>();
 
     @Override
@@ -64,11 +64,9 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         CategoriaSeeder.popularSeVazio(this, session.getUserId());
 
-        // Bind views
         spinnerTipoDivida = findViewById(R.id.spinnerTipoDivida);
         spinnerCategoria = findViewById(R.id.spinnerCategoria);
         spinnerParcelas = findViewById(R.id.spinnerParcelas);
-        editDevedor = findViewById(R.id.editDevedor);
         editDescricao = findViewById(R.id.editDescricao);
         editValor = findViewById(R.id.editValor);
         editDataCompra = findViewById(R.id.editDataCompra);
@@ -81,7 +79,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         tvTituloSelecao = findViewById(R.id.tvTituloSelecao);
         btnCadastrarAgora = findViewById(R.id.btnCadastrarAgora);
 
-        // Configurar RecyclerView horizontal
         rvSelecao.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
         configurarSpinners();
@@ -89,25 +86,18 @@ public class CadastroDividaActivity extends AppCompatActivity {
         configurarDatePicker(editVencimento);
         configurarMascaraValor(editValor);
 
-        // Ações dos botões de atalho
         btnNovaCategoria.setOnClickListener(v -> {
             startActivity(new Intent(this, CategoriasActivity.class));
         });
 
         btnNovoItem.setOnClickListener(v -> {
-            String tipo = spinnerTipoDivida.getSelectedItem().toString();
-            if (tipo.equals("Pix")) {
-                startActivity(new Intent(this, CartoesActivity.class));
-            } else {
-                startActivity(new Intent(this, CartoesActivity.class));
-            }
+            startActivity(new Intent(this, CartoesActivity.class));
         });
 
         btnCadastrarAgora.setOnClickListener(v -> {
             startActivity(new Intent(this, CartoesActivity.class));
         });
 
-        // Listener do tipo de dívida para atualizar os chips
         spinnerTipoDivida.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
@@ -118,7 +108,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
             public void onNothingSelected(android.widget.AdapterView<?> parent) { }
         });
 
-        // Modo edição
         if (getIntent().hasExtra("divida_id")) {
             dividaId = getIntent().getIntExtra("divida_id", -1);
             if (dividaId != -1) {
@@ -133,9 +122,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         btnSalvar.setOnClickListener(v -> salvarDivida());
     }
 
-    /**
-     * Atualiza a lista de chips conforme o tipo de dívida selecionado.
-     */
     private void atualizarSelecao() {
         String tipo = spinnerTipoDivida.getSelectedItem().toString();
         itensSelecao.clear();
@@ -158,12 +144,10 @@ public class CadastroDividaActivity extends AppCompatActivity {
                 itensSelecao.add(new String[]{sigla, p.nomeFavorecido, p.chave});
             }
         } else {
-            // Boleto, Empréstimo, Outros - não usa chips
             tvTituloSelecao.setText("Selecione o Banco / Origem");
             itensSelecao.add(new String[]{"GE", "Genérico", "Genérico"});
         }
 
-        // Mostrar empty state ou lista
         if (itensSelecao.isEmpty()) {
             rvSelecao.setVisibility(View.GONE);
             containerVazio.setVisibility(View.VISIBLE);
@@ -228,17 +212,18 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
     private void carregarCategoriasDoBanco() {
         categoriasDoBanco = db.categoriaDao().listarPorUsuario(session.getUserId());
-        List<String> nomesCategorias = new ArrayList<>();
-        for (Categoria c : categoriasDoBanco) {
-            nomesCategorias.add(c.getNome());
+
+        if (categoriasDoBanco.isEmpty()) {
+            Categoria vazia = new Categoria(0, session.getUserId(), "Nenhuma categoria", "#64748B");
+            List<Categoria> listaVazia = new ArrayList<>();
+            listaVazia.add(vazia);
+            CategoriaSpinnerAdapter adapterVazio = new CategoriaSpinnerAdapter(this, listaVazia);
+            spinnerCategoria.setAdapter(adapterVazio);
+            return;
         }
-        if (nomesCategorias.isEmpty()) {
-            nomesCategorias.add("Nenhuma categoria cadastrada");
-        }
-        ArrayAdapter<String> adapterCategoria = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item, nomesCategorias);
-        adapterCategoria.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCategoria.setAdapter(adapterCategoria);
+
+        CategoriaSpinnerAdapter adapter = new CategoriaSpinnerAdapter(this, categoriasDoBanco);
+        spinnerCategoria.setAdapter(adapter);
     }
 
     private void configurarDatePicker(EditText editText) {
@@ -294,16 +279,21 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
 
         String tipoDivida = spinnerTipoDivida.getSelectedItem().toString();
-        String categoria = spinnerCategoria.getSelectedItem().toString();
+
+        Object itemCategoria = spinnerCategoria.getSelectedItem();
+        String categoria;
+        if (itemCategoria instanceof Categoria) {
+            categoria = ((Categoria) itemCategoria).getNome();
+        } else {
+            categoria = itemCategoria.toString();
+        }
+
         String parcelas = spinnerParcelas.getSelectedItem().toString();
-        String devedor = editDevedor.getText().toString().trim();
         String descricao = editDescricao.getText().toString().trim();
         String valorStr = editValor.getText().toString().trim()
                 .replace("R$ ", "").replace(".", "").replace(",", ".");
-        String dataCompra = editDataCompra.getText().toString().trim();
         String vencimento = editVencimento.getText().toString().trim();
 
-        // Pega o item selecionado no chip
         String bancoSelecionado;
         if (chipAdapter != null && chipAdapter.getItemSelecionado() != null) {
             bancoSelecionado = chipAdapter.getItemSelecionado()[2];
@@ -311,7 +301,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
             bancoSelecionado = tipoDivida;
         }
 
-        if (devedor.isEmpty() || descricao.isEmpty() || valorStr.isEmpty() || vencimento.isEmpty()) {
+        if (descricao.isEmpty() || valorStr.isEmpty() || vencimento.isEmpty()) {
             Toast.makeText(this, "Preencha todos os campos obrigatórios!", Toast.LENGTH_SHORT).show();
             return;
         }

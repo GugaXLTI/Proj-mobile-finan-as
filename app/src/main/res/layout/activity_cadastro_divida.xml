@@ -81,7 +81,6 @@
                     android:padding="4dp" />
             </LinearLayout>
 
-            <!-- Lista horizontal de chips -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvSelecao"
                 android:layout_width="match_parent"
@@ -90,7 +89,6 @@
                 android:clipToPadding="false"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-            <!-- Empty State (some quando tem itens) -->
             <LinearLayout
                 android:id="@+id/containerVazio"
                 android:layout_width="match_parent"
@@ -123,27 +121,6 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Devedor -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Devedor / Responsável"
-            android:textColor="@color/text_gray"
-            android:textSize="13sp"
-            android:layout_marginBottom="8dp" />
-
-        <EditText
-            android:id="@+id/editDevedor"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_form_field"
-            android:hint="Ex: Israel (Próprio)"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:textColor="@color/text_white"
-            android:textColorHint="@color/text_hint" />
-
         <!-- Descrição -->
         <TextView
             android:layout_width="wrap_content"
@@ -165,7 +142,7 @@
             android:paddingEnd="12dp"
             android:layout_marginBottom="16dp" />
 
-        <!-- Categoria com "+ Nova Categoria" à direita -->
+        <!-- Categoria com "+ Nova Categoria" -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -199,7 +176,7 @@
             android:popupBackground="@color/card_bg"
             android:layout_marginBottom="16dp" />
 
-        <!-- Valor Total + Parcelas (lado a lado) -->
+        <!-- Valor Total + Parcelas -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -256,7 +233,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Data Compra + Vencimento (lado a lado) -->
+        <!-- Data Compra + Vencimento -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

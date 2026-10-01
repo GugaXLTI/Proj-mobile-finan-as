@@ -1,5 +1,6 @@
 package com.example.controle_gastos.adapter;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,13 +43,37 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         Divida d = dividas.get(position);
 
         holder.tvTitulo.setText(d.getTitulo());
-
-        // ⭐ Exibe o valor da PARCELA (não o total)
-        holder.tvValorRestante.setText("Falta: R$ " + String.format(Locale.getDefault(), "%.2f", d.getValorParcela()));
-
         holder.tvDetalhe.setText(d.getBanco() + " • " + d.getCategoria());
         holder.tvParcela.setText("Parcela " + d.getParcela());
         holder.tvVencimento.setText("Vencimento: " + d.getVencimento());
+
+        int totalParcelas = extrairNumeroParcelas(d.getParcela());
+        double valorParcelaReal = d.getValorTotal() / totalParcelas;
+        int parcelasPagas = (int) Math.round(d.getValorPago() / valorParcelaReal);
+
+        if (d.isPago()) {
+            // ⭐ Dívida totalmente paga
+            holder.tvValorRestante.setText("Pago ✓");
+            holder.tvValorRestante.setTextColor(Color.parseColor("#10B981"));
+
+            holder.btnPagar.setText("Pago");
+            holder.btnPagar.setEnabled(false);
+            holder.btnPagar.setAlpha(0.5f);
+        } else {
+            // ⭐ Ainda falta pagar (parcial ou total)
+            holder.tvValorRestante.setText(
+                    "Falta: R$ " + String.format(Locale.getDefault(), "%.2f", d.getValorRestante())
+            );
+            holder.tvValorRestante.setTextColor(Color.parseColor("#EF4444"));
+
+            if (totalParcelas > 1) {
+                holder.btnPagar.setText("Pagar (" + parcelasPagas + "/" + totalParcelas + ")");
+            } else {
+                holder.btnPagar.setText("Pagar");
+            }
+            holder.btnPagar.setEnabled(true);
+            holder.btnPagar.setAlpha(1.0f);
+        }
 
         holder.btnExcluir.setOnClickListener(v -> {
             if (listener != null) listener.onExcluirClick(d);
@@ -57,13 +82,27 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             if (listener != null) listener.onEditarClick(d);
         });
         holder.btnPagar.setOnClickListener(v -> {
-            if (listener != null) listener.onPagarClick(d);
+            if (listener != null && !d.isPago()) listener.onPagarClick(d);
         });
     }
 
     @Override
     public int getItemCount() {
         return dividas.size();
+    }
+
+    /**
+     * Extrai o número de parcelas de uma string como "10x" ou "1x (À vista)".
+     */
+    private int extrairNumeroParcelas(String parcela) {
+        try {
+            String numeros = parcela.replaceAll("[^0-9]", "");
+            if (numeros.isEmpty()) return 1;
+            int n = Integer.parseInt(numeros);
+            return n > 0 ? n : 1;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

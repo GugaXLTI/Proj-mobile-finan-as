@@ -107,11 +107,8 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
         for (Divida d : dividas) {
             totalGeral += d.getValorTotal();
-            if (d.isPago()) {
-                totalPago += d.getValorTotal();
-            } else {
-                totalAPagar += d.getValorRestante();
-            }
+            totalPago += d.getValorPago();          // ⭐ Soma só o que foi realmente pago
+            totalAPagar += d.getValorRestante();    // ⭐ Soma o que ainda falta
         }
 
         tvTotalAPagar.setText(String.format(Locale.getDefault(), "R$ %.2f", totalAPagar));
@@ -125,9 +122,7 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
                 .setTitle("Excluir dívida")
                 .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?")
                 .setPositiveButton("Excluir", (dialog, which) -> {
-                    // ⭐ Cancela o alarme antes de deletar
                     AlarmeHelper.cancelar(this, divida);
-
                     db.dividaDao().deletar(divida);
                     carregarDividas();
                     Toast.makeText(this, "Dívida excluída: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
@@ -145,12 +140,47 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
     @Override
     public void onPagarClick(Divida divida) {
-        // ⭐ Cancela o alarme (dívida paga, não precisa mais notificar)
-        AlarmeHelper.cancelar(this, divida);
+        // ⭐ Se já está totalmente paga, não faz nada
+        if (divida.isPago()) {
+            Toast.makeText(this, "Essa dívida já está paga!", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        divida.setPago(true);
+        int totalParcelas = extrairNumeroParcelas(divida.getParcela());
+        double valorParcelaReal = divida.getValorTotal() / totalParcelas;
+
+        // ⭐ Soma uma parcela ao valor pago
+        divida.valorPago += valorParcelaReal;
+
+        // ⭐ Verifica se quitou tudo (com margem de erro para arredondamento)
+        if (divida.valorPago >= divida.getValorTotal() - 0.01) {
+            divida.valorPago = divida.getValorTotal();
+            divida.setPago(true);
+            AlarmeHelper.cancelar(this, divida);
+            Toast.makeText(this, "Dívida quitada: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
+        } else {
+            int parcelasPagas = (int) Math.round(divida.valorPago / valorParcelaReal);
+            Toast.makeText(this,
+                    "Parcela " + parcelasPagas + "/" + totalParcelas + " paga!",
+                    Toast.LENGTH_SHORT).show();
+        }
+
         db.dividaDao().atualizar(divida);
         carregarDividas();
-        Toast.makeText(this, "Pagamento registrado: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Extrai o número de parcelas de uma string como "10x" ou "1x (À vista)".
+     * Retorna 1 se não conseguir extrair.
+     */
+    private int extrairNumeroParcelas(String parcela) {
+        try {
+            String numeros = parcela.replaceAll("[^0-9]", "");
+            if (numeros.isEmpty()) return 1;
+            int n = Integer.parseInt(numeros);
+            return n > 0 ? n : 1;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 }

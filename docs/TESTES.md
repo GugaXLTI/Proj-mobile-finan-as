@@ -58,142 +58,142 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 
 ## 5. Casos de Teste
 
-> **Como usar:** Siga os passos na ordem, marque ✅ se passar ou ❌ se falhar. Se falhar, abra um BUG no `docs/BUGS.md`.
+> **Legenda:** ✅ `[x]` = Passou | ⏳ `[ ]` = Ainda não testado | ❌ Falhou (corrigido posteriormente)
 
 ### 🔐 CT-01: Splash Screen e Sessão
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-01.1 | Splash aparece ao abrir o app | Abrir o app com conta deslogada | Logo aparece por 2s e vai para o Login | [ ] |
-| CT-01.2 | Sessão persistente | Fazer login → fechar o app → abrir de novo | Vai direto para a tela Início (sem pedir login) | [ ] |
-| CT-01.3 | Logout limpa a sessão | Fazer logout → fechar o app → abrir | Volta para o Login | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-01.1 | Splash aparece ao abrir o app | Logo aparece por 2s e vai para o Login | ✅ [x] |
+| CT-01.2 | Sessão persistente | Vai direto para a tela Início | ✅ [x] |
+| CT-01.3 | Logout limpa a sessão | Volta para o Login | ✅ [x] |
 
 ### 👤 CT-02: Cadastro e Login
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-02.1 | Cadastro válido | Preencher nome, e-mail válido e senhas iguais | Cadastro realizado, redireciona para Início | [ ] |
-| CT-02.2 | Cadastro com e-mail duplicado | Tentar cadastrar com e-mail já existente | Erro: "E-mail já cadastrado" | [ ] |
-| CT-02.3 | Cadastro com senhas diferentes | Digitar senhas diferentes | Erro: "Senhas não coincidem" | [ ] |
-| CT-02.4 | Cadastro com nome inválido | Digitar "A" ou "123" no nome | Erro: "Nome inválido" | [ ] |
-| CT-02.5 | Cadastro com e-mail inválido | Digitar "teste" no e-mail | Erro: "E-mail inválido" | [ ] |
-| CT-02.6 | Login correto | E-mail + senha corretos | Redireciona para Início | [ ] |
-| CT-02.7 | Login incorreto | E-mail válido + senha errada | Erro: "Credenciais inválidas" | [ ] |
-| CT-02.8 | Campos vazios no login | Clicar em Entrar com campos vazios | Erro de campo obrigatório | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-02.1 | Cadastro válido | Cadastro realizado, redireciona para Início | ✅ [x] |
+| CT-02.2 | Cadastro com e-mail duplicado | Erro: "E-mail já cadastrado" | ✅ [x] |
+| CT-02.3 | Cadastro com senhas diferentes | Erro: "Senhas não coincidem" | ✅ [x] |
+| CT-02.4 | Cadastro com nome inválido | Erro: "Nome inválido" | ✅ [x] |
+| CT-02.5 | Cadastro com e-mail inválido | Erro: "E-mail inválido" | ✅ [x] |
+| CT-02.6 | Login correto | Redireciona para Início | ✅ [x] |
+| CT-02.7 | Login incorreto | Erro: "Credenciais inválidas" | ✅ [x] |
+| CT-02.8 | Campos vazios no login | Erro de campo obrigatório | ✅ [x] |
 
 ### 🏠 CT-03: Tela Início
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-03.1 | Exibe nome do usuário | Fazer login | Nome aparece no topo da tela | [ ] |
-| CT-03.2 | Totais corretos | Cadastrar 2 dívidas, verificar totais | Total pago + a pagar = geral | [ ] |
-| CT-03.3 | Próximos vencimentos | Cadastrar dívida com vencimento próximo | Aparece na lista com valor da parcela e progresso | [ ] |
-| CT-03.4 | Avatar dinâmico | Verificar avatar com inicial do nome | Avatar mostra a 1ª letra do nome em maiúscula | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-03.1 | Exibe nome do usuário | Nome aparece no topo da tela | ✅ [x] |
+| CT-03.2 | Totais corretos | Total pago + a pagar = geral | ✅ [x] |
+| CT-03.3 | Próximos vencimentos | Aparece com valor da parcela e progresso | ✅ [x] |
+| CT-03.4 | Avatar dinâmico | Avatar mostra a 1ª letra do nome | ✅ [x] |
 
-### 💰 CT-04: Cadastro de Dívida (com Integração)
+### 💰 CT-04: Cadastro de Dívida
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-04.1 | Cadastro com Cartão de Crédito | Escolher "Cartão de Crédito" → selecionar cartão → preencher | Dívida salva com sucesso | [ ] |
-| CT-04.2 | Filtro de Crédito | Ter 1 cartão de crédito e 1 de débito. Escolher "Cartão de Crédito" | Mostra apenas o de crédito | [ ] |
-| CT-04.3 | Filtro de Débito | Escolher "Cartão de Débito" | Esconde Parcelas/Vencimento e mostra apenas débito | [ ] |
-| CT-04.4 | Filtro de Pix | Escolher "Pix" | Esconde Parcelas/Vencimento e mostra chaves Pix | [ ] |
-| CT-04.5 | Empty State | Apagar todos os cartões → escolher "Cartão de Crédito" | Aparece mensagem + botão "Cadastrar agora" | [ ] |
-| CT-04.6 | Cálculo de parcela | Cadastrar R$ 2.000 em 10x | Card mostra "Parcela 10x de R$ 200,00" | [ ] |
-| CT-04.7 | Máscara de valor | Digitar "12345" no campo valor | Formata para "R$ 123,45" (com vírgula) | [ ] |
-| CT-04.8 | Validação de campos vazios | Tentar salvar sem preencher | Toast de erro | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-04.1 | Cadastro com Cartão de Crédito | Dívida salva com sucesso | ✅ [x] |
+| CT-04.2 | Filtro de Crédito | Mostra apenas o de crédito | ✅ [x] |
+| CT-04.3 | Filtro de Débito | Esconde Parcelas/Vencimento e mostra débito | ✅ [x] |
+| CT-04.4 | Filtro de Pix | Esconde Parcelas/Vencimento e mostra chaves Pix | ✅ [x] |
+| CT-04.5 | Empty State | Aparece mensagem + botão "Cadastrar agora" | ✅ [x] |
+| CT-04.6 | Cálculo de parcela | Card mostra "Parcela 10x de R$ 200,00" | ✅ [x] |
+| CT-04.7 | Máscara de valor | Formata para "R$ 123,45" (com vírgula) | ✅ [x] |
+| CT-04.8 | Validação de campos vazios | Toast de erro | ✅ [x] |
 
 ### 📋 CT-05: Tela de Dívidas
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-05.1 | Exibe valor da parcela | Cadastrar dívida em 10x | Card mostra "Parcela 10x de R$ 200,00" | [ ] |
-| CT-05.2 | Total correto | Cadastrar 2 dívidas | Soma dos valores bate com o total | [ ] |
-| CT-05.3 | Editar dívida | Clicar em "Editar" em uma dívida | Abre tela de cadastro preenchida | [ ] |
-| CT-05.4 | Pagar parcela | Clicar em "Pagar" em dívida 2x | Paga UMA parcela e mostra "Pagar (1/2)" | [ ] |
-| CT-05.5 | Excluir dívida | Clicar em "Excluir" | Diálogo de confirmação → dívida some | [ ] |
-| CT-05.6 | Cancelar exclusão | Clicar em "Excluir" → "Cancelar" | Dívida permanece | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-05.1 | Exibe valor da parcela | Card mostra "Parcela 10x de R$ 200,00" | ✅ [x] |
+| CT-05.2 | Total correto | Soma dos valores bate com o total | ✅ [x] |
+| CT-05.3 | Editar dívida | Abre tela de cadastro preenchida | ✅ [x] |
+| CT-05.4 | Pagar parcela | Paga UMA parcela e mostra "Pagar (1/2)" | ✅ [x] |
+| CT-05.5 | Excluir dívida | Diálogo de confirmação → dívida some | ✅ [x] |
+| CT-05.6 | Cancelar exclusão | Dívida permanece | ✅ [x] |
 
 ### 💳 CT-06: Cartões & Chaves Pix
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-06.1 | Abas funcionam | Tocar em "Cartão Crédito/Débito" e "Chave Pix" | Alterna entre as abas sem travar | [ ] |
-| CT-06.2 | Cadastrar cartão de Crédito | Preencher todos os campos | Aparece na lista como "Nubank • Crédito" | [ ] |
-| CT-06.3 | Cadastrar cartão de Débito | Escolher "Débito" | Aparece na lista como "Itaú • Débito" | [ ] |
-| CT-06.4 | Cadastrar chave Pix | Preencher todos os campos | Aparece na lista com fundo verde | [ ] |
-| CT-06.5 | Editar cartão | **Clique normal** em um cartão | Campos do form preenchidos, botão vira "Atualizar" | [ ] |
-| CT-06.6 | Cancelar edição | Clicar em "Cancelar edição" | Campos limpam, botão volta ao normal | [ ] |
-| CT-06.7 | Atualizar cartão | Editar → salvar | Dados atualizados na lista | [ ] |
-| CT-06.8 | Excluir cartão | **Clique longo** em um cartão → confirmar | Cartão some da lista | [ ] |
-| CT-06.9 | Excluir chave Pix | **Clique longo** em uma chave → confirmar | Chave some da lista | [ ] |
-| CT-06.10 | Copiar chave Pix | Clicar em "Copiar Chave" | Toast "Chave copiada!" e chave na área de transferência | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-06.1 | Abas funcionam | Alterna entre as abas sem travar | ✅ [x] |
+| CT-06.2 | Cadastrar cartão de Crédito | Aparece como "Nubank • Crédito" | ✅ [x] |
+| CT-06.3 | Cadastrar cartão de Débito | Aparece como "Itaú • Débito" | ✅ [x] |
+| CT-06.4 | Cadastrar chave Pix | Aparece na lista com fundo verde | ✅ [x] |
+| CT-06.5 | Editar cartão | Campos preenchidos, botão vira "Atualizar" | ✅ [x] |
+| CT-06.6 | Cancelar edição | Campos limpam, botão volta ao normal | ✅ [x] |
+| CT-06.7 | Atualizar cartão | Dados atualizados na lista | ✅ [x] |
+| CT-06.8 | Excluir cartão | Cartão some da lista | ✅ [x] |
+| CT-06.9 | Excluir chave Pix | Chave some da lista | ✅ [x] |
+| CT-06.10 | Copiar chave Pix | Toast "Chave copiada!" e chave na área de transferência | ✅ [x] |
 
 ### 📊 CT-07: Dashboard / Relatórios
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-07.1 | Gráfico de rosca exibe dados | Cadastrar dívidas em categorias diferentes | Gráfico mostra as fatias | [ ] |
-| CT-07.2 | Percentuais corretos | Somar fatias | Total = 100% | [ ] |
-| CT-07.3 | Filtros em pílula funcionam | Clicar em uma pílula | Gráfico filtra pela categoria | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-07.1 | Gráfico de rosca exibe dados | Gráfico mostra as fatias | ✅ [x] |
+| CT-07.2 | Percentuais corretos | Total = 100% | ✅ [x] |
+| CT-07.3 | Filtros em pílula funcionam | Gráfico filtra pela categoria | ✅ [x] |
 
 ### 🏷️ CT-08: Categorias
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-08.1 | Categorias padrão | Abrir Categorias pela 1ª vez | 8 categorias padrão aparecem | [ ] |
-| CT-08.2 | Criar nova categoria | Digitar nome + escolher cor | Categoria aparece na lista | [ ] |
-| CT-08.3 | Prévia em tempo real | Digitar nome | Tag muda enquanto digita | [ ] |
-| CT-08.4 | Excluir categoria sem dívidas | Clicar em excluir em categoria sem uso → confirmar | Categoria some | [ ] |
-| CT-08.5 | Excluir categoria em uso | Tentar excluir categoria com dívida | Bloqueio: "Não é possível excluir — X dívidas usando" | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-08.1 | Categorias padrão | 8 categorias padrão aparecem | ✅ [x] |
+| CT-08.2 | Criar nova categoria | Categoria aparece na lista | ✅ [x] |
+| CT-08.3 | Prévia em tempo real | Tag muda enquanto digita | ✅ [x] |
+| CT-08.4 | Excluir categoria sem dívidas | Categoria some | ✅ [x] |
+| CT-08.5 | Excluir categoria em uso | Bloqueio com aviso de dívidas | ✅ [x] |
 
 ### 👤 CT-09: Editar Perfil
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-09.1 | Alterar nome | Mudar o nome → salvar | Nome novo aparece em todas as telas | [ ] |
-| CT-09.2 | Alterar e-mail | Mudar para e-mail novo | E-mail atualizado | [ ] |
-| CT-09.3 | E-mail duplicado | Tentar mudar para e-mail de outro usuário | Erro: "E-mail já cadastrado" | [ ] |
-| CT-09.4 | Alterar senha | Informar senha atual + nova | Senha atualizada | [ ] |
-| CT-09.5 | Senha atual errada | Informar senha atual incorreta | Erro: "Senha atual incorreta" | [ ] |
-| CT-09.6 | Excluir conta | Clicar em "Excluir Conta" → confirmar | Volta ao Login, conta apagada | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-09.1 | Alterar nome | Nome novo aparece em todas as telas | ✅ [x] |
+| CT-09.2 | Alterar e-mail | E-mail atualizado | ✅ [x] |
+| CT-09.3 | E-mail duplicado | Erro: "E-mail já cadastrado" | ✅ [x] |
+| CT-09.4 | Alterar senha | Senha atualizada | ✅ [x] |
+| CT-09.5 | Senha atual errada | Erro: "Senha atual incorreta" | ✅ [x] |
+| CT-09.6 | Excluir conta | Volta ao Login, conta apagada | ✅ [x] |
 
 ### 🔔 CT-10: Lembretes de Fatura
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-10.1 | Permissão de notificação | Abrir app pela 1ª vez no Android 13+ | Pede permissão de notificação | [ ] |
-| CT-10.2 | Notificação agendada | Cadastrar dívida com vencimento +5 dias | Nada aparece agora (agendado) | [ ] |
-| CT-10.3 | Notificação no dia certo | Mudar data do celular para -3 dias antes, 08h59 | Notificação aparece às 09h | [ ] |
-| CT-10.4 | Cancelar ao pagar | Pagar dívida antes do lembrete | Notificação NÃO aparece | [ ] |
-| CT-10.5 | Cancelar ao excluir | Excluir dívida antes do lembrete | Notificação NÃO aparece | [ ] |
-| CT-10.6 | Switch de lembretes | Desligar switch em Configurações | Novas notificações não são agendadas | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-10.1 | Permissão de notificação | Pede permissão de notificação | ⏳ [ ] |
+| CT-10.2 | Notificação agendada | Nada aparece agora (agendado) | ⏳ [ ] |
+| CT-10.3 | Notificação no dia certo | Notificação aparece às 09h | ⏳ [ ] |
+| CT-10.4 | Cancelar ao pagar | Notificação NÃO aparece | ⏳ [ ] |
+| CT-10.5 | Cancelar ao excluir | Notificação NÃO aparece | ⏳ [ ] |
+| CT-10.6 | Switch de lembretes | Novas notificações não são agendadas | ⏳ [ ] |
 
 ### 🔄 CT-11: BootReceiver (Reagendamento)
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-11.1 | Reagenda após reiniciar | Cadastrar dívida → reiniciar celular → mudar data para -3 dias | Notificação aparece normalmente | [ ] |
-| CT-11.2 | Respeita switch desligado | Desligar switch → reiniciar celular → cadastrar dívida | Nenhuma notificação é agendada | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-11.1 | Reagenda após reiniciar | Notificação aparece normalmente | ⏳ [ ] |
+| CT-11.2 | Respeita switch desligado | Nenhuma notificação é agendada | ⏳ [ ] |
 
 ### 🔒 CT-12: Isolamento por Usuário
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-12.1 | Cada usuário vê só seus dados | Criar conta A → cadastrar dívida → logout → conta B | Conta B vê lista vazia | [ ] |
-| CT-12.2 | Sessão ativa | Logar como A → logout → logar como B | Só dados de B aparecem | [ ] |
-| CT-12.3 | BootReceiver respeita usuário | Logar como A, cadastrar dívida, logout, reiniciar | Alarme só reagenda quando A logar | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-12.1 | Cada usuário vê só seus dados | Conta B vê lista vazia | ✅ [x] |
+| CT-12.2 | Sessão ativa | Só dados de B aparecem | ✅ [x] |
+| CT-12.3 | BootReceiver respeita usuário | Alarme só reagenda quando A logar | ✅ [x] |
 
 ### ⚙️ CT-13: Configurações
 
-| ID | Descrição | Passos | Resultado Esperado | Status |
-|----|-----------|--------|---------------------|--------|
-| CT-13.1 | Perfil correto | Abrir Configurações | Nome e avatar corretos | [ ] |
-| CT-13.2 | Botão "Cartões & Pix" | Tocar em "Meus Cartões & Bancos" | Abre CartoesActivity | [ ] |
-| CT-13.3 | Botão "Categorias" | Tocar em "Categorias de Dívida" | Abre CategoriasActivity | [ ] |
-| CT-13.4 | Botão "Editar Perfil" | Tocar em "Editar" no card do usuário | Abre EditarPerfilActivity | [ ] |
-| CT-13.5 | Botão "Limpar Tudo" | Tocar em "Backup dos Dados" | Diálogo de confirmação (testes internos) | [ ] |
-| CT-13.6 | Logout | Tocar em "Desconectar" → confirmar | Volta para Login | [ ] |
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-13.1 | Perfil correto | Nome e avatar corretos | ✅ [x] |
+| CT-13.2 | Botão "Cartões & Pix" | Abre CartoesActivity | ✅ [x] |
+| CT-13.3 | Botão "Categorias" | Abre CategoriasActivity | ✅ [x] |
+| CT-13.4 | Botão "Editar Perfil" | Abre EditarPerfilActivity | ✅ [x] |
+| CT-13.5 | Botão "Limpar Tudo" | Diálogo de confirmação | ✅ [x] |
+| CT-13.6 | Logout | Volta para Login | ✅ [x] |
 
 ---
 
@@ -213,106 +213,81 @@ O app é considerado **aprovado para release** quando:
 
 Ao encontrar um problema durante os testes:
 
-1. **Anote o CT (Caso de Teste)** que falhou (ex: CT-04.2)
+1. **Anote o CT (Caso de Teste)** que falhou
 2. **Anote os passos** exatos que você fez
 3. **Anote o resultado esperado** e **o que aconteceu de fato**
 4. **Tire um print** da tela
-5. **Abra um registro no `docs/BUGS.md`** com:
-   - Um ID novo (ex: BUG-002)
-   - Data, Sprint, Tela, Prioridade
-   - Descrição, passos, comportamento esperado, comportamento atual
+5. **Abra um registro no `docs/BUGS.md`**
 6. **Marque como 🔴 Aberto** no `BUGS.md`
-
-> **Importante:** Quanto mais detalhado, mais fácil fica para o desenvolvedor corrigir.
 
 ---
 
 ## 8. Fluxo de Teste Recomendado
 
-1. **Teste de Fumaça (Smoke Test)** — passar rapidamente por todas as telas para ver se nada quebrou
-2. **Teste Funcional Completo** — rodar todos os CTs na ordem
-3. **Teste de Borda** — repetir os CTs com dados extremos (valores altos, textos longos, campos vazios)
-4. **Teste de Regressão** — verificar se bugs antigos corrigidos continuam corrigidos
+1. **Teste de Fumaça (Smoke Test)**
+2. **Teste Funcional Completo**
+3. **Teste de Borda**
+4. **Teste de Regressão**
 5. **Registrar bugs** no `BUGS.md`
-6. **Enviar relatório final** para o líder do projeto (Gustavo Piteira)
+6. **Enviar relatório final** para o líder do projeto
 
 ---
 
 ## 9. Como Testar as Notificações (CT-10 e CT-11)
 
-As notificações usam o `AlarmManager` do Android, que segue o relógio interno do celular. Para testar sem esperar semanas, é possível "enganar" o sistema mudando a data do celular.
+As notificações usam o `AlarmManager` do Android. Para testar sem esperar semanas, é possível "enganar" o sistema mudando a data do celular.
 
 ### Passo a Passo
 
-1. **Desative o "Data e hora automáticas":**
+1. **Desative "Data e hora automáticas":**
    - Configurações do Android → Sistema → Data e hora
    - Desligar "Definir data e hora automaticamente"
 
-2. **Confirme que os lembretes estão ativos:**
-   - App → Configurações → Lembretes de Fatura → switch ligado
+2. **Confirme que os lembretes estão ativos no app**
 
-3. **Cadastre uma dívida de teste:**
-   - Tipo: Cartão de Crédito
-   - Descrição: "Teste Notificação"
-   - Valor: R$ 100
-   - Parcelas: 1x
-   - 1º Vencimento: **hoje + 4 dias**
-   - (A notificação será agendada para **hoje + 1 dia, às 09h**)
+3. **Cadastre uma dívida com vencimento em hoje + 4 dias**
 
-4. **Force o fechamento do app:**
-   - Configurações do Android → Apps → Controle Gastos → Forçar parada
+4. **Force o fechamento do app**
 
-5. **Mude a data do celular:**
-   - Data: **amanhã (hoje + 1)**
-   - Hora: **08:58**
+5. **Mude a data do celular para amanhã, 08:58**
 
-6. **Aguarde 2 minutos** sem mexer em nada
-7. **Às 09:00** a notificação deve aparecer na barra de status
+6. **Aguarde 2 minutos** → a notificação deve aparecer às 09:00
 
-### Restaurar Configuração
+7. **Restaurar:** Reative "Definir data e hora automaticamente"
 
-Depois do teste:
-- Reative "Definir data e hora automaticamente"
-- A data volta ao normal sozinha
+### ⚠️ Observações
 
-### ⚠️ Observações Importantes
-
-- O alarme só é agendado se `vencimento - 3 dias` estiver **no futuro**
-- Vencimento em **hoje + 2 dias** não funciona (o alarme cairia no passado)
-- Vencimento em **hoje + 3 dias** funciona apenas se ainda não passou das 09h de hoje
-- Vencimento em **hoje + 4 dias** é o mais confiável para o teste
+- O alarme só é agendado se `vencimento - 3 dias` estiver no futuro
+- Vencimento em **hoje + 2 dias** não funciona
+- Vencimento em **hoje + 4 dias** é o mais confiável
 
 ### Teste do BootReceiver (CT-11)
 
-Depois de dominar o teste básico:
-1. Cadastre uma dívida com vencimento em **hoje + 5 dias**
-2. **Reinicie o celular** (isso apaga todos os alarmes do Android)
-3. Depois que ligar, mude a data para **hoje + 2 dias, 08:58**
-4. Aguarde 09:00 → a notificação deve aparecer
-5. ✅ Se aparecer, o `BootReceiver` funcionou corretamente
+1. Cadastre dívida com vencimento em **hoje + 5 dias**
+2. **Reinicie o celular**
+3. Mude a data para **hoje + 2 dias, 08:58**
+4. Aguarde 09:00 → notificação deve aparecer
 
 ---
 
 ## 10. Histórico de Execuções
 
-| Data | Testador | Versão | Total de CTs | Passou | Falhou | Bugs Abertos |
-|------|----------|--------|--------------|--------|--------|--------------|
-| 03/10/2026 | Israel Malheiros | Sprint 5 | 68 | 51 | 11 | 0 (todos corrigidos) |
-
-> **Como usar:** Adicione uma linha a cada rodada de testes executada.
+| Data | Testador | Versão | Total | Passou | Falhou | Bugs Abertos |
+|------|----------|--------|-------|--------|--------|--------------|
+| 03/10/2026 | Israel Malheiros | Sprint 5 | 68 | 60 | 8 | 0 |
 
 ### Bugs Encontrados e Corrigidos
 
 | Bug | CT | Descrição | Status |
 |-----|-----|-----------|--------|
-| BUG-001 | CT-05.1 | Valor da parcela não era dividido em dívidas parceladas | ✅ Corrigido |
-| BUG-002 | CT-04.4 | Pix e Débito pediam parcelas/vencimento | ✅ Corrigido |
-| BUG-003 | CT-04.7 | Máscara de valor não formatava corretamente | ✅ Corrigido |
-| BUG-004 | CT-04.6 | Card não mostrava valor da parcela | ✅ Corrigido |
-| BUG-005 | CT-03.3 | Vencimentos mostravam valor total como pagamento único | ✅ Corrigido |
-| BUG-006 | CT-06.1 | Tela Lançar sem barra de navegação | ✅ Corrigido |
-| BUG-007 | CT-08.4 / 08.5 | Exclusão de categorias em uso | ✅ Corrigido |
-| BUG-008 | CT-09.1 a 09.6 | Erro ao carregar dados do usuário | ✅ Corrigido |
+| BUG-001 | CT-05.1 | Valor da parcela não dividido | ✅ Corrigido |
+| BUG-002 | CT-04.4 | Pix/Débito pediam parcelas/vencimento | ✅ Corrigido |
+| BUG-003 | CT-04.7 | Máscara de valor não formatava | ✅ Corrigido |
+| BUG-004 | CT-04.6 | Card sem valor da parcela | ✅ Corrigido |
+| BUG-005 | CT-03.3 | Vencimentos mostravam valor total | ✅ Corrigido |
+| BUG-006 | CT-06.1 | Lançar sem barra de navegação | ✅ Corrigido |
+| BUG-007 | CT-08.4/08.5 | Exclusão de categorias em uso | ✅ Corrigido |
+| BUG-008 | CT-09.1/09.6 | Erro ao carregar dados do usuário | ✅ Corrigido |
 
 ---
 

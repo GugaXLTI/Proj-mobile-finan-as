@@ -13,6 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,13 +37,17 @@ import java.util.Locale;
 
 public class CadastroDividaActivity extends AppCompatActivity {
 
+    private static final Locale LOCALE_BR = new Locale("pt", "BR");
+
     private Spinner spinnerTipoDivida, spinnerCategoria, spinnerParcelas;
     private EditText editDescricao, editValor, editDataCompra, editVencimento;
     private MaterialButton btnSalvar;
     private RecyclerView rvSelecao;
-    private LinearLayout containerVazio;
+    private LinearLayout containerVazio, containerParcelas, containerVencimento;
     private TextView btnNovoItem, btnNovaCategoria, tvTituloSelecao;
     private Button btnCadastrarAgora;
+
+    private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     private AppDatabase db;
     private SessionManager session;
@@ -74,10 +79,18 @@ public class CadastroDividaActivity extends AppCompatActivity {
         btnSalvar = findViewById(R.id.btnSalvarDivida);
         rvSelecao = findViewById(R.id.rvSelecao);
         containerVazio = findViewById(R.id.containerVazio);
+        containerParcelas = findViewById(R.id.containerParcelas);
+        containerVencimento = findViewById(R.id.containerVencimento);
         btnNovoItem = findViewById(R.id.btnNovoItem);
         btnNovaCategoria = findViewById(R.id.btnNovaCategoria);
         tvTituloSelecao = findViewById(R.id.tvTituloSelecao);
         btnCadastrarAgora = findViewById(R.id.btnCadastrarAgora);
+
+        tabInicio = findViewById(R.id.tabInicio);
+        tabLancar = findViewById(R.id.tabLancar);
+        tabDividas = findViewById(R.id.tabDividas);
+        tabRelatorios = findViewById(R.id.tabRelatorios);
+        tabConfig = findViewById(R.id.tabConfig);
 
         rvSelecao.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
@@ -120,11 +133,43 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
 
         btnSalvar.setOnClickListener(v -> salvarDivida());
+
+        // ⭐ Navegação da barra inferior
+        tabInicio.setOnClickListener(v -> {
+            startActivity(new Intent(this, InicioActivity.class));
+            finish();
+        });
+
+        tabLancar.setOnClickListener(v ->
+                Toast.makeText(this, "Você já está em Lançar", Toast.LENGTH_SHORT).show());
+
+        tabDividas.setOnClickListener(v -> {
+            startActivity(new Intent(this, DividasActivity.class));
+            finish();
+        });
+
+        tabRelatorios.setOnClickListener(v -> {
+            startActivity(new Intent(this, DashboardActivity.class));
+            finish();
+        });
+
+        tabConfig.setOnClickListener(v -> {
+            startActivity(new Intent(this, ConfiguracoesActivity.class));
+            finish();
+        });
+    }
+
+    private boolean isTipoAVista(String tipo) {
+        return tipo.equals("Pix") || tipo.equals("Cartão de Débito");
     }
 
     private void atualizarSelecao() {
         String tipo = spinnerTipoDivida.getSelectedItem().toString();
         itensSelecao.clear();
+
+        boolean isAVista = isTipoAVista(tipo);
+        containerParcelas.setVisibility(isAVista ? View.GONE : View.VISIBLE);
+        containerVencimento.setVisibility(isAVista ? View.GONE : View.VISIBLE);
 
         if (tipo.equals("Cartão de Crédito") || tipo.equals("Cartão de Débito")) {
             String tipoCartaoFiltro = tipo.equals("Cartão de Crédito") ? "Crédito" : "Débito";
@@ -175,20 +220,29 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private void configurarMascaraValor(EditText editText) {
         editText.addTextChangedListener(new TextWatcher() {
             private boolean isUpdating = false;
+
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
+
             @Override
             public void afterTextChanged(Editable s) {
                 if (isUpdating) return;
                 isUpdating = true;
+
                 String text = s.toString().replaceAll("[^0-9]", "");
+
                 if (text.isEmpty()) {
                     editText.setText("");
                     isUpdating = false;
                     return;
                 }
+
+                if (text.length() > 11) {
+                    text = text.substring(0, 11);
+                }
+
                 double valor = Double.parseDouble(text) / 100.0;
-                String formatted = String.format(Locale.getDefault(), "R$ %.2f", valor);
+                String formatted = String.format(LOCALE_BR, "R$ %.2f", valor);
                 editText.setText(formatted);
                 editText.setSelection(formatted.length());
                 isUpdating = false;
@@ -231,7 +285,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
             final Calendar calendar = Calendar.getInstance();
             new DatePickerDialog(this,
                     (view, year, month, day) -> {
-                        String data = String.format(Locale.getDefault(), "%02d/%02d/%04d", day, month + 1, year);
+                        String data = String.format(LOCALE_BR, "%02d/%02d/%04d", day, month + 1, year);
                         editText.setText(data);
                     },
                     calendar.get(Calendar.YEAR),
@@ -240,25 +294,125 @@ public class CadastroDividaActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * ⭐ Preenche os campos no modo edição.
+     * Se a categoria original não existir mais, abre um diálogo para criar uma nova.
+     */
     private void preencherCampos(Divida d) {
         editDescricao.setText(d.getTitulo());
-        String valorFormatado = String.format(Locale.getDefault(), "R$ %.2f", d.getValorTotal());
+
+        String valorFormatado = String.format(LOCALE_BR, "R$ %.2f", d.getValorTotal());
         editValor.setText(valorFormatado);
         editValor.setSelection(valorFormatado.length());
+
         editVencimento.setText(d.getVencimento());
 
-        for (int i = 0; i < categoriasDoBanco.size(); i++) {
-            if (categoriasDoBanco.get(i).getNome().equals(d.getCategoria())) {
-                spinnerCategoria.setSelection(i);
+        // ⭐ Verifica se a categoria da dívida ainda existe
+        boolean categoriaExiste = false;
+        for (Categoria c : categoriasDoBanco) {
+            if (c.getNome().equals(d.getCategoria())) {
+                categoriaExiste = true;
                 break;
             }
         }
+
+        if (!categoriaExiste && !d.getCategoria().isEmpty()) {
+            // ⭐ Categoria órfã! Abre diálogo para criar uma nova
+            mostrarDialogCategoriaOrfa(d.getCategoria());
+        } else {
+            // Seleciona a categoria normalmente
+            for (int i = 0; i < categoriasDoBanco.size(); i++) {
+                if (categoriasDoBanco.get(i).getNome().equals(d.getCategoria())) {
+                    spinnerCategoria.setSelection(i);
+                    break;
+                }
+            }
+        }
+
+        // Seleciona as parcelas
         for (int i = 0; i < spinnerParcelas.getAdapter().getCount(); i++) {
             if (spinnerParcelas.getAdapter().getItem(i).toString().equals(d.getParcela())) {
                 spinnerParcelas.setSelection(i);
                 break;
             }
         }
+    }
+
+    /**
+     * ⭐ Mostra diálogo pedindo para o usuário criar uma nova categoria
+     * quando a categoria original foi excluída.
+     */
+    private void mostrarDialogCategoriaOrfa(String nomeAntigo) {
+        // Cria um EditText programaticamente
+        final EditText input = new EditText(this);
+        input.setText(nomeAntigo);
+        input.setSelection(nomeAntigo.length());
+        input.setHint("Nome da categoria");
+        input.setTextColor(getResources().getColor(R.color.text_white));
+
+        // Container com padding para o EditText não ficar colado
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (16 * getResources().getDisplayMetrics().density);
+        container.setPadding(padding, 0, padding, 0);
+        container.addView(input);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Categoria não existe mais")
+                .setMessage("A categoria \"" + nomeAntigo + "\" foi excluída.\n\n" +
+                        "Digite um nome para criar uma nova categoria para esta dívida:")
+                .setView(container)
+                .setCancelable(false)
+                .setPositiveButton("Criar", (dialog, which) -> {
+                    String novoNome = input.getText().toString().trim();
+                    if (novoNome.isEmpty()) {
+                        Toast.makeText(this, "Digite um nome válido!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    criarCategoriaOrfa(novoNome);
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> {
+                    // Se cancelar, o spinner fica na primeira categoria por padrão
+                    Toast.makeText(this,
+                            "Escolha uma categoria antes de salvar!",
+                            Toast.LENGTH_LONG).show();
+                })
+                .show();
+    }
+
+    /**
+     * ⭐ Cria uma nova categoria com o nome informado pelo usuário.
+     * Se já existir uma categoria com esse nome, apenas seleciona ela.
+     */
+    private void criarCategoriaOrfa(String nome) {
+        // Verifica se já existe uma categoria com esse nome
+        Categoria existente = db.categoriaDao().buscarPorNome(session.getUserId(), nome);
+
+        if (existente == null) {
+            // Cria nova categoria com cor cinza padrão
+            Categoria nova = new Categoria(session.getUserId(), nome, "#64748B");
+            long id = db.categoriaDao().inserir(nova);
+
+            if (id <= 0) {
+                Toast.makeText(this, "Erro ao criar categoria.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        // Recarrega a lista de categorias
+        categoriasDoBanco = db.categoriaDao().listarPorUsuario(session.getUserId());
+        CategoriaSpinnerAdapter adapter = new CategoriaSpinnerAdapter(this, categoriasDoBanco);
+        spinnerCategoria.setAdapter(adapter);
+
+        // Seleciona a categoria criada
+        for (int i = 0; i < categoriasDoBanco.size(); i++) {
+            if (categoriasDoBanco.get(i).getNome().equals(nome)) {
+                spinnerCategoria.setSelection(i);
+                break;
+            }
+        }
+
+        Toast.makeText(this, "Categoria \"" + nome + "\" criada!", Toast.LENGTH_SHORT).show();
     }
 
     private int extrairNumeroParcelas(String parcela) {
@@ -279,6 +433,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
 
         String tipoDivida = spinnerTipoDivida.getSelectedItem().toString();
+        boolean isAVista = isTipoAVista(tipoDivida);
 
         Object itemCategoria = spinnerCategoria.getSelectedItem();
         String categoria;
@@ -288,11 +443,28 @@ public class CadastroDividaActivity extends AppCompatActivity {
             categoria = itemCategoria.toString();
         }
 
-        String parcelas = spinnerParcelas.getSelectedItem().toString();
         String descricao = editDescricao.getText().toString().trim();
         String valorStr = editValor.getText().toString().trim()
-                .replace("R$ ", "").replace(".", "").replace(",", ".");
+                .replace("R$", "").replace(".", "").replace(",", ".").trim();
+
+        String dataCompra = editDataCompra.getText().toString().trim();
         String vencimento = editVencimento.getText().toString().trim();
+
+        String parcelas;
+        if (isAVista) {
+            parcelas = "1x (À vista)";
+            if (vencimento.isEmpty()) {
+                if (!dataCompra.isEmpty()) {
+                    vencimento = dataCompra;
+                } else {
+                    Calendar c = Calendar.getInstance();
+                    vencimento = String.format(LOCALE_BR, "%02d/%02d/%04d",
+                            c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH) + 1, c.get(Calendar.YEAR));
+                }
+            }
+        } else {
+            parcelas = spinnerParcelas.getSelectedItem().toString();
+        }
 
         String bancoSelecionado;
         if (chipAdapter != null && chipAdapter.getItemSelecionado() != null) {
@@ -301,7 +473,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
             bancoSelecionado = tipoDivida;
         }
 
-        if (descricao.isEmpty() || valorStr.isEmpty() || vencimento.isEmpty()) {
+        if (descricao.isEmpty() || valorStr.isEmpty() || (!isAVista && vencimento.isEmpty())) {
             Toast.makeText(this, "Preencha todos os campos obrigatórios!", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -322,28 +494,48 @@ public class CadastroDividaActivity extends AppCompatActivity {
         int numParcelas = extrairNumeroParcelas(parcelas);
         double valorParcela = valor / numParcelas;
 
+        boolean jaPago = isAVista;
+        double valorJaPago = isAVista ? valor : 0.0;
+
         if (dividaEmEdicao != null) {
             AlarmeHelper.cancelar(this, dividaEmEdicao);
             dividaEmEdicao.titulo = descricao;
             dividaEmEdicao.valorTotal = valor;
             dividaEmEdicao.valorParcela = valorParcela;
+            dividaEmEdicao.valorPago = valorJaPago;
             dividaEmEdicao.banco = bancoSelecionado;
             dividaEmEdicao.categoria = categoria;
             dividaEmEdicao.parcela = parcelas;
             dividaEmEdicao.vencimento = vencimento;
+            dividaEmEdicao.pago = jaPago;
             db.dividaDao().atualizar(dividaEmEdicao);
-            AlarmeHelper.agendar(this, dividaEmEdicao);
+
+            if (!jaPago) {
+                AlarmeHelper.agendar(this, dividaEmEdicao);
+            }
             Toast.makeText(this, "Dívida atualizada com sucesso!", Toast.LENGTH_SHORT).show();
         } else {
             Divida novaDivida = new Divida(
-                    session.getUserId(), descricao, valor, valorParcela, 0.0,
-                    bancoSelecionado, categoria, parcelas, vencimento, false
+                    session.getUserId(), descricao, valor, valorParcela, valorJaPago,
+                    bancoSelecionado, categoria, parcelas, vencimento, jaPago
             );
             long idGerado = db.dividaDao().inserir(novaDivida);
             if (idGerado > 0) {
                 novaDivida.id = (int) idGerado;
-                AlarmeHelper.agendar(this, novaDivida);
-                Toast.makeText(this, "Dívida cadastrada com sucesso!", Toast.LENGTH_SHORT).show();
+
+                if (!jaPago) {
+                    AlarmeHelper.agendar(this, novaDivida);
+                }
+
+                String msg;
+                if (tipoDivida.equals("Pix")) {
+                    msg = "Compra via Pix registrada!";
+                } else if (tipoDivida.equals("Cartão de Débito")) {
+                    msg = "Compra no Débito registrada!";
+                } else {
+                    msg = "Dívida cadastrada com sucesso!";
+                }
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Erro ao cadastrar. Tente novamente.", Toast.LENGTH_SHORT).show();
                 return;

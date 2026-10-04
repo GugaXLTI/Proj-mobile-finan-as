@@ -16,6 +16,9 @@ import java.util.Locale;
 
 public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder> {
 
+    // ⭐ Locale brasileiro para forçar vírgula decimal
+    private static final Locale LOCALE_BR = new Locale("pt", "BR");
+
     private List<Divida> dividas;
     private OnDividaActionListener listener;
 
@@ -44,11 +47,22 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
 
         holder.tvTitulo.setText(d.getTitulo());
         holder.tvDetalhe.setText(d.getBanco() + " • " + d.getCategoria());
-        holder.tvParcela.setText("Parcela " + d.getParcela());
-        holder.tvVencimento.setText("Vencimento: " + d.getVencimento());
 
+        // ⭐ Mostra o número de parcelas E o valor de cada uma
         int totalParcelas = extrairNumeroParcelas(d.getParcela());
         double valorParcelaReal = d.getValorTotal() / totalParcelas;
+
+        if (totalParcelas > 1) {
+            holder.tvParcela.setText(
+                    "Parcela " + d.getParcela() + " de R$ " +
+                            String.format(LOCALE_BR, "%.2f", valorParcelaReal)
+            );
+        } else {
+            holder.tvParcela.setText("Parcela " + d.getParcela());
+        }
+
+        holder.tvVencimento.setText("Vencimento: " + d.getVencimento());
+
         int parcelasPagas = (int) Math.round(d.getValorPago() / valorParcelaReal);
 
         if (d.isPago()) {
@@ -62,7 +76,7 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         } else {
             // ⭐ Ainda falta pagar (parcial ou total)
             holder.tvValorRestante.setText(
-                    "Falta: R$ " + String.format(Locale.getDefault(), "%.2f", d.getValorRestante())
+                    "Falta: R$ " + String.format(LOCALE_BR, "%.2f", d.getValorRestante())
             );
             holder.tvValorRestante.setTextColor(Color.parseColor("#EF4444"));
 
@@ -91,9 +105,6 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         return dividas.size();
     }
 
-    /**
-     * Extrai o número de parcelas de uma string como "10x" ou "1x (À vista)".
-     */
     private int extrairNumeroParcelas(String parcela) {
         try {
             String numeros = parcela.replaceAll("[^0-9]", "");

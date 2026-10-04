@@ -36,23 +36,51 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
+        <!-- ⭐ Nova linha: progresso das parcelas -->
+        <TextView
+            android:id="@+id/tvParcelaVencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Parcela 2 de 10"
+            android:textColor="#10B981"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/tvDetalheVencimento"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cartão de Crédito • Vence em 15/10"
+            android:text="Vence em 15/10/2026"
             android:textColor="#64748B"
             android:textSize="11sp" />
     </LinearLayout>
 
-    <!-- Valor -->
-    <TextView
-        android:id="@+id/tvValorVencimento"
+    <!-- Valor (parcela + total) -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="R$ 2.450,00"
-        android:textColor="#EF4444"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:orientation="vertical"
+        android:gravity="end">
+
+        <TextView
+            android:id="@+id/tvValorVencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="R$ 245,00"
+            android:textColor="#EF4444"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- ⭐ Nova linha: total da compra -->
+        <TextView
+            android:id="@+id/tvTotalVencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Total: R$ 2.450,00"
+            android:textColor="#64748B"
+            android:textSize="10sp"
+            android:visibility="gone" />
+    </LinearLayout>
 
 </LinearLayout>

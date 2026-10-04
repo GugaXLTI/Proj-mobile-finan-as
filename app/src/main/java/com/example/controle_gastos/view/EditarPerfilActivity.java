@@ -36,7 +36,6 @@ public class EditarPerfilActivity extends AppCompatActivity {
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
 
-        // Vincula componentes
         btnVoltarPerfil = findViewById(R.id.btnVoltarPerfil);
         tvAvatarPerfil = findViewById(R.id.tvAvatarPerfil);
         editNomePerfil = findViewById(R.id.editNomePerfil);
@@ -53,48 +52,87 @@ public class EditarPerfilActivity extends AppCompatActivity {
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        // Carrega o usuário logado
         carregarUsuario();
 
-        // Botão Voltar
-        btnVoltarPerfil.setOnClickListener(v -> finish());
+        btnVoltarPerfil.setOnClickListener(v -> {
+            startActivity(new Intent(this, ConfiguracoesActivity.class));
+            finish();
+        });
 
-        // Botão Salvar
         btnSalvarPerfil.setOnClickListener(v -> salvarAlteracoes());
-
-        // Link Excluir Conta
         btnEliminarConta.setOnClickListener(v -> confirmarExclusao());
 
-        // Navegação
         tabInicio.setOnClickListener(v -> {
-            startActivity(new Intent(EditarPerfilActivity.this, InicioActivity.class));
+            startActivity(new Intent(this, InicioActivity.class));
             finish();
         });
         tabLancar.setOnClickListener(v -> {
-            startActivity(new Intent(EditarPerfilActivity.this, CadastroDividaActivity.class));
+            startActivity(new Intent(this, CadastroDividaActivity.class));
         });
         tabDividas.setOnClickListener(v -> {
-            startActivity(new Intent(EditarPerfilActivity.this, DividasActivity.class));
+            startActivity(new Intent(this, DividasActivity.class));
             finish();
         });
         tabRelatorios.setOnClickListener(v -> {
-            startActivity(new Intent(EditarPerfilActivity.this, DashboardActivity.class));
+            startActivity(new Intent(this, DashboardActivity.class));
             finish();
         });
         tabConfig.setOnClickListener(v -> {
-            startActivity(new Intent(EditarPerfilActivity.this, ConfiguracoesActivity.class));
+            startActivity(new Intent(this, ConfiguracoesActivity.class));
             finish();
         });
     }
 
+    /**
+     * ⭐ Carrega o usuário logado com 3 fallbacks para evitar o erro "Erro ao carregar dados".
+     *
+     * 1. Busca por ID (sessão)
+     * 2. Busca por nome (sessão)
+     * 3. Se só tem 1 usuário no banco, pega ele
+     * 4. Se nada funcionar, força logout
+     */
     private void carregarUsuario() {
         int userId = session.getUserId();
+
+        // Tentativa 1: por ID
         usuarioLogado = db.usuarioDao().buscarPorId(userId);
 
+        // Tentativa 2: por nome da sessão
         if (usuarioLogado == null) {
-            Toast.makeText(this, "Erro ao carregar dados do usuário.", Toast.LENGTH_SHORT).show();
-            finish();
+            String nomeSessao = session.getNome();
+            if (nomeSessao != null && !nomeSessao.isEmpty()) {
+                usuarioLogado = db.usuarioDao().buscarPorNome(nomeSessao);
+            }
+        }
+
+        // Tentativa 3: se só existe 1 usuário no banco
+        if (usuarioLogado == null) {
+            int total = db.usuarioDao().contarUsuarios();
+            if (total == 1) {
+                usuarioLogado = db.usuarioDao().buscarPrimeiroUsuario();
+            }
+        }
+
+        // Nada funcionou: sessão expirada
+        if (usuarioLogado == null) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Sessão expirada")
+                    .setMessage("Sua sessão expirou ou os dados foram redefinidos. Faça login novamente.")
+                    .setCancelable(false)
+                    .setPositiveButton("OK", (d, w) -> {
+                        session.logout();
+                        Intent intent = new Intent(this, LoginActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+                    })
+                    .show();
             return;
+        }
+
+        // ⭐ Se o userId da sessão não bate com o do banco, atualiza
+        if (usuarioLogado.getId() != userId) {
+            session.salvarSessao(usuarioLogado.getId(), usuarioLogado.getNome(), usuarioLogado.getEmail());
         }
 
         // Preenche os campos
@@ -114,7 +152,10 @@ public class EditarPerfilActivity extends AppCompatActivity {
         String novaSenha = editNovaSenha.getText().toString().trim();
         String confirmarNovaSenha = editConfirmarNovaSenha.getText().toString().trim();
 
-        // ===== VALIDAÇÕES =====
+        if (usuarioLogado == null) {
+            Toast.makeText(this, "Usuário não carregado. Tente novamente.", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         if (novoNome.isEmpty() || novoEmail.isEmpty() || senhaAtual.isEmpty()) {
             Toast.makeText(this, "Preencha nome, e-mail e senha atual!", Toast.LENGTH_SHORT).show();
@@ -136,13 +177,11 @@ public class EditarPerfilActivity extends AppCompatActivity {
             return;
         }
 
-        // Senha atual correta?
         if (!senhaAtual.equals(usuarioLogado.getSenha())) {
             Toast.makeText(this, "Senha atual incorreta!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Novo e-mail já em uso por outro usuário?
         if (!novoEmail.equals(usuarioLogado.getEmail())) {
             Usuario existente = db.usuarioDao().buscarPorEmail(novoEmail);
             if (existente != null) {
@@ -151,20 +190,16 @@ public class EditarPerfilActivity extends AppCompatActivity {
             }
         }
 
-        // Se preencheu nova senha, valida
         if (!novaSenha.isEmpty() || !confirmarNovaSenha.isEmpty()) {
             if (novaSenha.length() < 6) {
                 Toast.makeText(this, "A nova senha deve ter pelo menos 6 caracteres.", Toast.LENGTH_SHORT).show();
                 return;
             }
-
             if (!novaSenha.equals(confirmarNovaSenha)) {
                 Toast.makeText(this, "As novas senhas não coincidem!", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
-
-        // ===== SALVA NO BANCO =====
 
         usuarioLogado.setNome(novoNome);
         usuarioLogado.setEmail(novoEmail);
@@ -175,27 +210,29 @@ public class EditarPerfilActivity extends AppCompatActivity {
 
         db.usuarioDao().atualizar(usuarioLogado);
 
-        // Atualiza a sessão (nome pode ter mudado)
+        // ⭐ Atualiza nome E e-mail na sessão
         session.atualizarNome(novoNome);
+        session.atualizarEmail(novoEmail);
 
         Toast.makeText(this, "Perfil atualizado com sucesso!", Toast.LENGTH_SHORT).show();
         finish();
     }
 
     private void confirmarExclusao() {
+        if (usuarioLogado == null) {
+            Toast.makeText(this, "Usuário não carregado.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         new AlertDialog.Builder(this)
                 .setTitle("Eliminar conta")
                 .setMessage("Tem certeza que deseja eliminar sua conta?\n\nTodos os seus dados (dívidas, transações e conta) serão apagados permanentemente. Essa ação não pode ser desfeita.")
                 .setPositiveButton("Eliminar", (dialog, which) -> {
-                    // Deleta o usuário
                     db.usuarioDao().deletar(usuarioLogado);
-
-                    // Limpa a sessão
                     session.logout();
 
                     Toast.makeText(this, "Conta eliminada. Todos os dados foram apagados.", Toast.LENGTH_LONG).show();
 
-                    // Vai para o Login
                     Intent intent = new Intent(EditarPerfilActivity.this, LoginActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);

@@ -1,311 +1,389 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_screen"
-    android:fillViewport="true">
+    android:background="@color/bg_screen">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Título -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Lançar Nova Dívida"
-            android:fontFamily="@font/abril_fatface"
-            android:textSize="24sp"
-            android:textColor="@color/text_white"
-            android:layout_marginBottom="4dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cartões, faturas, empréstimos ou outras pendências"
-            android:textColor="@color/text_gray"
-            android:textSize="13sp"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Tipo de Dívida -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tipo de Dívida"
-            android:textColor="@color/text_gray"
-            android:textSize="13sp"
-            android:layout_marginBottom="8dp" />
-
-        <Spinner
-            android:id="@+id/spinnerTipoDivida"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_form_field"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:popupBackground="@color/card_bg"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Container de Seleção (Cartão/Pix) -->
         <LinearLayout
-            android:id="@+id/containerSelecao"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="16dp">
+            android:padding="16dp">
 
+            <!-- Título -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lançar Nova Dívida"
+                android:fontFamily="@font/abril_fatface"
+                android:textSize="24sp"
+                android:textColor="@color/text_white"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cartões, faturas, empréstimos ou outras pendências"
+                android:textColor="@color/text_gray"
+                android:textSize="13sp"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Tipo de Dívida -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tipo de Dívida"
+                android:textColor="@color/text_gray"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+
+            <Spinner
+                android:id="@+id/spinnerTipoDivida"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_form_field"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:popupBackground="@color/card_bg"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Container de Seleção (Cartão/Pix) -->
+            <LinearLayout
+                android:id="@+id/containerSelecao"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+                    <TextView
+                        android:id="@+id/tvTituloSelecao"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Selecione o Cartão / Banco"
+                        android:textColor="@color/text_gray"
+                        android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/btnNovoItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="+ Novo"
+                        android:textColor="@color/brand_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:padding="4dp" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvSelecao"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:clipToPadding="false"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+                <LinearLayout
+                    android:id="@+id/containerVazio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="24dp"
+                    android:visibility="gone"
+                    android:background="@drawable/bg_form_field">
+
+                    <TextView
+                        android:id="@+id/tvMensagemVazio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nenhum cartão cadastrado"
+                        android:textColor="@color/text_gray"
+                        android:textSize="13sp"
+                        android:gravity="center"
+                        android:layout_marginBottom="12dp" />
+
+                    <Button
+                        android:id="@+id/btnCadastrarAgora"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cadastrar agora"
+                        android:background="@drawable/bg_button_green"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:paddingHorizontal="24dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Descrição -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Descrição da Despesa"
+                android:textColor="@color/text_gray"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/editDescricao"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_form_field"
+                android:hint="Ex: Compra Mercado, Fatura Cartão"
+                android:textColor="@color/text_white"
+                android:textColorHint="@color/text_hint"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Categoria -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="8dp">
                 <TextView
-                    android:id="@+id/tvTituloSelecao"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Selecione o Cartão / Banco"
+                    android:text="Categoria"
                     android:textColor="@color/text_gray"
                     android:textSize="13sp" />
                 <TextView
-                    android:id="@+id/btnNovoItem"
+                    android:id="@+id/btnNovaCategoria"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="+ Novo"
+                    android:text="+ Nova Categoria"
                     android:textColor="@color/brand_green"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     android:padding="4dp" />
             </LinearLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvSelecao"
+            <Spinner
+                android:id="@+id/spinnerCategoria"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_form_field"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:popupBackground="@color/card_bg"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Valor + Parcelas -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:clipToPadding="false"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                android:layout_marginBottom="16dp">
 
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Valor Total (R$)"
+                        android:textColor="@color/text_gray"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="8dp" />
+                    <EditText
+                        android:id="@+id/editValor"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_form_field"
+                        android:hint="R$ 0,00"
+                        android:inputType="number"
+                        android:textColor="@color/brand_green"
+                        android:textColorHint="@color/text_hint"
+                        android:textStyle="bold"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/containerParcelas"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Parcelas"
+                        android:textColor="@color/text_gray"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="8dp" />
+                    <Spinner
+                        android:id="@+id/spinnerParcelas"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_form_field"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:popupBackground="@color/card_bg" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Data Compra + Vencimento -->
             <LinearLayout
-                android:id="@+id/containerVazio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="24dp"
-                android:visibility="gone"
-                android:background="@drawable/bg_form_field">
+                android:orientation="horizontal"
+                android:layout_marginBottom="24dp">
 
-                <TextView
-                    android:id="@+id/tvMensagemVazio"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Nenhum cartão cadastrado"
-                    android:textColor="@color/text_gray"
-                    android:textSize="13sp"
-                    android:gravity="center"
-                    android:layout_marginBottom="12dp" />
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Data da Compra"
+                        android:textColor="@color/text_gray"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="8dp" />
+                    <EditText
+                        android:id="@+id/editDataCompra"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_form_field"
+                        android:hint="06/09/2026"
+                        android:textColor="@color/text_white"
+                        android:textColorHint="@color/text_hint"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:focusable="false"
+                        android:clickable="true" />
+                </LinearLayout>
 
-                <Button
-                    android:id="@+id/btnCadastrarAgora"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/containerVencimento"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Cadastrar agora"
-                    android:background="@drawable/bg_button_green"
-                    android:textColor="@color/black"
-                    android:textStyle="bold"
-                    android:paddingHorizontal="24dp" />
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1º Vencimento"
+                        android:textColor="@color/text_gray"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="8dp" />
+                    <EditText
+                        android:id="@+id/editVencimento"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_form_field"
+                        android:hint="10/10/2026"
+                        android:textColor="@color/text_white"
+                        android:textColorHint="@color/text_hint"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:focusable="false"
+                        android:clickable="true" />
+                </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
 
-        <!-- Descrição -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Descrição da Despesa"
-            android:textColor="@color/text_gray"
-            android:textSize="13sp"
-            android:layout_marginBottom="8dp" />
-
-        <EditText
-            android:id="@+id/editDescricao"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_form_field"
-            android:hint="Ex: Compra Mercado, Fatura Cartão"
-            android:textColor="@color/text_white"
-            android:textColorHint="@color/text_hint"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Categoria com "+ Nova Categoria" -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Categoria"
-                android:textColor="@color/text_gray"
-                android:textSize="13sp" />
-            <TextView
-                android:id="@+id/btnNovaCategoria"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="+ Nova Categoria"
-                android:textColor="@color/brand_green"
-                android:textSize="13sp"
+            <!-- Botão Salvar -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSalvarDivida"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="@color/brand_green"
+                android:text="Salvar Lançamento"
+                android:textAllCaps="false"
+                android:textColor="#000000"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:padding="4dp" />
+                app:cornerRadius="12dp" />
+
         </LinearLayout>
+    </ScrollView>
 
-        <Spinner
-            android:id="@+id/spinnerCategoria"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_form_field"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:popupBackground="@color/card_bg"
-            android:layout_marginBottom="16dp" />
+    <!-- ⭐ Barra de Navegação Inferior -->
+    <LinearLayout
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:background="@color/bg_screen"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-        <!-- Valor Total + Parcelas -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tabInicio"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⌂\nInício"
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Valor Total (R$)"
-                    android:textColor="@color/text_gray"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="8dp" />
-                <EditText
-                    android:id="@+id/editValor"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_form_field"
-                    android:hint="R$ 0,00"
-                    android:inputType="number"
-                    android:textColor="@color/brand_green"
-                    android:textColorHint="@color/text_hint"
-                    android:textStyle="bold"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="12dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Parcelas"
-                    android:textColor="@color/text_gray"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="8dp" />
-                <Spinner
-                    android:id="@+id/spinnerParcelas"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_form_field"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:popupBackground="@color/card_bg" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Data Compra + Vencimento -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tabLancar"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="+\nLançar"
+            android:textColor="@color/brand_green"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Data da Compra"
-                    android:textColor="@color/text_gray"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="8dp" />
-                <EditText
-                    android:id="@+id/editDataCompra"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_form_field"
-                    android:hint="06/09/2026"
-                    android:textColor="@color/text_white"
-                    android:textColorHint="@color/text_hint"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:focusable="false"
-                    android:clickable="true" />
-            </LinearLayout>
+        <TextView
+            android:id="@+id/tabDividas"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⊡\nDívidas"
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="12dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="1º Vencimento"
-                    android:textColor="@color/text_gray"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="8dp" />
-                <EditText
-                    android:id="@+id/editVencimento"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_form_field"
-                    android:hint="10/10/2026"
-                    android:textColor="@color/text_white"
-                    android:textColorHint="@color/text_hint"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:focusable="false"
-                    android:clickable="true" />
-            </LinearLayout>
-        </LinearLayout>
+        <TextView
+            android:id="@+id/tabRelatorios"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="◷\nRelatórios"
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
 
-        <!-- Botão Salvar -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSalvarDivida"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:backgroundTint="@color/brand_green"
-            android:text="Salvar Lançamento"
-            android:textAllCaps="false"
-            android:textColor="#000000"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="12dp" />
+        <TextView
+            android:id="@+id/tabConfig"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⚙\nConfig"
+            android:textColor="@color/text_gray"
+            android:textSize="12sp" />
 
     </LinearLayout>
-</ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

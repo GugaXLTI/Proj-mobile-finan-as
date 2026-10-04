@@ -232,18 +232,32 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
         rvCategorias.setAdapter(adapter);
     }
 
+    /**
+     * ⭐ Bloqueia a exclusão se a categoria estiver em uso por dívidas.
+     * Se não estiver em uso, exclui normalmente.
+     */
     @Override
     public void onExcluirClick(Categoria categoria) {
         int count = db.categoriaDao().contarDividasPorCategoria(session.getUserId(), categoria.getNome());
 
-        String mensagem = "Tem certeza que deseja excluir \"" + categoria.getNome() + "\"?";
+        // ⭐ Se houver dívidas usando essa categoria, BLOQUEIA a exclusão
         if (count > 0) {
-            mensagem += "\n\nAtenção: existem " + count + " dívida(s) usando essa categoria.";
+            String textoDividas = count == 1 ? "1 dívida" : count + " dívidas";
+
+            new AlertDialog.Builder(this)
+                    .setTitle("Não é possível excluir")
+                    .setMessage("A categoria \"" + categoria.getNome() + "\" está sendo usada por " +
+                            textoDividas + ".\n\n" +
+                            "Para excluí-la, primeiro altere a categoria dessas dívidas ou exclua-as.")
+                    .setPositiveButton("Entendi", null)
+                    .show();
+            return;
         }
 
+        // ⭐ Se não houver dívidas, permite excluir normalmente
         new AlertDialog.Builder(this)
                 .setTitle("Excluir categoria")
-                .setMessage(mensagem)
+                .setMessage("Tem certeza que deseja excluir \"" + categoria.getNome() + "\"?")
                 .setPositiveButton("Excluir", (dialog, which) -> {
                     db.categoriaDao().deletar(categoria);
                     carregarCategorias();

@@ -28,6 +28,7 @@ import java.util.Locale;
 public class InicioActivity extends AppCompatActivity {
 
     private static final int REQ_NOTIFICACAO = 100;
+    private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
     private TextView tvAvatarInicio, tvNomeInicio, tvTotalDividasInicio, tvTotalPagoInicio, tvAlertaMes;
     private RecyclerView rvVencimentos;
@@ -47,10 +48,7 @@ public class InicioActivity extends AppCompatActivity {
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
 
-        // ⭐ Cria o canal de notificação
         NotificationHelper.criarCanal(this);
-
-        // ⭐ Solicita permissão de notificação no Android 13+
         solicitarPermissaoNotificacao();
 
         tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
@@ -106,7 +104,6 @@ public class InicioActivity extends AppCompatActivity {
         });
     }
 
-    // ⭐ SOLICITA PERMISSÃO DE NOTIFICAÇÃO (Android 13+)
     private void solicitarPermissaoNotificacao() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -173,11 +170,11 @@ public class InicioActivity extends AppCompatActivity {
             }
         }
 
-        tvTotalDividasInicio.setText(String.format(Locale.getDefault(), "R$ %.2f", totalAPagar));
-        tvTotalPagoInicio.setText(String.format(Locale.getDefault(), "R$ %.2f", totalPago));
+        tvTotalDividasInicio.setText(String.format(LOCALE_BR, "R$ %.2f", totalAPagar));
+        tvTotalPagoInicio.setText(String.format(LOCALE_BR, "R$ %.2f", totalPago));
 
         String alerta = contadorAPagar + (contadorAPagar == 1 ? " fatura somando R$ " : " faturas somando R$ ")
-                + String.format(Locale.getDefault(), "%.2f", totalAPagar);
+                + String.format(LOCALE_BR, "%.2f", totalAPagar);
         tvAlertaMes.setText(alerta);
     }
 }

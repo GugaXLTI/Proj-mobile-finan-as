@@ -8,6 +8,7 @@ public class SessionManager {
     private static final String PREF_NAME = "sessao_usuario";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USER_NOME = "user_nome";
+    private static final String KEY_USER_EMAIL = "user_email";
 
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
@@ -23,9 +24,22 @@ public class SessionManager {
         editor.apply();
     }
 
-    // ⭐ NOVO: atualiza o nome na sessão (usado ao editar perfil)
+    // ⭐ NOVO: salva também o e-mail (chamado no login)
+    public void salvarSessao(int userId, String nome, String email) {
+        editor.putInt(KEY_USER_ID, userId);
+        editor.putString(KEY_USER_NOME, nome);
+        editor.putString(KEY_USER_EMAIL, email);
+        editor.apply();
+    }
+
     public void atualizarNome(String novoNome) {
         editor.putString(KEY_USER_NOME, novoNome);
+        editor.apply();
+    }
+
+    // ⭐ NOVO: atualiza o e-mail na sessão
+    public void atualizarEmail(String novoEmail) {
+        editor.putString(KEY_USER_EMAIL, novoEmail);
         editor.apply();
     }
 
@@ -39,6 +53,11 @@ public class SessionManager {
 
     public String getNome() {
         return prefs.getString(KEY_USER_NOME, "");
+    }
+
+    // ⭐ NOVO: retorna o e-mail salvo na sessão
+    public String getEmail() {
+        return prefs.getString(KEY_USER_EMAIL, "");
     }
 
     public void logout() {

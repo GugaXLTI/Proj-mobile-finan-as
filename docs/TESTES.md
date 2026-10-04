@@ -1,322 +1,55 @@
-# App Gestão de Finanças
+---
 
-## Status do Projeto
-🚀 **Em desenvolvimento – Sprint 5 (Cartões, Chaves Pix, Integração, BootReceiver e CRUD Completo) – Room + Autenticação + Categorias + Editar Perfil + Lembretes + Cartões + Chaves Pix** 🚀
+## 11. Execuções Realizadas
 
-- ✅ Splash Screen (com verificação de sessão)
-- ✅ Tela de Login (autenticação no Room)
-- ✅ Tela de Cadastro (nome, e-mail, senha, confirmação)
-- ✅ Tela de Início (Home com nome do usuário logado)
-- ✅ Dashboard (Relatórios)
-- ✅ Tela de Dívidas
-- ✅ Tela de Cadastro de Dívida
-- ✅ Tela de Configurações (com logout)
-- ✅ Tela de Categorias (criar, listar e excluir)
-- ✅ Tela de Editar Perfil (nome, e-mail, senha e exclusão de conta)
-- ✅ Lembretes de Fatura (notificações 3 dias antes do vencimento)
-- ✅ BootReceiver (reagenda alarmes após reiniciar o celular)
-- ✅ Tela de Cartões & Chaves Pix (com abas e CRUD completo)
-- ✅ Cadastro de Cartão com tipo Crédito/Débito
-- ✅ Cadastro de Chave Pix com tipo (CPF, Celular, E-mail, Aleatória)
-- ✅ Editar e excluir cartões e chaves Pix (clique normal = editar, clique longo = excluir)
-- ✅ Integração da tela Lançar Dívida com Cartões e Chaves Pix
-- ✅ Filtro dinâmico: cartões de crédito, débito ou chaves Pix conforme tipo de dívida
-- ✅ Empty State com botão "Cadastrar agora" quando não há itens
-- ✅ Bottom Navigation funcional
-- ✅ Persistência de dados com Room (SQLite)
-- ✅ Sessão persistente com SharedPreferences
-- ✅ CRUD completo de dívidas no banco
-- ✅ Isolamento por usuário (cada conta vê apenas seus dados)
-- ✅ Editar dívida funcional
-- ✅ Confirmação ao excluir dívida
-- ✅ Máscara de valor automática (R$ 0,00)
-- ✅ Categorias dinâmicas no cadastro de dívida
-- ✅ Cálculo automático do valor das parcelas
-- ✅ Validação de e-mail com Regex
-- ✅ Validação de nome e senha
-- ✅ Exibição dinâmica do usuário logado
-- ✅ **Pix e Cartão de Débito tratados como à vista (sem parcelas/vencimento, marcados como pagos)**
-- ✅ **Cards de dívidas exibem valor da parcela e progresso (ex: 'Parcela 3x de R$ 66,67')**
-- ✅ **Tela Início mostra valor da parcela, progresso e total das compras parceladas**
-- ✅ **Bloqueio de exclusão de categorias em uso por dívidas**
-- ✅ **Correção do carregamento de dados do usuário na tela Editar Perfil**
-- ✅ **Plano de Testes documentado (docs/TESTES.md)**
+### Rodada 1 — 03/10/2026 (Sprint 5)
 
-> **Observação:** o MVP final será entregue no Sprint 6, com autenticação em nuvem e sincronização.
+**Testador:** Israel Malheiros  
+**Versão:** Sprint 5 (com correções de bugs)  
+**Ambiente:** Celular Android físico
+
+| Bloco | Total de CTs | Passou | Falhou | Bugs Abertos |
+|-------|--------------|--------|--------|--------------|
+| CT-01 (Splash/Sessão) | 3 | 3 | 0 | 0 |
+| CT-02 (Cadastro/Login) | 8 | 8 | 0 | 0 |
+| CT-03 (Início) | 4 | 4 | 0 | 0 |
+| CT-04 (Cadastro Dívida) | 8 | 6 | 2 | 2 (corrigidos) |
+| CT-05 (Dívidas) | 6 | 6 | 0 | 0 |
+| CT-06 (Cartões/Pix) | 10 | 9 | 1 | 1 (corrigido) |
+| CT-07 (Dashboard) | 3 | 3 | 0 | 0 |
+| CT-08 (Categorias) | 5 | 3 | 2 | 2 (corrigidos) |
+| CT-09 (Editar Perfil) | 6 | 0 | 6 | 1 (corrigido) |
+| CT-10 (Lembretes) | 6 | — | — | Pendente |
+| CT-11 (BootReceiver) | 2 | — | — | Pendente |
+| CT-12 (Isolamento) | 3 | 3 | 0 | 0 |
+| CT-13 (Configurações) | 6 | 6 | 0 | 0 |
+
+### Bugs Encontrados e Corrigidos
+
+| Bug | CT | Descrição | Status |
+|-----|-----|-----------|--------|
+| BUG-002 | CT-04.4 | Pix e Débito pediam parcelas/vencimento | ✅ Corrigido |
+| BUG-003 | CT-04.7 | Máscara de valor não formatava corretamente | ✅ Corrigido |
+| BUG-004 | CT-04.6 | Card não mostrava valor da parcela | ✅ Corrigido |
+| BUG-005 | CT-03.3 | Vencimentos mostravam valor total como pagamento único | ✅ Corrigido |
+| BUG-006 | CT-06.1 | Tela Lançar sem barra de navegação | ✅ Corrigido |
+| BUG-007 | CT-08.4 / 08.5 | Exclusão de categorias em uso | ✅ Corrigido |
+| BUG-008 | CT-09.1 a 09.6 | Erro ao carregar dados do usuário | ✅ Corrigido |
+
+### Próximos Passos
+
+- Executar CT-10 (Lembretes) com mudança de data do celular
+- Executar CT-11 (BootReceiver) reiniciando o celular
+- Testar notificações após reinicialização
 
 ---
 
-## Descrição
-Aplicativo de gestão de finanças pessoais desenvolvido para a disciplina de **[Nome da Disciplina]** no curso de **[Nome do Curso]**.
+## 12. Histórico de Execuções
 
-O app permite ao usuário:
-- Criar conta com nome, e-mail e senha (autenticação local)
-- Fazer login com validação no banco de dados
-- Manter a sessão ativa entre aberturas do app
-- Visualizar o resumo de dívidas e vencimentos na tela de Início
-- Acompanhar gastos por categoria com gráfico de rosca
-- Gerenciar dívidas (cadastrar, editar, pagar, excluir)
-- Criar e personalizar categorias com cores próprias
-- Editar perfil (nome, e-mail, senha) e excluir conta
-- Receber notificações 3 dias antes do vencimento das faturas
-- Receber notificações mesmo após reiniciar o celular (BootReceiver)
-- Cadastrar, editar e excluir cartões de crédito/débito
-- Cadastrar, editar e excluir chaves Pix de credores
-- Copiar chave Pix com um toque (área de transferência)
-- Selecionar o cartão ou chave Pix ao lançar uma nova dívida
-- Manter seus dados isolados por conta (cada usuário vê apenas seus dados)
-- Configurar preferências do sistema (biometria, lembretes, backup)
+| Data | Testador | Versão | Total de CTs | Passou | Falhou | Bugs Abertos |
+|------|----------|--------|--------------|--------|--------|--------------|
+| 03/10/2026 | Israel Malheiros | Sprint 5 | 68 | 51 | 11 | 0 (todos corrigidos) |
+
+> **Como usar:** Adicione uma linha a cada rodada de testes executada.
 
 ---
-
-## 🖥️ Tecnologias e Ferramentas
-- **Linguagem:** Java
-- **IDE:** Android Studio Iguana (2023.2.1)
-- **Versionamento:** Git + GitHub
-- **Sistema Operacional:** Android (mínimo API 24 – Android 7.0)
-- **Design:** Figma (protótipos desenvolvidos pela equipe)
-- **Bibliotecas:** Room (SQLite), MPAndroidChart, Material Design Components, RecyclerView, CardView, ViewPager2, SharedPreferences, AlarmManager
-
----
-
-## 👥 Equipe
-| Nome | Função |
-|------|--------|
-| **Gustavo Piteira** | Líder do Projeto / Desenvolvedor Back-End |
-| **Israel Malheiros** | Desenvolvedor Front-End / Design Figma / UX & UI |
-| **Gustavo Marques** | Desenvolvedor (XML e Interface) |
-| **Francisco Andrade** | Desenvolvedor (Lógica e Integração) |
-
----
-
-## 📱 Telas do App
-
-### Splash Screen
-Tela de abertura com logo, fontes personalizadas (Abril Fatface e Lato), timer de 2 segundos e verificação de sessão ativa. Redireciona o usuário logado para a tela de Início, ou o novo usuário para o Login.
-
-### Tela de Login
-Formulário com campos de e-mail e senha, validação de campos obrigatórios, verificação de credenciais no Room, link para cadastro e navegação para a tela de Início.
-
-### Tela de Cadastro
-Formulário com campos de **nome**, e-mail, senha e confirmação de senha. Validações:
-- Campos obrigatórios
-- Nome com no mínimo 2 caracteres e apenas letras
-- E-mail com formato válido (Regex: `nome@dominio.com`)
-- Senha com no mínimo 6 caracteres
-- Senhas coincidentes
-- Verificação de e-mail duplicado no banco
-
-### Tela de Início (Home)
-Resumo de dívidas acumuladas, total já pago, alerta de faturas do mês e lista dos próximos vencimentos lidos do Room. Exibe o **nome e avatar do usuário logado** no topo. Solicita **permissão de notificação** no Android 13+ e cria o canal de notificação na primeira execução. Os cards de vencimento mostram **valor da parcela, progresso (ex: 'Parcela 2 de 10') e valor total da compra**.
-
-### Dashboard (Relatórios)
-Gráfico de rosca (MPAndroidChart) com distribuição de dívidas por categoria, cores personalizadas do Figma, percentuais dentro das fatias, total no centro, filtros em formato de pílula e lista de dívidas não pagas – tudo lido do banco e filtrado pelo usuário logado.
-
-### Tela de Dívidas
-Cards com título, **valor da parcela** (calculado automaticamente), banco/categoria, número da parcela e vencimento. Resumo com totais (a pagar, pago, geral) e botões de ação:
-- **Excluir** – com diálogo de confirmação + cancelamento do alarme
-- **Editar** – abre a tela de cadastro em modo edição
-- **Pagar** – registra o pagamento de UMA parcela por vez (mostra progresso: "Pagar (1/2)")
-
-### Cadastro de Dívida
-Formulário redesenhado fiel ao Figma com:
-- **Tipo de dívida** (Cartão de Crédito, Cartão de Débito, Pix, Empréstimo, Fatura, Boleto, Outros)
-- **Seleção visual em chips** dos cartões ou chaves Pix cadastrados (filtrados pelo tipo escolhido)
-- **Empty State** com mensagem e botão "Cadastrar agora" quando não há itens
-- Botão de atalho **"+ Novo"** e link **"+ Nova Categoria"**
-- Campos **Valor/Parcelas** e **Data da Compra/1º Vencimento** lado a lado
-- **Cálculo automático do valor de cada parcela**
-- **Agendamento de notificação** 3 dias antes do vencimento
-- **Pix e Cartão de Débito:** escondem Parcelas e Vencimento e marcam como pago automaticamente
-- **Barra de navegação inferior** integrada
-- **Spinner de categoria com bolinha colorida** ao lado do nome
-
-### Tela de Categorias
-- Exibe **8 categorias padrão** automaticamente (Alimentação, Transporte, Saúde, Educação, Lazer, Moradia, Assinaturas, Outros)
-- Usuário pode **criar** novas categorias com nome e **cor personalizada** (8 cores disponíveis)
-- **Prévia da tag** atualiza em tempo real enquanto digita
-- **Contagem de dívidas** por categoria
-- **Bloqueio de exclusão** quando a categoria está em uso por dívidas
-- **Categoria órfã:** ao editar dívida cuja categoria foi excluída, o app pede um novo nome e cria automaticamente
-
-### Tela de Cartões & Chaves Pix
-Tela com navegação por abas (TabLayout + ViewPager2):
-
-**Aba "Cartão Crédito/Débito":**
-- Cadastro de cartão com **tipo** (Crédito/Débito), instituição, apelido, últimos 4 dígitos, dia de vencimento
-- Lista de cartões em formato de cartão de crédito (com bandeira, número mascarado, titular e vencimento)
-- Sigla da bandeira gerada automaticamente (ex: Nubank → NU)
-- **Clique normal** = entra em modo edição (botão muda para "Atualizar Cartão")
-- **Clique longo** = excluir com diálogo de confirmação
-- Botão **"Cancelar edição"** aparece somente no modo edição
-
-**Aba "Chave Pix de Dívida":**
-- Cadastro de chave Pix com **tipo** (CNPJ/CPF, Celular, E-mail, Chave Aleatória), chave, nome do favorecido
-- Lista de chaves com fundo verde (degradê) e badge "Pix Direto"
-- Botão **"Copiar Chave"** que envia para a área de transferência
-- **Clique normal** = entra em modo edição
-- **Clique longo** = excluir com diálogo de confirmação
-
-### Editar Perfil
-- **Alterar nome completo** (validação: mínimo 2 letras, apenas letras)
-- **Alterar e-mail** (validação Regex + verificação de duplicado)
-- **Alterar senha** (opcional, requer senha atual + nova senha + confirmação)
-- **Eliminar conta** e apagar todos os dados (com confirmação)
-- **3 fallbacks de carregamento:** por ID, por nome e por único usuário (previne erro de sessão corrompida)
-
-### Lembretes de Fatura
-- **Notificações 3 dias antes do vencimento** de cada dívida, às 9h da manhã
-- Solicita **permissão** automaticamente no Android 13+
-- Alarme é **cancelado automaticamente** quando a dívida é paga ou excluída
-- **Switch em Configurações** permite ativar/desativar todos os lembretes
-- Funciona **offline** (usa AlarmManager local)
-- **BootReceiver** reagenda automaticamente os alarmes após reiniciar o celular
-
-### Configurações
-Tela com perfil do usuário (nome e avatar dinâmicos), gerenciamento de **cartões e chaves Pix**, categorias, **switch funcional de lembretes**, biometria, limpeza de dados (para testes) e desconexão de sessão.
-
-### Bottom Navigation
-Barra inferior com abas: Início, Lançar, Dívidas, Relatórios e Config – com navegação funcional entre as telas.
-
----
-
-## 🔧 Como Clonar e Executar
-
-1. **Clone o repositório:**
-   ```bash
-   git clone https://github.com/GugaXLTI/Proj-mobile-finan-as.git
-   ```
-
-2. **Abra o projeto no Android Studio** (versão Iguana 2023.2.1 ou superior).
-
-3. **Aguarde o Gradle sincronizar** e baixar as dependências (incluindo Room).
-
-4. **Execute o app** em um emulador ou dispositivo físico (API 24+).
-
-5. **Para atualizar o código:**
-   ```bash
-   git pull origin master
-   ```
-
----
-
-## 📂 Estrutura do Projeto (resumida)
-
-```
-app/src/main/java/com/example/controle_gastos/
-├── model/
-│   ├── Usuario.java              # Entidade de usuário (@Entity)
-│   ├── Divida.java               # Entidade de dívida (@Entity, com usuarioId e valorParcela)
-│   ├── Transacao.java            # Entidade de transação (@Entity, com usuarioId)
-│   ├── Categoria.java            # Entidade de categoria (@Entity, com usuarioId e cor)
-│   ├── Cartao.java               # Entidade de cartão (@Entity, com tipo Crédito/Débito)
-│   ├── ChavePix.java             # Entidade de chave Pix (@Entity)
-│   └── CategoriaResumo.java      # Resumo por categoria
-├── dao/
-│   ├── UsuarioDao.java           # CRUD + login + buscarPorEmail + buscarPorNome + deletar
-│   ├── DividaDao.java            # CRUD + filtros por usuário
-│   ├── TransacaoDao.java         # CRUD + filtros por usuário
-│   ├── CategoriaDao.java         # CRUD + contagem de dívidas por categoria
-│   ├── CartaoDao.java            # CRUD de cartões
-│   └── ChavePixDao.java          # CRUD de chaves Pix
-├── database/
-│   ├── AppDatabase.java          # Classe principal do Room (versão 7)
-│   └── DatabaseClient.java       # Singleton de acesso ao banco
-├── utils/
-│   ├── SessionManager.java       # Sessão + atualização de nome e email
-│   ├── CategoriaSeeder.java      # Categorias padrão na primeira execução
-│   ├── NotificationHelper.java   # Canal + envio de notificações
-│   └── AlarmeHelper.java         # Agendamento/cancelamento de alarmes
-├── receiver/
-│   ├── LembreteReceiver.java     # BroadcastReceiver para notificações
-│   └── BootReceiver.java         # Reagenda alarmes após reinicialização
-├── adapter/
-│   ├── LancamentoAdapter.java    # Adapter de lançamentos
-│   ├── LegendaAdapter.java       # Adapter de legendas
-│   ├── DividaAdapter.java        # Adapter de dívidas
-│   ├── VencimentoAdapter.java    # Adapter de vencimentos (tela Início)
-│   ├── CategoriaAdapter.java     # Adapter de categorias
-│   ├── CategoriaSpinnerAdapter.java # Adapter de categoria no Spinner (com cor)
-│   ├── CartaoAdapter.java        # Adapter de cartões
-│   ├── ChavePixAdapter.java      # Adapter de chaves Pix
-│   └── ChipSelecaoAdapter.java   # Adapter de seleção em chips
-└── view/
-    ├── SplashActivity.java           # Tela de abertura (2s + verificação de sessão)
-    ├── LoginActivity.java            # Tela de Login
-    ├── CadastroActivity.java         # Tela de Cadastro
-    ├── InicioActivity.java           # Tela de Início (Home)
-    ├── DashboardActivity.java        # Dashboard/Relatórios
-    ├── DividasActivity.java          # Tela de Dívidas
-    ├── CadastroDividaActivity.java   # Cadastro de Dívida (integrado com Cartões/Pix)
-    ├── CategoriasActivity.java       # Gerenciamento de Categorias
-    ├── EditarPerfilActivity.java     # Edição de Perfil
-    ├── ConfiguracoesActivity.java    # Configurações + Logout
-    ├── CartoesActivity.java          # Tela de Cartões & Chaves Pix (com abas)
-    ├── CartoesFragment.java          # Fragment da aba de Cartões
-    └── ChavesPixFragment.java        # Fragment da aba de Chaves Pix
-```
-
----
-
-## 📌 Histórico de Commits (resumo)
-
-- `feat: estrutura inicial do app com Java e classe Transacao`
-- `feat: adiciona DadosMock com transações iniciais`
-- `feat: adiciona Splash Screen com timer e estilização`
-- `style: aplica fontes Abril Fatface e Lato`
-- `feat: finaliza tela de Login com logo e estilização`
-- `feat: implementa tela de Cadastro com validações`
-- `feat: adiciona Dashboard com gráfico e filtros`
-- `feat: implementa tela de Dívidas com cards e totais`
-- `feat: adiciona tela de Cadastro de Dívida`
-- `feat: implementa tela de Configurações e navegação`
-- `feat: implementa tela Início como nova home e ajusta navegação`
-- `feat: padroniza gráfico de dívidas e conecta aba Lançar ao cadastro`
-- `feat: implementa Room e autenticação local`
-- `feat: integra telas de dívidas com Room`
-- `feat: adiciona campo nome, validações e exibe usuário logado nas telas`
-- `fix: vincula dívidas e transações ao usuário logado`
-- `feat: adiciona entidade Categoria, DAO e atualiza AppDatabase para v3`
-- `feat: cria CategoriaSeeder com categorias padrão`
-- `feat: implementa tela de Categorias com CRUD completo`
-- `feat: prepara back-end para edição de perfil`
-- `feat: implementa tela de Editar Perfil com validações e exclusão de conta`
-- `feat: implementa lembretes de fatura com notificações`
-- `fix: corrige cálculo do valor das parcelas nas dívidas`
-- `feat: adiciona entidades Cartao e ChavePix, DAOs e atualiza AppDatabase para v6`
-- `feat: implementa tela de Cartões e Chaves Pix com abas e CRUD completo`
-- `feat: adiciona tipo ao Cartão e integra tela de Lançar Dívida com Cartões/Pix`
-- `feat: adiciona BootReceiver para reagendar alarmes após reinicialização`
-- `feat: adiciona exclusão de Cartões e Chaves Pix com clique longo`
-- `feat: adiciona edição de Cartões e Chaves Pix (CRUD completo)`
-- `docs: adiciona plano de testes completo (casos de teste e critérios de aceitação)`
-- `fix: corrige máscara de valor e exibe valor da parcela no card de dívidas`
-- `fix: exibe valor da parcela e progresso nos vencimentos da tela Início`
-- `fix: trata compras no Cartão de Débito como à vista (sem parcelas/vencimento)`
-- `fix: adiciona barra de navegação inferior na tela de Lançar Dívida`
-- `fix: bloqueia exclusão de categorias em uso e cria nova quando órfã`
-- `fix: corrige erro ao carregar dados do usuário na tela Editar Perfil`
-
----
-
-## 🚧 Próximos Passos
-
-- Exportação de dados (PDF/CSV)
-- Biometria real (BiometricPrompt)
-- Simulador de pagamento com QR Code (para depois do MVP)
-- Autenticação em nuvem (Firebase Auth) – opcional para o MVP final
-- Sincronização entre dispositivos – opcional para o MVP final
-
----
-
-## 📄 Documentação Adicional
-
-- **[docs/TESTES.md](docs/TESTES.md)** – Plano de testes, casos de teste e critérios de aceitação
-- **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)** – Documentação técnica sobre a arquitetura e decisões de projeto
-- **[docs/BUGS.md](docs/BUGS.md)** – Registro de bugs encontrados e corrigidos
-- **[CHANGELOG.md](CHANGELOG.md)** – Histórico detalhado de mudanças por versão/Sprint
-- **[Protótipo no Figma](https://www.figma.com/design/BED5loI0pi57B5nkPPufij/ORG---TELA?node-id=71-1192&t=CZH8LT7ObgHAeZla-1)** – Design e protótipo navegável do app
-
----
-
-> **Observação:** Este README é atualizado ao final de cada Sprint com novos recursos, mudanças e instruções.

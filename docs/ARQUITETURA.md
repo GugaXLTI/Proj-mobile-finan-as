@@ -1,165 +1,246 @@
 ---
 
-## 🐛 Correções de Bugs da Sprint 5
+## 🗑️ Soft Delete de Dívidas
 
-### Data da implementação
-03/10/2026
+### Data de implementação
+06/10/2026
 
-### Resumo
+### Descrição
 
-Foram corrigidos **7 bugs** identificados durante a execução dos testes do Plano de Testes (`docs/TESTES.md`). Abaixo está o detalhamento técnico de cada um.
+Foi implementado um sistema de **soft delete** (exclusão lógica) para dívidas. Em vez de apagar o registro do banco, o app agora **marca como excluída**. Isso permite que a dívida continue aparecendo no Histórico, mesmo depois de excluída.
 
-### 🐛 BUG-002: Pix e Cartão de Débito com parcelas/vencimento
+### Por que fazer isso?
 
-**Problema:** Compras via Pix e Débito exibiam campos de Parcelas e Vencimento, que não fazem sentido (são pagamentos à vista).
+1. **Histórico fiel ao Figma:** o usuário vê o que foi excluído
+2. **Auditabilidade:** sistemas financeiros nunca apagam registros, só marcam como inativos
+3. **Padrão de mercado:** é o comportamento de apps bancários reais
 
-**Solução:**
-- Novo helper `isTipoAVista(String tipo)` que cobre Pix e Cartão de Débito
-- Esconde containers de Parcelas e Vencimento
-- Força `parcela = "1x (À vista)"` e `vencimento = dataCompra`
-- Marca como pago automaticamente: `pago = true`, `valorPago = valorTotal`
-- Não agenda alarme de notificação
+### Como funciona
 
-**Arquivos:** `CadastroDividaActivity.java`, `activity_cadastro_divida.xml`
+```
+Antes (exclusão física):
+┌──────────────────┐
+│ Dívida "Almoço"  │ → db.deletar() → 🗑️ Desaparece pra sempre
+└──────────────────┘
 
----
+Depois (soft delete):
+┌──────────────────┐
+│ Dívida "Almoço"  │ → d.excluida = true → 💾 Fica no banco
+└──────────────────┘                    mas invisível nas telas
+                                        principais
+```
 
-### 🐛 BUG-003: Máscara de valor não formata corretamente
+### Componentes
 
-**Problema:** Em celulares configurados em inglês, a máscara exibia "R$ 123.45" (ponto) em vez de "R$ 123,45" (vírgula).
+#### 1. `model/Divida.java`
+- Novo campo: `public boolean excluida;`
+- 3 construtores:
+  - **Completo** (usado pelo Room)
+  - **Sem ID** (assume `excluida = false` — o caso mais comum)
+  - **Sem ID com excluida** (casos especiais)
 
-**Solução:**
-- Constante `LOCALE_BR = new Locale("pt", "BR")`
-- Forçado em todos os `String.format` de valores monetários
-- Limite de 11 dígitos para evitar overflow
+#### 2. `dao/DividaDao.java`
+- Todas as queries existentes filtram `excluida = 0`
+- Novas queries para o Histórico:
+  - `listarExcluidasPorUsuario(userId)` — só excluídas
+  - `listarTodasParaHistorico(userId)` — todas (incluindo excluídas)
+  - `listarPorCategoria(userId, categoria)` — filtro por categoria
+- Renomeado `deletar()` para `deletarFisicamente()` (uso restrito)
 
-**Arquivos:** `CadastroDividaActivity.java`, `DividaAdapter.java`, `VencimentoAdapter.java`, `InicioActivity.java`
+#### 3. Telas afetadas
 
----
+| Tela | Comportamento |
+|------|---------------|
+| **Dívidas** | Ignora excluídas (query filtrada) |
+| **Início** | Ignora excluídas |
+| **Dashboard** | Ignora excluídas |
+| **Histórico** | **Mostra** excluídas com ✗ vermelho |
 
-### 🐛 BUG-004: Card de dívidas não mostrava valor da parcela
+#### 4. Exclusão
 
-**Problema:** O card mostrava apenas "Parcela 3x" sem informar o valor de cada parcela.
+Toda exclusão agora chama:
+```java
+divida.setExcluida(true);
+db.dividaDao().atualizar(divida);
+```
 
-**Solução:**
-- Exibe "Parcela 3x de R$ 66,67" quando há mais de 1 parcela
+Em vez de `deletarFisicamente()`.
 
-**Arquivos:** `DividaAdapter.java`
+### Versão do banco
 
----
-
-### 🐛 BUG-005: Vencimentos na tela Início mostravam valor total como pagamento único
-
-**Problema:** Os cards de vencimento exibiam o valor total da compra, dando a impressão de que o usuário precisava pagar tudo de uma vez.
-
-**Solução:**
-- Adiciona linha de progresso: "Parcela 2 de 10"
-- Exibe o valor da parcela em destaque
-- Adiciona linha com valor total em letras menores
-- Esconde as duas linhas quando a dívida é à vista
-
-**Arquivos:** `VencimentoAdapter.java`, `item_vencimento.xml`, `InicioActivity.java`
-
----
-
-### 🐛 BUG-006: Tela Lançar Dívida sem barra de navegação
-
-**Problema:** O usuário ficava "preso" na tela de Lançar Dívida, sem conseguir navegar para outras abas.
-
-**Solução:**
-- Envolve o layout em `ConstraintLayout` com `bottomNavigation`
-- Adiciona a barra de navegação inferior (Início, Lançar, Dívidas, Relatórios, Config)
-- Destaca a aba "Lançar" como ativa (verde)
-
-**Arquivos:** `activity_cadastro_divida.xml`, `CadastroDividaActivity.java`
+- **v7** → Sprint 5 (Cartões, Pix)
+- **v8** → Sprint 6 (Soft Delete)
 
 ---
 
-### 🐛 BUG-007: Exclusão de categorias em uso
+## 📜 Tela de Histórico
 
-**Problema:** Ao excluir uma categoria usada por dívidas, as dívidas ficavam com o nome da categoria órfã ("fantasma") em Início, Dívidas e Dashboard.
+### Data de implementação
+06/10/2026
 
-**Solução:**
-- Bloqueia a exclusão quando a categoria está em uso
-- Exibe diálogo informativo com contagem de dívidas afetadas
-- Detecta categoria órfã ao editar dívida
-- Abre diálogo pedindo novo nome (pré-preenchido)
-- Cria a categoria automaticamente com cor cinza padrão
+### Descrição
 
-**Arquivos:** `CategoriasActivity.java`, `CadastroDividaActivity.java`
+Tela que mostra o **histórico de dívidas mês a mês**, com navegação, filtros e exportação.
+
+### Arquitetura
+
+```
+┌──────────────────────────────────────────┐
+│  HistoricoActivity                       │
+├──────────────────────────────────────────┤
+│  1. Navegação de mês (← Setembro 2026 →) │
+│  2. Card de resumo (Total/Pago/Falta)    │
+│  3. Chips de filtro por categoria        │
+│  4. RecyclerView de lançamentos          │
+│  5. Botão "Baixar Resumo" (CSV/PDF)      │
+└─────────────┬────────────────────────────┘
+              │
+              ▼
+┌──────────────────────────────────────────┐
+│  HistoricoAdapter                        │
+│  (4 estados visuais por item)            │
+└──────────────────────────────────────────┘
+```
+
+### 4 Estados de cada Dívida
+
+| Estado | Condição | Cor | Ícone |
+|--------|----------|-----|-------|
+| ✅ Liquidado | `pago = true` | Verde | ✓ |
+| ↻ Parcial | `valorPago > 0` e `pago = false` | Azul | ↻ |
+| ⏳ Pendente | `valorPago = 0` e `pago = false` | Amarelo | → |
+| ✗ Excluída | `excluida = true` | Vermelho | ✗ |
+
+### Filtro por mês
+
+A dívida entra no mês da sua **data de vencimento** (parse de `dd/MM/yyyy`).
+
+### Filtros por categoria
+
+Os chips são **gerados dinamicamente** com base nas categorias que têm dívidas no mês selecionado.
+
+### Integração com a tela Início
+
+O card **"Total de Dívidas Acumuladas"** agora é clicável. Ao tocá-lo, o usuário é levado para o Histórico.
 
 ---
 
-### 🐛 BUG-008: Erro ao carregar dados do usuário na tela Editar Perfil
+## 📤 Exportação de Dados
 
-**Problema:** Quando a sessão perdia a sincronia com o banco (após reinstalação ou migração), o `buscarPorId()` retornava `null` e a tela mostrava "Erro ao carregar dados do Usuário".
+### Data de implementação
+06/10/2026
 
-**Solução:**
-- **Fallback 1:** busca por ID (sessão)
-- **Fallback 2:** busca por nome (sessão)
-- **Fallback 3:** se só existe 1 usuário no banco, usa ele
-- Se nada funcionar, força logout e redireciona para Login
-- Novos métodos no `UsuarioDao`: `buscarPorNome`, `buscarPrimeiroUsuario`, `contarUsuarios`
-- `SessionManager` agora salva e atualiza o e-mail na sessão
+### Descrição
 
-**Arquivos:** `EditarPerfilActivity.java`, `UsuarioDao.java`, `SessionManager.java`
+Foi implementada exportação do extrato mensal em **CSV** e **PDF**.
 
----
+### CSV (`CsvExportHelper.java`)
 
-## 🎨 Melhorias de UX
+- Gera arquivo `.csv` com separador `;`
+- BOM UTF-8 para o Excel reconhecer acentos
+- Colunas: Título, Categoria, Banco, Parcela, Vencimento, Valor Total, Valor Pago, Falta, Status
+- Compartilhamento via WhatsApp, Email, Drive
 
-### Spinner de categoria com bolinha colorida
+### PDF (`PdfExportHelper.java`)
 
-**Data:** 03/10/2026
+- Biblioteca **iTextG 5.5.10**
+- Layout escuro fiel ao Figma (fundo #131C2E, cores do app)
+- Cabeçalho "ORG" + Gestão Financeira
+- Card de resumo (Total, Já Pago, Falta Pagar)
+- Lista de lançamentos com cores por estado
 
-**Descrição:** O spinner de categoria agora exibe uma bolinha colorida ao lado do nome, refletindo a cor escolhida pelo usuário.
+### FileProvider
 
-**Componentes criados:**
-- Layout `item_spinner_categoria.xml`
-- Adapter `CategoriaSpinnerAdapter.java`
+Configuração necessária para compartilhar arquivos via Intent:
 
----
+**`res/xml/file_paths.xml`:**
+```xml
+<paths>
+    <cache-path name="exports" path="exports/" />
+</paths>
+```
 
-## 📌 Arquivos modificados na Sprint 5 (Correções)
+**`AndroidManifest.xml`:**
+```xml
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="${applicationId}.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+</provider>
+```
+
+### Fluxo de uso
+
+1. Usuário abre o Histórico
+2. Seleciona o mês (e opcionalmente a categoria)
+3. Toca em "Baixar Resumo"
+4. Diálogo: **CSV (Excel)** ou **PDF (Relatório)**
+5. Escolhe o formato → arquivo é gerado na pasta `cache/exports/`
+6. Intent de compartilhamento é aberto
+7. Usuário escolhe o app (WhatsApp, Gmail, Drive, etc)
+
+### Arquivos criados
+
+| Arquivo | Tipo |
+|---------|------|
+| `utils/CsvExportHelper.java` | Helper CSV |
+| `utils/PdfExportHelper.java` | Helper PDF |
+| `res/xml/file_paths.xml` | Config FileProvider |
+
+### Arquivos modificados
 
 | Arquivo | Mudança |
 |---------|---------|
-| `view/CadastroDividaActivity.java` | Pix/Débito à vista, máscara pt-BR, barra de navegação, categoria órfã |
-| `view/CategoriasActivity.java` | Bloqueio de exclusão de categorias em uso |
-| `view/EditarPerfilActivity.java` | 3 fallbacks para carregar usuário |
-| `view/InicioActivity.java` | Locale pt-BR |
-| `adapter/DividaAdapter.java` | Exibe valor da parcela |
-| `adapter/VencimentoAdapter.java` | Exibe progresso de parcelas e valor da parcela |
-| `dao/UsuarioDao.java` | Novos métodos `buscarPorNome`, `buscarPrimeiroUsuario`, `contarUsuarios` |
-| `utils/SessionManager.java` | Salva e atualiza e-mail |
-| `layout/activity_cadastro_divida.xml` | Barra de navegação inferior |
-| `layout/item_vencimento.xml` | Linha de progresso e valor total |
-| `layout/item_spinner_categoria.xml` | **Novo** – bolinha colorida + nome |
-| `adapter/CategoriaSpinnerAdapter.java` | **Novo** – adapter do spinner |
+| `build.gradle.kts` | Dependência iTextG |
+| `AndroidManifest.xml` | Registro do FileProvider |
+| `view/HistoricoActivity.java` | Diálogo CSV/PDF + exportação |
+
+---
+
+## 🧪 Como testar Soft Delete e Histórico
+
+1. Cadastre uma dívida normal (com categoria "Lazer")
+2. **Exclua** essa dívida na tela de Dívidas
+3. ✅ A dívida some da tela de Dívidas
+4. ✅ Abra **Início → Histórico** e navegue até o mês do vencimento
+5. ✅ A dívida aparece com status **"Excluída ✗"** em vermelho e valor riscado
+6. ✅ O card de resumo **não soma** o valor da dívida excluída
+
+---
+
+## 🧪 Como testar Exportação
+
+### CSV
+1. Abra o Histórico em um mês com dívidas
+2. Toque em "Baixar Resumo" → **CSV**
+3. Compartilhe via WhatsApp ou Drive
+4. Abra no Excel/Sheets → deve mostrar resumo + lista
+
+### PDF
+1. Mesmo fluxo, mas escolhe **PDF**
+2. Compartilhe e abra
+3. ✅ Deve ter o cabeçalho "ORG", o card de resumo e a lista formatada
 
 ---
 
 ## 🚧 Próximos passos
 
-- [ ] Aplicar o mesmo padrão de isolamento caso novas entidades sejam criadas
-- [ ] Implementar `Migration` real (não destrutiva) quando houver usuários reais
-- [ ] Exportar/importar dados por usuário
-- [ ] Backup na nuvem (Firebase Auth + Firestore – opcional)
-- [ ] Testar as notificações com mudança de data do celular
+- [ ] Testes de notificação pelo Israel
+- [ ] Aplicar Migration real (não destrutiva) no futuro
+- [ ] Autenticação em nuvem (Firebase) — opcional
+- [ ] Biometria real
 
 ---
 
 ## 📚 Referências
 
-- Issue relacionada: (criar no GitHub)
-- Autor da descoberta: Gustavo Piteira / Israel Malheiros
-- Data da resolução: 23/09/2026 a 03/10/2026
-- Expansão para Categoria: 26/09/2026
-- Implementação dos Lembretes: 27/09/2026
-- Correção do Cálculo de Parcelas (BUG-001): 27/09/2026
-- Implementação de Cartões e Chaves Pix: 28/09/2026
-- Integração de Cartões/Pix com Lançar Dívida: 28/09/2026
-- Implementação do BootReceiver: 29/09/2026
-- CRUD Completo de Cartões/Pix: 29/09/2026
-- Plano de Testes: 29/09/2026
-- **Correção dos BUGs 002 a 008: 03/10/2026**
+- Autor da Sprint 6: Gustavo Piteira
+- Data de implementação: 06/10/2026
+- Soft Delete: 06/10/2026
+- Tela de Histórico: 06/10/2026
+- Exportação CSV: 06/10/2026
+- Exportação PDF: 06/10/2026

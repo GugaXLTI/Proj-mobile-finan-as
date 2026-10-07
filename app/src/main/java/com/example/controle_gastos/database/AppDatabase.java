@@ -22,7 +22,7 @@ import com.example.controle_gastos.model.ChavePix;
                 Usuario.class, Divida.class, Transacao.class, Categoria.class,
                 Cartao.class, ChavePix.class
         },
-        version = 8, // ⭐ MUDOU DE 7 PARA 8 (campo excluida em Divida)
+        version = 9, // ⭐ MUDOU DE 8 PARA 9 (campo grupoId em Divida)
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {

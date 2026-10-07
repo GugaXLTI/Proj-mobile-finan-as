@@ -467,57 +467,129 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        int numParcelas = extrairNumeroParcelas(parcelas);
-        double valorParcela = valor / numParcelas;
-
-        boolean jaPago = isAVista;
-        double valorJaPago = isAVista ? valor : 0.0;
-
+        // ============================================================
+        // MODO EDIÇÃO: edita apenas o registro atual
+        // ============================================================
         if (dividaEmEdicao != null) {
             AlarmeHelper.cancelar(this, dividaEmEdicao);
             dividaEmEdicao.titulo = descricao;
             dividaEmEdicao.valorTotal = valor;
-            dividaEmEdicao.valorParcela = valorParcela;
-            dividaEmEdicao.valorPago = valorJaPago;
             dividaEmEdicao.banco = bancoSelecionado;
             dividaEmEdicao.categoria = categoria;
             dividaEmEdicao.parcela = parcelas;
             dividaEmEdicao.vencimento = vencimento;
-            dividaEmEdicao.pago = jaPago;
             db.dividaDao().atualizar(dividaEmEdicao);
 
-            if (!jaPago) {
+            if (!dividaEmEdicao.isPago()) {
                 AlarmeHelper.agendar(this, dividaEmEdicao);
             }
             Toast.makeText(this, "Dívida atualizada com sucesso!", Toast.LENGTH_SHORT).show();
-        } else {
-            // ⭐ Agora usa o construtor de conveniência (assume excluida = false)
-            Divida novaDivida = new Divida(
-                    session.getUserId(), descricao, valor, valorParcela, valorJaPago,
-                    bancoSelecionado, categoria, parcelas, vencimento, jaPago
+            finish();
+            return;
+        }
+
+        // ============================================================
+        // MODO CRIAÇÃO
+        // ============================================================
+
+        // ⭐ CASO 1: Pix/Débito à vista
+        if (isAVista) {
+            Divida nova = new Divida(
+                    session.getUserId(), descricao, valor, valor, valor,
+                    bancoSelecionado, categoria, "1x (À vista)", vencimento, true
             );
-            long idGerado = db.dividaDao().inserir(novaDivida);
+            db.dividaDao().inserir(nova);
+
+            String msg = tipoDivida.equals("Pix") ? "Compra via Pix registrada!" : "Compra no Débito registrada!";
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        // ⭐ CASO 2: Crédito à vista (1x)
+        int numParcelas = extrairNumeroParcelas(parcelas);
+        if (numParcelas == 1) {
+            Divida nova = new Divida(
+                    session.getUserId(), descricao, valor, valor, 0.0,
+                    bancoSelecionado, categoria, "1x (À vista)", vencimento, false
+            );
+            long idGerado = db.dividaDao().inserir(nova);
             if (idGerado > 0) {
-                novaDivida.id = (int) idGerado;
+                nova.id = (int) idGerado;
+                AlarmeHelper.agendar(this, nova);
+                Toast.makeText(this, "Dívida cadastrada com sucesso!", Toast.LENGTH_SHORT).show();
+            }
+            finish();
+            return;
+        }
 
-                if (!jaPago) {
-                    AlarmeHelper.agendar(this, novaDivida);
-                }
+        // ⭐ CASO 3: Crédito parcelado — gera N registros
+        int grupoId = db.dividaDao().maxGrupoId() + 1;
+        double valorParcela = valor / numParcelas;
 
-                String msg;
-                if (tipoDivida.equals("Pix")) {
-                    msg = "Compra via Pix registrada!";
-                } else if (tipoDivida.equals("Cartão de Débito")) {
-                    msg = "Compra no Débito registrada!";
-                } else {
-                    msg = "Dívida cadastrada com sucesso!";
-                }
-                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Erro ao cadastrar. Tente novamente.", Toast.LENGTH_SHORT).show();
-                return;
+        Calendar cBase = converterParaCalendar(vencimento);
+        if (cBase == null) {
+            Toast.makeText(this, "Data de vencimento inválida!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        for (int i = 0; i < numParcelas; i++) {
+            Calendar cParcela = (Calendar) cBase.clone();
+            cParcela.add(Calendar.MONTH, i);
+
+            String vencParcela = String.format(LOCALE_BR, "%02d/%02d/%04d",
+                    cParcela.get(Calendar.DAY_OF_MONTH),
+                    cParcela.get(Calendar.MONTH) + 1,
+                    cParcela.get(Calendar.YEAR));
+
+            String numeroParcela = (i + 1) + "/" + numParcelas;
+
+            Divida parcela = new Divida(
+                    session.getUserId(),
+                    grupoId,
+                    descricao,
+                    valorParcela,  // valorTotal = valor da parcela
+                    valorParcela,
+                    0.0,
+                    bancoSelecionado,
+                    categoria,
+                    numeroParcela,
+                    vencParcela,
+                    false,
+                    false
+            );
+
+            long idGerado = db.dividaDao().inserir(parcela);
+            if (idGerado > 0) {
+                parcela.id = (int) idGerado;
+                AlarmeHelper.agendar(this, parcela);
             }
         }
+
+        Toast.makeText(this,
+                "Dívida cadastrada em " + numParcelas + "x de R$ " +
+                        String.format(LOCALE_BR, "%.2f", valorParcela),
+                Toast.LENGTH_LONG).show();
         finish();
+    }
+
+    /**
+     * Converte "dd/MM/yyyy" para Calendar. Retorna null se inválido.
+     */
+    private Calendar converterParaCalendar(String data) {
+        try {
+            String[] partes = data.split("/");
+            if (partes.length != 3) return null;
+            int dia = Integer.parseInt(partes[0]);
+            int mes = Integer.parseInt(partes[1]) - 1;
+            int ano = Integer.parseInt(partes[2]);
+
+            Calendar c = Calendar.getInstance();
+            c.set(ano, mes, dia, 9, 0, 0);
+            c.set(Calendar.MILLISECOND, 0);
+            return c;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

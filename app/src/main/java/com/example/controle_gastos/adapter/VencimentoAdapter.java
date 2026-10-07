@@ -14,7 +14,6 @@ import java.util.Locale;
 
 public class VencimentoAdapter extends RecyclerView.Adapter<VencimentoAdapter.ViewHolder> {
 
-    // ⭐ Locale brasileiro para vírgula decimal
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
     private List<Divida> dividas;
@@ -41,33 +40,27 @@ public class VencimentoAdapter extends RecyclerView.Adapter<VencimentoAdapter.Vi
                 : "?";
         holder.tvInicial.setText(inicial);
 
-        // Título
         holder.tvTitulo.setText(d.getTitulo());
-
-        // Data de vencimento
         holder.tvDetalhe.setText("Vence em " + d.getVencimento());
 
-        int totalParcelas = extrairNumeroParcelas(d.getParcela());
-        double valorParcelaReal = d.getValorTotal() / totalParcelas;
+        int totalParcelas = extrairTotalParcelas(d.getParcela());
 
         if (totalParcelas > 1) {
-            // ⭐ Dívida parcelada: mostra progresso + valor da parcela + total
-            double valorPago = d.getValorPago();
-            int parcelasPagas = (int) Math.round(valorPago / valorParcelaReal);
-            int parcelaAtual = Math.min(parcelasPagas + 1, totalParcelas);
-
-            holder.tvParcela.setText("Parcela " + parcelaAtual + " de " + totalParcelas);
+            // ⭐ Parcelado: mostra "Parcela 2/4" + valor da parcela + total do grupo
+            holder.tvParcela.setText("Parcela " + d.getParcela());
             holder.tvParcela.setVisibility(View.VISIBLE);
 
-            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", valorParcelaReal));
-            holder.tvTotal.setText(String.format(LOCALE_BR, "Total: R$ %.2f", d.getValorTotal()));
+            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", d.getValorTotal()));
+
+            // Total do grupo = valor da parcela × total de parcelas
+            double totalGrupo = d.getValorTotal() * totalParcelas;
+            holder.tvTotal.setText(String.format(LOCALE_BR, "Total: R$ %.2f", totalGrupo));
             holder.tvTotal.setVisibility(View.VISIBLE);
         } else {
-            // ⭐ Dívida à vista: só mostra o valor total
+            // ⭐ À vista: só valor
             holder.tvParcela.setVisibility(View.GONE);
             holder.tvTotal.setVisibility(View.GONE);
-
-            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", d.getValorRestante()));
+            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", d.getValorTotal()));
         }
     }
 
@@ -76,7 +69,20 @@ public class VencimentoAdapter extends RecyclerView.Adapter<VencimentoAdapter.Vi
         return dividas.size();
     }
 
-    private int extrairNumeroParcelas(String parcela) {
+    private int extrairTotalParcelas(String parcela) {
+        if (parcela == null) return 1;
+        if (parcela.contains("/")) {
+            try {
+                String[] partes = parcela.split("/");
+                String total = partes[1].replaceAll("[^0-9]", "");
+                if (!total.isEmpty()) {
+                    int n = Integer.parseInt(total);
+                    return n > 0 ? n : 1;
+                }
+            } catch (Exception e) {
+                return 1;
+            }
+        }
         try {
             String numeros = parcela.replaceAll("[^0-9]", "");
             if (numeros.isEmpty()) return 1;

@@ -36,16 +36,11 @@ public class HistoricoAdapter extends RecyclerView.Adapter<HistoricoAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Divida d = lista.get(position);
 
-        // Título e detalhe
         holder.tvTitulo.setText(d.getTitulo());
         holder.tvDetalhe.setText(d.getBanco() + " • " + d.getCategoria() + " • " + d.getVencimento());
-
-        // Valor
         holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", d.getValorTotal()));
 
-        // ⭐ Define o estado
         if (d.isExcluida()) {
-            // ✗ EXCLUÍDA
             holder.tvIcone.setText("✗");
             aplicarCorIcone(holder, "#EF4444", "#3A1515");
             holder.tvStatus.setText("Excluída ✗");
@@ -56,7 +51,6 @@ public class HistoricoAdapter extends RecyclerView.Adapter<HistoricoAdapter.View
                     android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
 
         } else if (d.isPago()) {
-            // ✅ LIQUIDADO
             holder.tvIcone.setText("✓");
             aplicarCorIcone(holder, "#10B981", "#1A3D35");
             holder.tvStatus.setText("Liquidado ✓");
@@ -66,26 +60,18 @@ public class HistoricoAdapter extends RecyclerView.Adapter<HistoricoAdapter.View
             holder.tvValor.setPaintFlags(holder.tvValor.getPaintFlags() &
                     (~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG));
 
-        } else if (d.getValorPago() > 0) {
-            // 🔄 PARCIALMENTE PAGO
-            int totalParcelas = extrairNumeroParcelas(d.getParcela());
-            double valorParcelaReal = d.getValorTotal() / totalParcelas;
-            int parcelasPagas = (int) Math.round(d.getValorPago() / valorParcelaReal);
-
-            holder.tvIcone.setText("↻");
-            aplicarCorIcone(holder, "#3B82F6", "#152A3D");
-            holder.tvStatus.setText("Parcela " + parcelasPagas + "/" + totalParcelas);
-            holder.tvStatus.setTextColor(Color.parseColor("#3B82F6"));
-            holder.tvStatus.setBackground(criarBadge("#152A3D"));
-            holder.tvValor.setTextColor(Color.parseColor("#3B82F6"));
-            holder.tvValor.setPaintFlags(holder.tvValor.getPaintFlags() &
-                    (~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG));
-
         } else {
-            // ⏳ PENDENTE (não pago nenhuma parcela)
+            // ⏳ PENDENTE
             holder.tvIcone.setText("→");
             aplicarCorIcone(holder, "#F59E0B", "#2A1F0A");
-            holder.tvStatus.setText("Pendente");
+
+            int totalParcelas = extrairTotalParcelas(d.getParcela());
+            if (totalParcelas > 1) {
+                holder.tvStatus.setText("Parcela " + d.getParcela());
+            } else {
+                holder.tvStatus.setText("Pendente");
+            }
+
             holder.tvStatus.setTextColor(Color.parseColor("#F59E0B"));
             holder.tvStatus.setBackground(criarBadge("#2A1F0A"));
             holder.tvValor.setTextColor(Color.parseColor("#F59E0B"));
@@ -94,21 +80,14 @@ public class HistoricoAdapter extends RecyclerView.Adapter<HistoricoAdapter.View
         }
     }
 
-    /**
-     * Aplica a cor ao fundo do ícone circular e à cor do texto do ícone.
-     */
     private void aplicarCorIcone(ViewHolder holder, String corIcone, String corFundo) {
         holder.tvIcone.setTextColor(Color.parseColor(corIcone));
-
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
         circle.setColor(Color.parseColor(corFundo));
         holder.tvIcone.setBackground(circle);
     }
 
-    /**
-     * Cria um badge arredondado com a cor de fundo especificada.
-     */
     private GradientDrawable criarBadge(String corFundo) {
         GradientDrawable badge = new GradientDrawable();
         badge.setShape(GradientDrawable.RECTANGLE);
@@ -117,7 +96,20 @@ public class HistoricoAdapter extends RecyclerView.Adapter<HistoricoAdapter.View
         return badge;
     }
 
-    private int extrairNumeroParcelas(String parcela) {
+    private int extrairTotalParcelas(String parcela) {
+        if (parcela == null) return 1;
+        if (parcela.contains("/")) {
+            try {
+                String[] partes = parcela.split("/");
+                String total = partes[1].replaceAll("[^0-9]", "");
+                if (!total.isEmpty()) {
+                    int n = Integer.parseInt(total);
+                    return n > 0 ? n : 1;
+                }
+            } catch (Exception e) {
+                return 1;
+            }
+        }
         try {
             String numeros = parcela.replaceAll("[^0-9]", "");
             if (numeros.isEmpty()) return 1;

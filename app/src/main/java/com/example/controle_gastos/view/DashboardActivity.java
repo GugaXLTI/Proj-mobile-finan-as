@@ -32,6 +32,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -47,6 +48,9 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     private Button btnExportar;
     private TextView tvTituloLista, tvTotalLista;
 
+    // ⭐ Navegação de mês
+    private TextView btnMesAnteriorDash, btnMesProximoDash, tvMesAtualDash, tvBadgeAtualDash;
+
     private List<Divida> todasDividas;
     private List<Divida> dividasFiltradas;
     private DividaAdapter dividaAdapter;
@@ -55,6 +59,10 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
 
     private AppDatabase db;
     private SessionManager session;
+
+    // ⭐ Mês/ano sendo visualizado
+    private int mesSelecionado;
+    private int anoSelecionado;
 
     private final int[] CORES_FIGMA = {
             Color.parseColor("#A855F7"),
@@ -84,6 +92,12 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         tvTituloLista = findViewById(R.id.tvTituloLista);
         tvTotalLista = findViewById(R.id.tvTotalLista);
 
+        // ⭐ Navegação de mês
+        btnMesAnteriorDash = findViewById(R.id.btnMesAnteriorDash);
+        btnMesProximoDash = findViewById(R.id.btnMesProximoDash);
+        tvMesAtualDash = findViewById(R.id.tvMesAtualDash);
+        tvBadgeAtualDash = findViewById(R.id.tvBadgeAtualDash);
+
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
         tabDividas = findViewById(R.id.tabDividas);
@@ -92,10 +106,34 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
 
         rvLancamentos.setLayoutManager(new LinearLayoutManager(this));
 
+        // Inicia no mês atual
+        Calendar c = Calendar.getInstance();
+        mesSelecionado = c.get(Calendar.MONTH) + 1;
+        anoSelecionado = c.get(Calendar.YEAR);
+
         configurarPieChart();
         carregarDados();
         configurarExportar();
         configurarNavegacao();
+
+        // ⭐ Listeners das setas
+        btnMesAnteriorDash.setOnClickListener(v -> {
+            mesSelecionado--;
+            if (mesSelecionado < 1) {
+                mesSelecionado = 12;
+                anoSelecionado--;
+            }
+            carregarDados();
+        });
+
+        btnMesProximoDash.setOnClickListener(v -> {
+            mesSelecionado++;
+            if (mesSelecionado > 12) {
+                mesSelecionado = 1;
+                anoSelecionado++;
+            }
+            carregarDados();
+        });
     }
 
     @Override
@@ -104,11 +142,56 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         carregarDados();
     }
 
+    /**
+     * ⭐ Carrega as dívidas do mês SELECIONADO (não mais "atual" fixo).
+     */
     private void carregarDados() {
-        todasDividas = db.dividaDao().listarPorUsuario(session.getUserId());
+        List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
+        todasDividas = new ArrayList<>();
+
+        for (Divida d : todas) {
+            if (pertenceAoMes(d, mesSelecionado, anoSelecionado)) {
+                todasDividas.add(d);
+            }
+        }
+
         dividasFiltradas = new ArrayList<>(todasDividas);
+        atualizarTituloMes();
         atualizarDashboard("Todos");
         configurarFiltros();
+    }
+
+    /**
+     * Atualiza o título do mês e mostra/esconde o badge "Atual".
+     */
+    private void atualizarTituloMes() {
+        String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
+        tvMesAtualDash.setText(meses[mesSelecionado - 1] + " " + anoSelecionado);
+
+        Calendar c = Calendar.getInstance();
+        int mesAtual = c.get(Calendar.MONTH) + 1;
+        int anoAtual = c.get(Calendar.YEAR);
+
+        if (mesSelecionado == mesAtual && anoSelecionado == anoAtual) {
+            tvBadgeAtualDash.setVisibility(View.VISIBLE);
+        } else {
+            tvBadgeAtualDash.setVisibility(View.GONE);
+        }
+    }
+
+    private boolean pertenceAoMes(Divida d, int mes, int ano) {
+        String venc = d.getVencimento();
+        if (venc == null || venc.isEmpty()) return false;
+        try {
+            String[] partes = venc.split("/");
+            if (partes.length != 3) return false;
+            int m = Integer.parseInt(partes[1]);
+            int a = Integer.parseInt(partes[2]);
+            return m == mes && a == ano;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void configurarPieChart() {
@@ -136,10 +219,8 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
 
         Map<String, Double> gastosPorCategoria = new HashMap<>();
         for (Divida d : dividasFiltradas) {
-            if (!d.isPago()) {
-                double valor = gastosPorCategoria.getOrDefault(d.getCategoria(), 0.0);
-                gastosPorCategoria.put(d.getCategoria(), valor + d.getValorRestante());
-            }
+            double valor = gastosPorCategoria.getOrDefault(d.getCategoria(), 0.0);
+            gastosPorCategoria.put(d.getCategoria(), valor + d.getValorTotal());
         }
 
         totalParaPercentual = 0f;
@@ -179,8 +260,7 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
 
             @Override
             public String getFormattedValue(float value) {
-                String label = labelsPorValor.get(value);
-                return montarTexto(value, label);
+                return montarTexto(value, labelsPorValor.get(value));
             }
 
             @Override
@@ -198,14 +278,14 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
 
-        double totalDividas = 0;
+        double totalMes = 0;
         for (Divida d : dividasFiltradas) {
-            if (!d.isPago()) totalDividas += d.getValorRestante();
+            totalMes += d.getValorTotal();
         }
 
         SpannableStringBuilder centerText = new SpannableStringBuilder();
         String labelTotal = "TOTAL\n";
-        String valorTotal = "R$ " + String.format(LOCALE_BR, "%.2f", totalDividas);
+        String valorTotal = "R$ " + String.format(LOCALE_BR, "%.2f", totalMes);
         centerText.append(labelTotal);
         centerText.append(valorTotal);
 
@@ -222,16 +302,18 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         pieChart.setCenterTextSize(15f);
         pieChart.invalidate();
 
-        List<Divida> dividasNaoPagas = new ArrayList<>();
-        for (Divida d : dividasFiltradas) {
-            if (!d.isPago()) dividasNaoPagas.add(d);
-        }
-
-        dividaAdapter = new DividaAdapter(dividasNaoPagas, this);
+        dividaAdapter = new DividaAdapter(dividasFiltradas, this);
         rvLancamentos.setAdapter(dividaAdapter);
 
-        tvTituloLista.setText(categoriaFiltro.equals("Todos") ? "DÍVIDAS" : "DÍVIDAS EM " + categoriaFiltro.toUpperCase());
-        tvTotalLista.setText("Total: R$ " + String.format(LOCALE_BR, "%.2f", totalDividas));
+        // ⭐ Título com o mês selecionado
+        String[] meses = {"JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
+                "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"};
+        String nomeMes = meses[mesSelecionado - 1];
+
+        tvTituloLista.setText(categoriaFiltro.equals("Todos")
+                ? "DÍVIDAS DE " + nomeMes
+                : "DÍVIDAS DE " + nomeMes + " • " + categoriaFiltro.toUpperCase());
+        tvTotalLista.setText("Total: R$ " + String.format(LOCALE_BR, "%.2f", totalMes));
     }
 
     private void configurarFiltros() {
@@ -239,10 +321,8 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
 
         Map<String, Integer> categoriasCount = new HashMap<>();
         for (Divida d : todasDividas) {
-            if (!d.isPago()) {
-                int count = categoriasCount.getOrDefault(d.getCategoria(), 0);
-                categoriasCount.put(d.getCategoria(), count + 1);
-            }
+            int count = categoriasCount.getOrDefault(d.getCategoria(), 0);
+            categoriasCount.put(d.getCategoria(), count + 1);
         }
 
         criarBotaoFiltro("Todos", todasDividas.size(), true);
@@ -359,34 +439,12 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
             return;
         }
 
-        int totalParcelas = extrairNumeroParcelas(divida.getParcela());
-        double valorParcelaReal = divida.getValorTotal() / totalParcelas;
-
-        divida.valorPago += valorParcelaReal;
-
-        if (divida.valorPago >= divida.getValorTotal() - 0.01) {
-            divida.valorPago = divida.getValorTotal();
-            divida.setPago(true);
-            Toast.makeText(this, "Dívida quitada: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
-        } else {
-            int parcelasPagas = (int) Math.round(divida.valorPago / valorParcelaReal);
-            Toast.makeText(this,
-                    "Parcela " + parcelasPagas + "/" + totalParcelas + " paga!",
-                    Toast.LENGTH_SHORT).show();
-        }
+        divida.valorPago = divida.getValorTotal();
+        divida.setPago(true);
 
         db.dividaDao().atualizar(divida);
         carregarDados();
-    }
-
-    private int extrairNumeroParcelas(String parcela) {
-        try {
-            String numeros = parcela.replaceAll("[^0-9]", "");
-            if (numeros.isEmpty()) return 1;
-            int n = Integer.parseInt(numeros);
-            return n > 0 ? n : 1;
-        } catch (NumberFormatException e) {
-            return 1;
-        }
+        Toast.makeText(this, "Parcela paga: " + divida.getTitulo() + " (" + divida.getParcela() + ")",
+                Toast.LENGTH_SHORT).show();
     }
 }

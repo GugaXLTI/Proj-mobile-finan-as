@@ -16,7 +16,6 @@ import java.util.Locale;
 
 public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder> {
 
-    // ⭐ Locale brasileiro para forçar vírgula decimal
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
     private List<Divida> dividas;
@@ -48,25 +47,18 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         holder.tvTitulo.setText(d.getTitulo());
         holder.tvDetalhe.setText(d.getBanco() + " • " + d.getCategoria());
 
-        // ⭐ Mostra o número de parcelas E o valor de cada uma
-        int totalParcelas = extrairNumeroParcelas(d.getParcela());
-        double valorParcelaReal = d.getValorTotal() / totalParcelas;
+        // ⭐ Cada registro JÁ É uma parcela. Não dividir!
+        int totalParcelas = extrairTotalParcelas(d.getParcela());
 
         if (totalParcelas > 1) {
-            holder.tvParcela.setText(
-                    "Parcela " + d.getParcela() + " de R$ " +
-                            String.format(LOCALE_BR, "%.2f", valorParcelaReal)
-            );
+            holder.tvParcela.setText("Parcela " + d.getParcela()); // "Parcela 2/4"
         } else {
             holder.tvParcela.setText("Parcela " + d.getParcela());
         }
 
         holder.tvVencimento.setText("Vencimento: " + d.getVencimento());
 
-        int parcelasPagas = (int) Math.round(d.getValorPago() / valorParcelaReal);
-
         if (d.isPago()) {
-            // ⭐ Dívida totalmente paga
             holder.tvValorRestante.setText("Pago ✓");
             holder.tvValorRestante.setTextColor(Color.parseColor("#10B981"));
 
@@ -74,17 +66,12 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             holder.btnPagar.setEnabled(false);
             holder.btnPagar.setAlpha(0.5f);
         } else {
-            // ⭐ Ainda falta pagar (parcial ou total)
             holder.tvValorRestante.setText(
-                    "Falta: R$ " + String.format(LOCALE_BR, "%.2f", d.getValorRestante())
+                    "R$ " + String.format(LOCALE_BR, "%.2f", d.getValorTotal())
             );
             holder.tvValorRestante.setTextColor(Color.parseColor("#EF4444"));
 
-            if (totalParcelas > 1) {
-                holder.btnPagar.setText("Pagar (" + parcelasPagas + "/" + totalParcelas + ")");
-            } else {
-                holder.btnPagar.setText("Pagar");
-            }
+            holder.btnPagar.setText("Pagar");
             holder.btnPagar.setEnabled(true);
             holder.btnPagar.setAlpha(1.0f);
         }
@@ -105,7 +92,30 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         return dividas.size();
     }
 
-    private int extrairNumeroParcelas(String parcela) {
+    /**
+     * ⭐ Extrai o TOTAL de parcelas do campo "X/Y".
+     * "2/4"      → 4
+     * "1x"       → 1
+     * "1x (À vista)" → 1
+     */
+    private int extrairTotalParcelas(String parcela) {
+        if (parcela == null) return 1;
+
+        // Formato "X/Y" → pega o Y
+        if (parcela.contains("/")) {
+            try {
+                String[] partes = parcela.split("/");
+                String total = partes[1].replaceAll("[^0-9]", "");
+                if (!total.isEmpty()) {
+                    int n = Integer.parseInt(total);
+                    return n > 0 ? n : 1;
+                }
+            } catch (Exception e) {
+                return 1;
+            }
+        }
+
+        // Formato "1x" ou "1x (À vista)"
         try {
             String numeros = parcela.replaceAll("[^0-9]", "");
             if (numeros.isEmpty()) return 1;

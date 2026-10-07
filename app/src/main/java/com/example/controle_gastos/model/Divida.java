@@ -11,6 +11,7 @@ public class Divida {
     public int id;
 
     public int usuarioId;
+    public int grupoId; // ⭐ NOVO: 0 = sem grupo, >0 = parcela de um grupo
 
     public String titulo;
     public double valorTotal;
@@ -21,15 +22,15 @@ public class Divida {
     public String parcela;
     public String vencimento;
     public boolean pago;
-    public boolean excluida; // ⭐ NOVO: soft delete
+    public boolean excluida;
 
-    // ============================================================
-    // Construtor COMPLETO (usado pelo Room para ler do banco)
-    // ============================================================
-    public Divida(int id, int usuarioId, String titulo, double valorTotal, double valorParcela, double valorPago,
-                  String banco, String categoria, String parcela, String vencimento, boolean pago, boolean excluida) {
+    // Construtor COMPLETO (Room)
+    public Divida(int id, int usuarioId, int grupoId, String titulo, double valorTotal, double valorParcela,
+                  double valorPago, String banco, String categoria, String parcela, String vencimento,
+                  boolean pago, boolean excluida) {
         this.id = id;
         this.usuarioId = usuarioId;
+        this.grupoId = grupoId;
         this.titulo = titulo;
         this.valorTotal = valorTotal;
         this.valorParcela = valorParcela;
@@ -42,15 +43,12 @@ public class Divida {
         this.excluida = excluida;
     }
 
-    // ============================================================
-    // Construtor SEM ID e SEM excluida (conveniência para criação)
-    // Assume excluida = false automaticamente
-    // ⭐ Use este na maioria dos casos (nova dívida sempre nasce ativa)
-    // ============================================================
+    // Construtor SEM ID/SEM grupoId (conveniência)
     @Ignore
     public Divida(int usuarioId, String titulo, double valorTotal, double valorParcela, double valorPago,
                   String banco, String categoria, String parcela, String vencimento, boolean pago) {
         this.usuarioId = usuarioId;
+        this.grupoId = 0;
         this.titulo = titulo;
         this.valorTotal = valorTotal;
         this.valorParcela = valorParcela;
@@ -60,17 +58,16 @@ public class Divida {
         this.parcela = parcela;
         this.vencimento = vencimento;
         this.pago = pago;
-        this.excluida = false; // ⭐ Padrão: sempre nasce ativa
+        this.excluida = false;
     }
 
-    // ============================================================
-    // Construtor SEM ID COM excluida (para casos especiais)
-    // Use apenas se você PRECISA criar uma dívida já excluída
-    // ============================================================
+    // Construtor SEM ID, COM grupoId
     @Ignore
-    public Divida(int usuarioId, String titulo, double valorTotal, double valorParcela, double valorPago,
-                  String banco, String categoria, String parcela, String vencimento, boolean pago, boolean excluida) {
+    public Divida(int usuarioId, int grupoId, String titulo, double valorTotal, double valorParcela,
+                  double valorPago, String banco, String categoria, String parcela, String vencimento,
+                  boolean pago, boolean excluida) {
         this.usuarioId = usuarioId;
+        this.grupoId = grupoId;
         this.titulo = titulo;
         this.valorTotal = valorTotal;
         this.valorParcela = valorParcela;
@@ -85,6 +82,7 @@ public class Divida {
 
     public int getId() { return id; }
     public int getUsuarioId() { return usuarioId; }
+    public int getGrupoId() { return grupoId; }
     public String getTitulo() { return titulo; }
     public double getValorTotal() { return valorTotal; }
     public double getValorParcela() { return valorParcela; }

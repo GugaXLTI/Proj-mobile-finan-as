@@ -23,12 +23,15 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 - Edição de perfil
 - Relatórios (Dashboard)
 - Configurações gerais
+- **Tela de Histórico por Mês (navegação, filtros, estados)**
+- **Soft Delete de dívidas**
+- **Exportação CSV do extrato mensal**
+- **Exportação PDF do extrato mensal**
 
 ### ❌ O que NÃO está incluído (fora do escopo desta Sprint):
-- Autenticação em nuvem (Firebase) — planejada para Sprint 6
+- Autenticação em nuvem (Firebase) — planejada para Sprint 7
 - Sincronização entre dispositivos
 - Biometria real
-- Exportação de dados (PDF/CSV)
 
 ---
 
@@ -58,7 +61,7 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 
 ## 5. Casos de Teste
 
-> **Legenda:** ✅ `[x]` = Passou | ⏳ `[ ]` = Ainda não testado | ❌ Falhou (corrigido posteriormente)
+> **Legenda:** ✅ `[x]` = Passou | ⏳ `[ ]` = Ainda não testado
 
 ### 🔐 CT-01: Splash Screen e Sessão
 
@@ -89,6 +92,7 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 | CT-03.2 | Totais corretos | Total pago + a pagar = geral | ✅ [x] |
 | CT-03.3 | Próximos vencimentos | Aparece com valor da parcela e progresso | ✅ [x] |
 | CT-03.4 | Avatar dinâmico | Avatar mostra a 1ª letra do nome | ✅ [x] |
+| CT-03.5 | Card total clicável | Card "Total de Dívidas" abre o Histórico | ⏳ [ ] |
 
 ### 💰 CT-04: Cadastro de Dívida
 
@@ -162,19 +166,19 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-10.1 | Permissão de notificação | Pede permissão de notificação | ⏳ [ ] |
-| CT-10.2 | Notificação agendada | Nada aparece agora (agendado) | ⏳ [ ] |
-| CT-10.3 | Notificação no dia certo | Notificação aparece às 09h | ⏳ [ ] |
-| CT-10.4 | Cancelar ao pagar | Notificação NÃO aparece | ⏳ [ ] |
-| CT-10.5 | Cancelar ao excluir | Notificação NÃO aparece | ⏳ [ ] |
-| CT-10.6 | Switch de lembretes | Novas notificações não são agendadas | ⏳ [ ] |
+| CT-10.1 | Permissão de notificação | Pede permissão de notificação | ✅ [x] |
+| CT-10.2 | Notificação agendada | Nada aparece agora (agendado) | ✅ [x] |
+| CT-10.3 | Notificação no dia certo | Notificação aparece às 09h | ✅ [x] |
+| CT-10.4 | Cancelar ao pagar | Notificação NÃO aparece | ✅ [x] |
+| CT-10.5 | Cancelar ao excluir | Notificação NÃO aparece | ✅ [x] |
+| CT-10.6 | Switch de lembretes | Novas notificações não são agendadas | ✅ [x] |
 
 ### 🔄 CT-11: BootReceiver (Reagendamento)
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-11.1 | Reagenda após reiniciar | Notificação aparece normalmente | ⏳ [ ] |
-| CT-11.2 | Respeita switch desligado | Nenhuma notificação é agendada | ⏳ [ ] |
+| CT-11.1 | Reagenda após reiniciar | Notificação aparece normalmente | ✅ [x] |
+| CT-11.2 | Respeita switch desligado | Nenhuma notificação é agendada | ✅ [x] |
 
 ### 🔒 CT-12: Isolamento por Usuário
 
@@ -195,13 +199,59 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 | CT-13.5 | Botão "Limpar Tudo" | Diálogo de confirmação | ✅ [x] |
 | CT-13.6 | Logout | Volta para Login | ✅ [x] |
 
+### 🗑️ CT-14: Soft Delete de Dívidas ⭐ NOVO
+
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-14.1 | Exclusão some da lista | Dívida excluída some da tela de Dívidas | ⏳ [ ] |
+| CT-14.2 | Exclusão não apaga do banco | Dívida excluída aparece no Histórico com ✗ | ⏳ [ ] |
+| CT-14.3 | Exclusão cancela alarme | Notificação da dívida excluída não dispara | ⏳ [ ] |
+| CT-14.4 | Exclusão não soma no total | Total da tela Início ignora excluídas | ⏳ [ ] |
+
+### 📜 CT-15: Tela de Histórico ⭐ NOVO
+
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-15.1 | Abrir Histórico pelo card | Toque no card "Total de Dívidas" abre o Histórico | ⏳ [ ] |
+| CT-15.2 | Navegação entre meses | Setas ← e → mudam o mês | ⏳ [ ] |
+| CT-15.3 | Badge "Atual" | Aparece apenas no mês atual | ⏳ [ ] |
+| CT-15.4 | Card de resumo | Total / Já Pago / Falta Pagar corretos | ⏳ [ ] |
+| CT-15.5 | Chips de filtro dinâmicos | Chips mostram apenas categorias do mês | ⏳ [ ] |
+| CT-15.6 | Filtro por categoria | Chip filtra a lista corretamente | ⏳ [ ] |
+| CT-15.7 | Estado Liquidado | Dívida paga aparece com ✓ verde | ⏳ [ ] |
+| CT-15.8 | Estado Parcial | Dívida parcialmente paga mostra "Parcela 1/2" | ⏳ [ ] |
+| CT-15.9 | Estado Pendente | Dívida não paga aparece com → amarelo | ⏳ [ ] |
+| CT-15.10 | Estado Excluída | Dívida excluída aparece com ✗ vermelho e valor riscado | ⏳ [ ] |
+
+### 📤 CT-16: Exportação CSV ⭐ NOVO
+
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-16.1 | Diálogo de formato | Botão abre diálogo "CSV ou PDF" | ⏳ [ ] |
+| CT-16.2 | Gerar CSV | Arquivo `.csv` é gerado com sucesso | ⏳ [ ] |
+| CT-16.3 | Compartilhar via WhatsApp | CSV chega no WhatsApp com acentos corretos | ⏳ [ ] |
+| CT-16.4 | Abrir no Excel/Sheets | Planilha abre com colunas corretas | ⏳ [ ] |
+| CT-16.5 | Exportar só categoria | Escolher uma categoria → CSV só daquela categoria | ⏳ [ ] |
+| CT-16.6 | CSV vazio | Sem dívidas no mês → Toast "Nenhum lançamento" | ⏳ [ ] |
+
+### 📋 CT-17: Exportação PDF ⭐ NOVO
+
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-17.1 | Gerar PDF | Arquivo `.pdf` é gerado com sucesso | ⏳ [ ] |
+| CT-17.2 | Layout do PDF | Cabeçalho "ORG", card resumo e lista | ⏳ [ ] |
+| CT-17.3 | Cores por estado | Estados com cores corretas no PDF | ⏳ [ ] |
+| CT-17.4 | Compartilhar via WhatsApp | PDF chega no WhatsApp abrível | ⏳ [ ] |
+| CT-17.5 | Exportar só categoria | PDF só da categoria selecionada | ⏳ [ ] |
+| CT-17.6 | PDF vazio | Sem dívidas → Toast "Nenhum lançamento" | ⏳ [ ] |
+
 ---
 
 ## 6. Critérios de Aceitação
 
 O app é considerado **aprovado para release** quando:
 
-- ✅ Todos os casos de teste das seções CT-01 a CT-13 estiverem com status "Passou"
+- ✅ Todos os casos de teste das seções CT-01 a CT-17 estiverem com status "Passou"
 - ✅ Nenhum bug de prioridade 🔴 Alta estiver em aberto
 - ✅ Os bugs de prioridade 🟡 Média forem documentados no `docs/BUGS.md`
 - ✅ O app não travar (crash) em nenhum fluxo testado
@@ -211,14 +261,12 @@ O app é considerado **aprovado para release** quando:
 
 ## 7. Como Reportar um Bug
 
-Ao encontrar um problema durante os testes:
-
-1. **Anote o CT (Caso de Teste)** que falhou
-2. **Anote os passos** exatos que você fez
-3. **Anote o resultado esperado** e **o que aconteceu de fato**
-4. **Tire um print** da tela
+1. **Anote o CT** que falhou
+2. **Anote os passos** exatos
+3. **Anote o esperado** vs **o que aconteceu**
+4. **Tire um print**
 5. **Abra um registro no `docs/BUGS.md`**
-6. **Marque como 🔴 Aberto** no `BUGS.md`
+6. **Marque como 🔴 Aberto**
 
 ---
 
@@ -229,37 +277,21 @@ Ao encontrar um problema durante os testes:
 3. **Teste de Borda**
 4. **Teste de Regressão**
 5. **Registrar bugs** no `BUGS.md`
-6. **Enviar relatório final** para o líder do projeto
+6. **Enviar relatório final**
 
 ---
 
 ## 9. Como Testar as Notificações (CT-10 e CT-11)
 
-As notificações usam o `AlarmManager` do Android. Para testar sem esperar semanas, é possível "enganar" o sistema mudando a data do celular.
-
 ### Passo a Passo
 
-1. **Desative "Data e hora automáticas":**
-   - Configurações do Android → Sistema → Data e hora
-   - Desligar "Definir data e hora automaticamente"
-
+1. **Desative "Data e hora automáticas"** no Android
 2. **Confirme que os lembretes estão ativos no app**
-
 3. **Cadastre uma dívida com vencimento em hoje + 4 dias**
-
 4. **Force o fechamento do app**
-
 5. **Mude a data do celular para amanhã, 08:58**
-
-6. **Aguarde 2 minutos** → a notificação deve aparecer às 09:00
-
-7. **Restaurar:** Reative "Definir data e hora automaticamente"
-
-### ⚠️ Observações
-
-- O alarme só é agendado se `vencimento - 3 dias` estiver no futuro
-- Vencimento em **hoje + 2 dias** não funciona
-- Vencimento em **hoje + 4 dias** é o mais confiável
+6. **Aguarde 2 minutos** → notificação deve aparecer às 09:00
+7. **Restaurar:** reative "Data e hora automáticas"
 
 ### Teste do BootReceiver (CT-11)
 
@@ -270,11 +302,34 @@ As notificações usam o `AlarmManager` do Android. Para testar sem esperar sema
 
 ---
 
-## 10. Histórico de Execuções
+## 10. Como Testar o Soft Delete (CT-14)
+
+1. Cadastre uma dívida com categoria "Lazer"
+2. Exclua essa dívida na tela de Dívidas
+3. ✅ Ela some da lista de Dívidas
+4. ✅ Total da tela Início **não** soma mais ela
+5. ✅ Abra o Histórico no mês do vencimento
+6. ✅ Aparece com status **"Excluída ✗"** em vermelho
+
+---
+
+## 11. Como Testar a Exportação (CT-16 e CT-17)
+
+1. Abra o Histórico
+2. Selecione um mês com dívidas
+3. Toque em **"Baixar Resumo"**
+4. Escolha **CSV** → compartilhe no WhatsApp/Drive
+5. Abra o arquivo no Excel/Sheets → confira os dados
+6. Volte e escolha **PDF** → compartilhe e abra
+
+---
+
+## 12. Histórico de Execuções
 
 | Data | Testador | Versão | Total | Passou | Falhou | Bugs Abertos |
 |------|----------|--------|-------|--------|--------|--------------|
 | 03/10/2026 | Israel Malheiros | Sprint 5 | 68 | 60 | 8 | 0 |
+| — | Israel Malheiros | Sprint 6 | 21 | — | — | — |
 
 ### Bugs Encontrados e Corrigidos
 
@@ -291,7 +346,7 @@ As notificações usam o `AlarmManager` do Android. Para testar sem esperar sema
 
 ---
 
-## 11. Referências
+## 13. Referências
 
 - **`docs/BUGS.md`** — Registro de bugs encontrados
 - **`docs/ARQUITETURA.md`** — Documentação técnica do projeto

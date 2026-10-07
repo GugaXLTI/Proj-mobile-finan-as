@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,8 +17,11 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.HistoricoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.CsvExportHelper;
+import com.example.controle_gastos.utils.PdfExportHelper;
 import com.example.controle_gastos.utils.SessionManager;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -59,7 +63,6 @@ public class HistoricoActivity extends AppCompatActivity {
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
 
-        // Bind views
         btnVoltarHistorico = findViewById(R.id.btnVoltarHistorico);
         btnMesAnterior = findViewById(R.id.btnMesAnterior);
         btnMesProximo = findViewById(R.id.btnMesProximo);
@@ -81,15 +84,13 @@ public class HistoricoActivity extends AppCompatActivity {
 
         rvLancamentosHistorico.setLayoutManager(new LinearLayoutManager(this));
 
-        // Inicia no mês atual
         Calendar c = Calendar.getInstance();
-        mesSelecionado = c.get(Calendar.MONTH) + 1; // 1-12
+        mesSelecionado = c.get(Calendar.MONTH) + 1;
         anoSelecionado = c.get(Calendar.YEAR);
 
         carregarDividas();
         atualizarTela();
 
-        // Listeners
         btnVoltarHistorico.setOnClickListener(v -> finish());
         btnMesAnterior.setOnClickListener(v -> {
             mesSelecionado--;
@@ -109,12 +110,10 @@ public class HistoricoActivity extends AppCompatActivity {
             categoriaSelecionada = "Todos";
             atualizarTela();
         });
-        btnBaixarResumo.setOnClickListener(v -> {
-            // TODO: implementado no BLOCO 3 e 4 (CSV e PDF)
-            Toast.makeText(this, "Exportação será implementada no próximo bloco!", Toast.LENGTH_SHORT).show();
-        });
 
-        // Navegação inferior
+        // ⭐ Diálogo CSV/PDF
+        btnBaixarResumo.setOnClickListener(v -> mostrarDialogoExportacao());
+
         tabInicio.setOnClickListener(v -> {
             startActivity(new Intent(this, InicioActivity.class));
             finish();
@@ -134,16 +133,10 @@ public class HistoricoActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Carrega TODAS as dívidas (inclusive excluídas) do usuário logado.
-     */
     private void carregarDividas() {
         todasDividas = db.dividaDao().listarTodasParaHistorico(session.getUserId());
     }
 
-    /**
-     * Atualiza a tela inteira: título do mês, resumo, chips e lista.
-     */
     private void atualizarTela() {
         atualizarTituloMes();
         filtrarDividasDoMes();
@@ -157,7 +150,6 @@ public class HistoricoActivity extends AppCompatActivity {
                 "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
         tvMesAtual.setText(meses[mesSelecionado - 1] + " " + anoSelecionado);
 
-        // Verifica se é o mês atual
         Calendar c = Calendar.getInstance();
         int mesAtual = c.get(Calendar.MONTH) + 1;
         int anoAtual = c.get(Calendar.YEAR);
@@ -169,10 +161,6 @@ public class HistoricoActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Filtra as dívidas pelo mês/ano selecionado, baseado no vencimento.
-     * Formato esperado: "dd/MM/yyyy"
-     */
     private void filtrarDividasDoMes() {
         dividasDoMes.clear();
         for (Divida d : todasDividas) {
@@ -194,10 +182,6 @@ public class HistoricoActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Calcula totais do mês e atualiza o card de resumo.
-     * Dívidas EXCLUÍDAS não entram no cálculo.
-     */
     private void atualizarResumo() {
         double total = 0;
         double pago = 0;
@@ -209,21 +193,15 @@ public class HistoricoActivity extends AppCompatActivity {
         }
 
         double faltaPagar = total - pago;
-        int percPago = total > 0 ? (int) Math.round((pago / total) * 100) : 0;
-        int percFalta = 100 - percPago;
 
         tvTotalMes.setText(String.format(LOCALE_BR, "R$ %.2f", total));
         tvJaPagoMes.setText(String.format(LOCALE_BR, "R$ %.2f", pago));
         tvFaltaPagarMes.setText(String.format(LOCALE_BR, "R$ %.2f", faltaPagar));
     }
 
-    /**
-     * Monta os chips de filtro por categoria (apenas categorias que têm dívidas no mês).
-     */
     private void montarFiltros() {
         containerFiltrosHistorico.removeAllViews();
 
-        // Conta categorias do mês
         Map<String, Integer> categoriasCount = new HashMap<>();
         for (Divida d : dividasDoMes) {
             int count = categoriasCount.getOrDefault(d.getCategoria(), 0);
@@ -277,9 +255,6 @@ public class HistoricoActivity extends AppCompatActivity {
         chip.setBackground(d);
     }
 
-    /**
-     * Atualiza a lista conforme a categoria selecionada.
-     */
     private void atualizarLista() {
         dividasFiltradas.clear();
         for (Divida d : dividasDoMes) {
@@ -288,7 +263,6 @@ public class HistoricoActivity extends AppCompatActivity {
             }
         }
 
-        // Título da lista
         String nomeMes = tvMesAtual.getText().toString().toUpperCase();
         String titulo = categoriaSelecionada.equals("Todos")
                 ? "LANÇAMENTOS DE " + nomeMes
@@ -297,5 +271,92 @@ public class HistoricoActivity extends AppCompatActivity {
 
         adapter = new HistoricoAdapter(dividasFiltradas);
         rvLancamentosHistorico.setAdapter(adapter);
+    }
+
+    // ==========================================
+    // ⭐ EXPORTAÇÃO (CSV e PDF)
+    // ==========================================
+
+    /**
+     * Mostra diálogo perguntando se quer exportar em CSV ou PDF.
+     */
+    private void mostrarDialogoExportacao() {
+        String[] opcoes = {"📄  Exportar como CSV (Excel)", "📋  Exportar como PDF (Relatório)"};
+
+        new AlertDialog.Builder(this)
+                .setTitle("Escolha o formato")
+                .setItems(opcoes, (dialog, which) -> {
+                    if (which == 0) {
+                        exportarCsv();
+                    } else {
+                        exportarPdf();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    /**
+     * Exporta o resumo do mês em CSV.
+     */
+    private void exportarCsv() {
+        List<Divida> paraExportar = new ArrayList<>();
+        for (Divida d : dividasDoMes) {
+            if (categoriaSelecionada.equals("Todos") || d.getCategoria().equals(categoriaSelecionada)) {
+                paraExportar.add(d);
+            }
+        }
+
+        if (paraExportar.isEmpty()) {
+            Toast.makeText(this, "Nenhum lançamento para exportar neste mês.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String mesAno = tvMesAtual.getText().toString();
+        String sufixo = categoriaSelecionada.equals("Todos")
+                ? ""
+                : "_" + categoriaSelecionada.toLowerCase().replace(" ", "_");
+
+        File arquivo = CsvExportHelper.gerarCsv(this, paraExportar, mesAno + sufixo);
+
+        if (arquivo == null) {
+            Toast.makeText(this, "Erro ao gerar o arquivo CSV.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "CSV gerado com sucesso!", Toast.LENGTH_SHORT).show();
+        CsvExportHelper.compartilharCsv(this, arquivo);
+    }
+
+    /**
+     * Exporta o resumo do mês em PDF.
+     */
+    private void exportarPdf() {
+        List<Divida> paraExportar = new ArrayList<>();
+        for (Divida d : dividasDoMes) {
+            if (categoriaSelecionada.equals("Todos") || d.getCategoria().equals(categoriaSelecionada)) {
+                paraExportar.add(d);
+            }
+        }
+
+        if (paraExportar.isEmpty()) {
+            Toast.makeText(this, "Nenhum lançamento para exportar neste mês.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String mesAno = tvMesAtual.getText().toString();
+        File arquivo = PdfExportHelper.gerarPdf(this, paraExportar, mesAno, categoriaSelecionada);
+
+        if (arquivo == null) {
+            Toast.makeText(this, "Erro ao gerar o PDF.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "PDF gerado com sucesso!", Toast.LENGTH_SHORT).show();
+        PdfExportHelper.compartilharPdf(this, arquivo);
     }
 }

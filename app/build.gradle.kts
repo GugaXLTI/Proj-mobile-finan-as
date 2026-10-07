@@ -39,7 +39,10 @@ dependencies {
     implementation("androidx.activity:activity:1.8.0")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
-    // ⭐ ROOM (ADICIONADO)
+    // ⭐ iText para geração de PDF
+    implementation("com.itextpdf:itextg:5.5.10")
+
+    // ⭐ ROOM
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")

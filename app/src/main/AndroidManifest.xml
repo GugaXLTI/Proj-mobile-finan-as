@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> <!-- ⭐ NOVO -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -53,7 +53,7 @@
         <activity android:name=".view.EditarPerfilActivity" android:exported="false" />
         <activity android:name=".view.HistoricoActivity" android:exported="false" />
 
-        <!-- ⭐ NOVA ACTIVITY DE CARTÕES E PIX -->
+        <!-- ⭐ ACTIVITY DE CARTÕES E PIX -->
         <activity android:name=".view.CartoesActivity" android:exported="false" />
 
         <!-- ⭐ Receiver de Lembretes de Fatura -->
@@ -61,7 +61,7 @@
             android:name=".receiver.LembreteReceiver"
             android:exported="false" />
 
-        <!-- ⭐ NOVO: Receiver para reagendar alarmes após reiniciar o celular -->
+        <!-- ⭐ Receiver para reagendar alarmes após reiniciar o celular -->
         <receiver
             android:name=".receiver.BootReceiver"
             android:enabled="true"
@@ -72,8 +72,19 @@
             </intent-filter>
         </receiver>
 
+        <!-- ⭐ FileProvider para compartilhar CSV e PDF -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <meta-data
-            android:name="preloaded_fonts"
+            android:name="android.preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
 
     </application>

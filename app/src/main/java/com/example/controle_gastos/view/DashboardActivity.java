@@ -39,6 +39,8 @@ import java.util.Map;
 
 public class DashboardActivity extends AppCompatActivity implements DividaAdapter.OnDividaActionListener {
 
+    private static final Locale LOCALE_BR = new Locale("pt", "BR");
+
     private com.github.mikephil.charting.charts.PieChart pieChart;
     private RecyclerView rvLancamentos;
     private LinearLayout containerFiltros;
@@ -103,7 +105,6 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     }
 
     private void carregarDados() {
-        // ⭐ FILTRA POR USUÁRIO LOGADO
         todasDividas = db.dividaDao().listarPorUsuario(session.getUserId());
         dividasFiltradas = new ArrayList<>(todasDividas);
         atualizarDashboard("Todos");
@@ -173,7 +174,7 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
             private String montarTexto(float value, String label) {
                 if (label == null) label = "";
                 float percentual = totalParaPercentual > 0 ? (value / totalParaPercentual) * 100f : 0f;
-                return label + "\n" + String.format(Locale.getDefault(), "%.0f%%", percentual);
+                return label + "\n" + String.format(LOCALE_BR, "%.0f%%", percentual);
             }
 
             @Override
@@ -204,7 +205,7 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
 
         SpannableStringBuilder centerText = new SpannableStringBuilder();
         String labelTotal = "TOTAL\n";
-        String valorTotal = "R$ " + String.format(Locale.getDefault(), "%.2f", totalDividas);
+        String valorTotal = "R$ " + String.format(LOCALE_BR, "%.2f", totalDividas);
         centerText.append(labelTotal);
         centerText.append(valorTotal);
 
@@ -230,7 +231,7 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         rvLancamentos.setAdapter(dividaAdapter);
 
         tvTituloLista.setText(categoriaFiltro.equals("Todos") ? "DÍVIDAS" : "DÍVIDAS EM " + categoriaFiltro.toUpperCase());
-        tvTotalLista.setText("Total: R$ " + String.format(Locale.getDefault(), "%.2f", totalDividas));
+        tvTotalLista.setText("Total: R$ " + String.format(LOCALE_BR, "%.2f", totalDividas));
     }
 
     private void configurarFiltros() {
@@ -332,9 +333,11 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     public void onExcluirClick(Divida divida) {
         new AlertDialog.Builder(this)
                 .setTitle("Excluir dívida")
-                .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?")
+                .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?\n\n" +
+                        "A dívida ficará registrada no Histórico como excluída.")
                 .setPositiveButton("Excluir", (dialog, which) -> {
-                    db.dividaDao().deletar(divida);
+                    divida.setExcluida(true);
+                    db.dividaDao().atualizar(divida);
                     carregarDados();
                     Toast.makeText(this, "Dívida excluída: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
                 })
@@ -351,9 +354,39 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
 
     @Override
     public void onPagarClick(Divida divida) {
-        divida.setPago(true);
+        if (divida.isPago()) {
+            Toast.makeText(this, "Essa dívida já está paga!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int totalParcelas = extrairNumeroParcelas(divida.getParcela());
+        double valorParcelaReal = divida.getValorTotal() / totalParcelas;
+
+        divida.valorPago += valorParcelaReal;
+
+        if (divida.valorPago >= divida.getValorTotal() - 0.01) {
+            divida.valorPago = divida.getValorTotal();
+            divida.setPago(true);
+            Toast.makeText(this, "Dívida quitada: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
+        } else {
+            int parcelasPagas = (int) Math.round(divida.valorPago / valorParcelaReal);
+            Toast.makeText(this,
+                    "Parcela " + parcelasPagas + "/" + totalParcelas + " paga!",
+                    Toast.LENGTH_SHORT).show();
+        }
+
         db.dividaDao().atualizar(divida);
         carregarDados();
-        Toast.makeText(this, "Pagamento registrado: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
+    }
+
+    private int extrairNumeroParcelas(String parcela) {
+        try {
+            String numeros = parcela.replaceAll("[^0-9]", "");
+            if (numeros.isEmpty()) return 1;
+            int n = Integer.parseInt(numeros);
+            return n > 0 ? n : 1;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 }

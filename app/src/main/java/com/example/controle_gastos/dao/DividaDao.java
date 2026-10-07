@@ -18,15 +18,17 @@ public interface DividaDao {
     @Update
     void atualizar(Divida divida);
 
+    // ⚠️ Use com cuidado: apaga de verdade do banco.
+    // Só use no "Limpar Tudo" das Configurações.
     @Delete
-    void deletar(Divida divida);
+    void deletarFisicamente(Divida divida);
 
-    // ======== CONSULTAS POR USUÁRIO (novas) ========
+    // ======== CONSULTAS POR USUÁRIO (agora ignoram excluídas) ========
 
-    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId")
+    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId AND excluida = 0")
     List<Divida> listarPorUsuario(int usuarioId);
 
-    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId AND pago = 0")
+    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId AND pago = 0 AND excluida = 0")
     List<Divida> listarNaoPagasPorUsuario(int usuarioId);
 
     @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId AND id = :id LIMIT 1")
@@ -34,4 +36,18 @@ public interface DividaDao {
 
     @Query("SELECT * FROM dividas WHERE id = :id LIMIT 1")
     Divida buscarPorId(int id);
+
+    // ======== CONSULTAS PARA O HISTÓRICO (Sprint 6) ========
+
+    // ⭐ Lista APENAS as dívidas excluídas (para mostrar no histórico)
+    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId AND excluida = 1 ORDER BY vencimento DESC")
+    List<Divida> listarExcluidasPorUsuario(int usuarioId);
+
+    // ⭐ Lista TODAS (incluindo excluídas) — usado no Histórico
+    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId ORDER BY vencimento DESC")
+    List<Divida> listarTodasParaHistorico(int usuarioId);
+
+    // ⭐ Lista por categoria (para o Histórico filtrado)
+    @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId AND categoria = :categoria ORDER BY vencimento DESC")
+    List<Divida> listarPorCategoria(int usuarioId, String categoria);
 }

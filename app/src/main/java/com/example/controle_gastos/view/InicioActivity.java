@@ -10,6 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -33,6 +34,9 @@ public class InicioActivity extends AppCompatActivity {
     private TextView tvAvatarInicio, tvNomeInicio, tvTotalDividasInicio, tvTotalPagoInicio, tvAlertaMes;
     private RecyclerView rvVencimentos;
     private Button btnVerTodosVencimentos;
+
+    // ⭐ NOVO: card clicável do total de dívidas
+    private CardView cardTotalDividas;
 
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
@@ -59,6 +63,9 @@ public class InicioActivity extends AppCompatActivity {
         rvVencimentos = findViewById(R.id.rvVencimentos);
         btnVerTodosVencimentos = findViewById(R.id.btnVerTodosVencimentos);
 
+        // ⭐ Card clicável do total
+        cardTotalDividas = findViewById(R.id.cardTotalDividas);
+
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
         tabDividas = findViewById(R.id.tabDividas);
@@ -74,6 +81,12 @@ public class InicioActivity extends AppCompatActivity {
         rvVencimentos.setLayoutManager(new LinearLayoutManager(this));
 
         carregarDados();
+
+        // ⭐ Abre o Histórico ao clicar no card do total
+        cardTotalDividas.setOnClickListener(v -> {
+            Intent intent = new Intent(InicioActivity.this, HistoricoActivity.class);
+            startActivity(intent);
+        });
 
         btnVerTodosVencimentos.setOnClickListener(v -> {
             Intent intent = new Intent(InicioActivity.this, DividasActivity.class);

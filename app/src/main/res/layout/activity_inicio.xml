@@ -21,6 +21,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Cabeçalho (Avatar + Nome) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -75,10 +76,15 @@
                     android:textSize="11sp" />
             </LinearLayout>
 
+            <!-- ⭐ CARD CLICÁVEL: Total de Dívidas Acumuladas -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/cardTotalDividas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 app:cardBackgroundColor="#131C2E"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp">
@@ -105,6 +111,33 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/tvVerHistorico"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Ver histórico →"
+                            android:textColor="#10B981"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+
+                        <TextView
+                            android:id="@+id/tvTotalDividasInicio"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="R$ 3.424,80"
+                            android:textColor="#FFFFFF"
+                            android:textSize="32sp"
+                            android:textStyle="bold" />
+
+                        <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_badge_aberto"
@@ -114,19 +147,10 @@
                             android:textColor="#EF4444"
                             android:textSize="11sp" />
                     </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tvTotalDividasInicio"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="R$ 3.424,80"
-                        android:textColor="#FFFFFF"
-                        android:textSize="32sp"
-                        android:textStyle="bold" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Card: Total Já Pago -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -162,6 +186,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Card: Atenção Este Mês -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -215,6 +240,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Cabeçalho da lista de vencimentos -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -224,6 +250,7 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
+            <!-- Card com lista de vencimentos -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -260,6 +287,7 @@
         </LinearLayout>
     </ScrollView>
 
+    <!-- ⭐ Barra de navegação inferior -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"

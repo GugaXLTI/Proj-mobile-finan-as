@@ -134,7 +134,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         btnSalvar.setOnClickListener(v -> salvarDivida());
 
-        // ⭐ Navegação da barra inferior
         tabInicio.setOnClickListener(v -> {
             startActivity(new Intent(this, InicioActivity.class));
             finish();
@@ -294,10 +293,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * ⭐ Preenche os campos no modo edição.
-     * Se a categoria original não existir mais, abre um diálogo para criar uma nova.
-     */
     private void preencherCampos(Divida d) {
         editDescricao.setText(d.getTitulo());
 
@@ -307,7 +302,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         editVencimento.setText(d.getVencimento());
 
-        // ⭐ Verifica se a categoria da dívida ainda existe
         boolean categoriaExiste = false;
         for (Categoria c : categoriasDoBanco) {
             if (c.getNome().equals(d.getCategoria())) {
@@ -317,10 +311,8 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
 
         if (!categoriaExiste && !d.getCategoria().isEmpty()) {
-            // ⭐ Categoria órfã! Abre diálogo para criar uma nova
             mostrarDialogCategoriaOrfa(d.getCategoria());
         } else {
-            // Seleciona a categoria normalmente
             for (int i = 0; i < categoriasDoBanco.size(); i++) {
                 if (categoriasDoBanco.get(i).getNome().equals(d.getCategoria())) {
                     spinnerCategoria.setSelection(i);
@@ -329,7 +321,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
             }
         }
 
-        // Seleciona as parcelas
         for (int i = 0; i < spinnerParcelas.getAdapter().getCount(); i++) {
             if (spinnerParcelas.getAdapter().getItem(i).toString().equals(d.getParcela())) {
                 spinnerParcelas.setSelection(i);
@@ -338,19 +329,13 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * ⭐ Mostra diálogo pedindo para o usuário criar uma nova categoria
-     * quando a categoria original foi excluída.
-     */
     private void mostrarDialogCategoriaOrfa(String nomeAntigo) {
-        // Cria um EditText programaticamente
         final EditText input = new EditText(this);
         input.setText(nomeAntigo);
         input.setSelection(nomeAntigo.length());
         input.setHint("Nome da categoria");
         input.setTextColor(getResources().getColor(R.color.text_white));
 
-        // Container com padding para o EditText não ficar colado
         LinearLayout container = new LinearLayout(this);
         container.setOrientation(LinearLayout.VERTICAL);
         int padding = (int) (16 * getResources().getDisplayMetrics().density);
@@ -372,7 +357,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
                     criarCategoriaOrfa(novoNome);
                 })
                 .setNegativeButton("Cancelar", (dialog, which) -> {
-                    // Se cancelar, o spinner fica na primeira categoria por padrão
                     Toast.makeText(this,
                             "Escolha uma categoria antes de salvar!",
                             Toast.LENGTH_LONG).show();
@@ -380,16 +364,10 @@ public class CadastroDividaActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * ⭐ Cria uma nova categoria com o nome informado pelo usuário.
-     * Se já existir uma categoria com esse nome, apenas seleciona ela.
-     */
     private void criarCategoriaOrfa(String nome) {
-        // Verifica se já existe uma categoria com esse nome
         Categoria existente = db.categoriaDao().buscarPorNome(session.getUserId(), nome);
 
         if (existente == null) {
-            // Cria nova categoria com cor cinza padrão
             Categoria nova = new Categoria(session.getUserId(), nome, "#64748B");
             long id = db.categoriaDao().inserir(nova);
 
@@ -399,12 +377,10 @@ public class CadastroDividaActivity extends AppCompatActivity {
             }
         }
 
-        // Recarrega a lista de categorias
         categoriasDoBanco = db.categoriaDao().listarPorUsuario(session.getUserId());
         CategoriaSpinnerAdapter adapter = new CategoriaSpinnerAdapter(this, categoriasDoBanco);
         spinnerCategoria.setAdapter(adapter);
 
-        // Seleciona a categoria criada
         for (int i = 0; i < categoriasDoBanco.size(); i++) {
             if (categoriasDoBanco.get(i).getNome().equals(nome)) {
                 spinnerCategoria.setSelection(i);
@@ -515,6 +491,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
             }
             Toast.makeText(this, "Dívida atualizada com sucesso!", Toast.LENGTH_SHORT).show();
         } else {
+            // ⭐ Agora usa o construtor de conveniência (assume excluida = false)
             Divida novaDivida = new Divida(
                     session.getUserId(), descricao, valor, valorParcela, valorJaPago,
                     bancoSelecionado, categoria, parcelas, vencimento, jaPago

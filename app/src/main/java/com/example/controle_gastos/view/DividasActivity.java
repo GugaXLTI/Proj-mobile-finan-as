@@ -107,8 +107,8 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
         for (Divida d : dividas) {
             totalGeral += d.getValorTotal();
-            totalPago += d.getValorPago();          // ⭐ Soma só o que foi realmente pago
-            totalAPagar += d.getValorRestante();    // ⭐ Soma o que ainda falta
+            totalPago += d.getValorPago();
+            totalAPagar += d.getValorRestante();
         }
 
         tvTotalAPagar.setText(String.format(Locale.getDefault(), "R$ %.2f", totalAPagar));
@@ -120,10 +120,16 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     public void onExcluirClick(Divida divida) {
         new AlertDialog.Builder(this)
                 .setTitle("Excluir dívida")
-                .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?")
+                .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?\n\n" +
+                        "A dívida ficará registrada no Histórico como excluída.")
                 .setPositiveButton("Excluir", (dialog, which) -> {
+                    // ⭐ Cancela o alarme (não faz sentido notificar dívida excluída)
                     AlarmeHelper.cancelar(this, divida);
-                    db.dividaDao().deletar(divida);
+
+                    // ⭐ SOFT DELETE: marca como excluída, não apaga do banco
+                    divida.setExcluida(true);
+                    db.dividaDao().atualizar(divida);
+
                     carregarDividas();
                     Toast.makeText(this, "Dívida excluída: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
                 })
@@ -140,7 +146,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
     @Override
     public void onPagarClick(Divida divida) {
-        // ⭐ Se já está totalmente paga, não faz nada
         if (divida.isPago()) {
             Toast.makeText(this, "Essa dívida já está paga!", Toast.LENGTH_SHORT).show();
             return;
@@ -149,10 +154,8 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         int totalParcelas = extrairNumeroParcelas(divida.getParcela());
         double valorParcelaReal = divida.getValorTotal() / totalParcelas;
 
-        // ⭐ Soma uma parcela ao valor pago
         divida.valorPago += valorParcelaReal;
 
-        // ⭐ Verifica se quitou tudo (com margem de erro para arredondamento)
         if (divida.valorPago >= divida.getValorTotal() - 0.01) {
             divida.valorPago = divida.getValorTotal();
             divida.setPago(true);
@@ -169,10 +172,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         carregarDividas();
     }
 
-    /**
-     * Extrai o número de parcelas de uma string como "10x" ou "1x (À vista)".
-     * Retorna 1 se não conseguir extrair.
-     */
     private int extrairNumeroParcelas(String parcela) {
         try {
             String numeros = parcela.replaceAll("[^0-9]", "");

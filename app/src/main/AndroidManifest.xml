@@ -51,6 +51,7 @@
         <activity android:name=".view.InicioActivity" android:exported="false" />
         <activity android:name=".view.CategoriasActivity" android:exported="false" />
         <activity android:name=".view.EditarPerfilActivity" android:exported="false" />
+        <activity android:name=".view.HistoricoActivity" android:exported="false" />
 
         <!-- ⭐ NOVA ACTIVITY DE CARTÕES E PIX -->
         <activity android:name=".view.CartoesActivity" android:exported="false" />

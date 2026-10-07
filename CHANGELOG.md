@@ -6,85 +6,107 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
+## [Não lançado] – Sprint 6 (Histórico, Soft Delete e Exportação)
+
+### Adicionado
+- **Soft Delete de Dívidas**
+  - Campo `excluida` na entidade `Divida` (marcação em vez de exclusão física)
+  - Dívidas excluídas somem das telas principais mas permanecem no banco
+  - Aparecem no Histórico com status "Excluída ✗" e valor riscado
+  - Exclusão em `DividasActivity` e `DashboardActivity` agora usa soft delete
+  - Alarme de notificação é cancelado automaticamente ao excluir
+- **Tela de Histórico por Mês**
+  - `HistoricoActivity` com navegação entre meses (← Setembro 2026 →)
+  - Badge "Atual" quando o mês selecionado é o atual
+  - Card de resumo do mês: Total, Já Pago, Falta Pagar (com percentuais)
+  - Chips de filtro por categoria (dinâmicos)
+  - Lista de lançamentos com 4 estados visuais
+  - `HistoricoAdapter` com cores e ícones por estado:
+    - ✅ Liquidado (verde)
+    - ↻ Parcial (azul)
+    - ⏳ Pendente (amarelo)
+    - ✗ Excluída (vermelho, valor riscado)
+  - Layout `activity_historico.xml` fiel ao Figma
+  - Layout `item_historico.xml` com card multi-estado
+  - Botão "Baixar Resumo do Mês" integrado
+- **Exportação CSV**
+  - `CsvExportHelper` para geração e compartilhamento de arquivos CSV
+  - BOM UTF-8 para abrir corretamente no Excel (acentos)
+  - Escape de campos com `;` ou aspas
+  - Coluna de status (Liquidado, Parcial, Pendente, Excluída)
+  - Compartilhamento via WhatsApp, Email, Drive, etc
+- **Exportação PDF**
+  - Dependência iTextG 5.5.10 no `build.gradle.kts`
+  - `PdfExportHelper` com geração de PDF estilizado
+  - Cabeçalho "ORG", card de resumo e lista de lançamentos
+  - Cores por estado (verde, vermelho, azul)
+  - Compartilhamento via Intent
+- **Diálogo de escolha de formato**
+  - Botão "Baixar Resumo" agora abre diálogo: CSV ou PDF
+- **FileProvider**
+  - Configuração de `file_paths.xml` para compartilhar arquivos
+  - Registro no `AndroidManifest.xml`
+- **Integração na Tela Início**
+  - Card "TOTAL DE DÍVIDAS ACUMULADAS" agora é clicável
+  - Indicador visual "Ver histórico →"
+  - Abre o Histórico ao tocar
+
+### Modificado
+- `AppDatabase` atualizado para versão 8 (campo `excluida` em `Divida`)
+- Entidade `Divida` agora tem 3 construtores:
+  - Completo (Room)
+  - Sem ID (assume `excluida = false`)
+  - Sem ID com `excluida` (casos especiais)
+- Todas as queries do `DividaDao` agora ignoram dívidas com `excluida = 1`
+- Adicionadas queries para o Histórico:
+  - `listarExcluidasPorUsuario`
+  - `listarTodasParaHistorico`
+  - `listarPorCategoria`
+- `DividasActivity` — método `deletarFisicamente` renomeado para uso restrito
+- `DashboardActivity` — `onPagarClick` agora paga uma parcela por vez
+- `InicioActivity` — card de total é clicável
+- `HistoricoActivity` — botão "Baixar Resumo" abre diálogo CSV/PDF
+
+### Corrigido
+- Exclusão de dívidas agora é reversível (soft delete)
+- Valores monetários padronizados com locale pt-BR no Dashboard
+
+---
+
 ## [Não lançado] – Sprint 5 (Cartões, Chaves Pix, Integração, BootReceiver, CRUD Completo e Correções)
 
 ### Adicionado
 - **Sistema de BootReceiver (Reagendamento de Alarmes)**
-  - `BootReceiver` (BroadcastReceiver) que escuta os eventos `BOOT_COMPLETED` e `MY_PACKAGE_REPLACED`
-  - Reagenda automaticamente os alarmes das dívidas não pagas após reiniciar o celular ou atualizar o app
+  - `BootReceiver` que escuta `BOOT_COMPLETED` e `MY_PACKAGE_REPLACED`
+  - Reagenda alarmes das dívidas não pagas após reiniciar o celular
   - Respeita o estado do switch de lembretes
-  - Executa a busca no Room em thread separada
-  - Permissão `RECEIVE_BOOT_COMPLETED` adicionada ao Manifest
-- **Tela de Cartões & Chaves Pix** com navegação por abas (`TabLayout` + `ViewPager2`)
-  - Entidade `Cartao` com campos `usuarioId`, `instituicao`, `apelido`, `ultimos4Digitos`, `diaVencimento`, `limite`, `bandeira` e `tipo`
-  - Entidade `ChavePix` com campos `usuarioId`, `tipoChave`, `chave`, `nomeFavorecido`, `banco` e `apelidoDivida`
-  - `CartaoDao` e `ChavePixDao` com CRUD completo
-  - Fragments `CartoesFragment` e `ChavesPixFragment`
-  - Adapters `CartaoAdapter`, `ChavePixAdapter` e `ChipSelecaoAdapter`
-  - Cadastro de cartão com **tipo Crédito/Débito**
-  - Cadastro de chave Pix com **tipo** (CNPJ/CPF, Celular, E-mail, Chave Aleatória)
-  - Botão **"Copiar Chave"** que envia a chave Pix para a área de transferência
-- **Edição e Exclusão de Cartões e Chaves Pix (CRUD Completo)**
-  - Clique normal em um card = entra em modo edição
-  - Clique longo em um card = abre diálogo de confirmação de exclusão
-  - Botão principal muda de "+ Guardar" para "✓ Atualizar" quando em edição
-  - Botão **"✕ Cancelar edição"** aparece somente no modo edição
-- **Integração da tela de Lançar Dívida com Cartões e Chaves Pix**
-  - Filtro dinâmico por tipo (Crédito, Débito, Pix)
-  - Empty State com botão **"Cadastrar agora"** quando não há itens
-  - Botão de atalho **"+ Novo"** e link **"+ Nova Categoria"**
-- **Redesign do layout `activity_cadastro_divida.xml`** fiel ao protótipo do Figma
-- **Drawables personalizados** (`bg_form_field`, `bg_button_green`, `bg_card_pix`)
-- **Documentação de Testes**
-  - Arquivo `docs/TESTES.md` com plano completo de testes
-  - 13 categorias de casos de teste (CT-01 a CT-13)
+- **Tela de Cartões & Chaves Pix** com navegação por abas
+  - Entidade `Cartao` com tipo (Crédito/Débito)
+  - Entidade `ChavePix` com tipo (CNPJ/CPF, Celular, E-mail, Aleatória)
+  - CRUD completo com clique normal (editar) e clique longo (excluir)
+  - Botão "Copiar Chave" para a área de transferência
+- **Integração da tela Lançar Dívida com Cartões e Pix**
+  - Filtro dinâmico por tipo
+  - Empty State com botão "Cadastrar agora"
+- **Documentação de Testes** (`docs/TESTES.md`)
 - **Spinner de categoria com bolinha colorida**
-  - Novo layout `item_spinner_categoria.xml`
-  - Novo adapter `CategoriaSpinnerAdapter`
-  - Exibe a cor da categoria ao lado do nome no spinner
-- **Barra de navegação inferior na tela de Lançar Dívida**
-  - Aba "Lançar" destacada em verde
+- **Barra de navegação inferior na tela Lançar**
 
 ### Modificado
-- `AppDatabase` atualizado para versão 6 (adiciona `Cartao` e `ChavePix`)
-- `AppDatabase` atualizado para versão 7 (adiciona campo `tipo` em `Cartao`)
-- `CadastroDividaActivity` agora integra com cartões e chaves Pix cadastrados
-- `CartoesFragment` e `ChavesPixFragment` agora gerenciam modo edição e exclusão
-- `CartaoAdapter` e `ChavePixAdapter` agora suportam clique normal e clique longo
-- `CadastroDividaActivity` agora esconde Parcelas/Vencimento para Pix e Débito
-- `CadastroDividaActivity` agora tem barra de navegação inferior
-- `DividaAdapter` agora exibe o valor da parcela (ex: "Parcela 3x de R$ 66,67")
-- `VencimentoAdapter` agora exibe progresso de parcelas e valor da parcela
-- `InicioActivity` agora usa locale pt-BR em todos os valores monetários
-- `CategoriasActivity` agora bloqueia exclusão de categorias em uso
-- `EditarPerfilActivity` agora tem 3 fallbacks para carregar o usuário
-- `UsuarioDao` agora tem métodos `buscarPorNome`, `buscarPrimeiroUsuario` e `contarUsuarios`
-- `SessionManager` agora salva e atualiza o e-mail do usuário
-- `AppDatabase` agora inclui permissão `RECEIVE_BOOT_COMPLETED` e registra o `BootReceiver`
-- Ajuste nas cores dos layouts para usar o padrão do projeto
+- `AppDatabase` atualizado para versão 6 (Cartões e Chaves Pix)
+- `AppDatabase` atualizado para versão 7 (campo `tipo` em `Cartao`)
+- Pix e Cartão de Débito tratados como à vista (sem parcelas/vencimento)
+- Máscara de valor força locale pt-BR
+- Cards de dívidas exibem valor da parcela e progresso
 
 ### Corrigido
-- **BUG-002:** Pix e Cartão de Débito não deveriam ter parcelas/vencimento
-  - Esconde os containers de Parcelas e Vencimento para esses tipos
-  - Marca automaticamente como pago (pago = true, valorPago = valorTotal)
-  - Não agenda alarme de notificação para compras à vista
-- **BUG-003:** Máscara de valor não formatava corretamente em celulares em inglês
-  - Locale pt-BR forçado em todos os `String.format` de valores monetários
-  - Agora sempre exibe "R$ 123,45" (com vírgula)
-- **BUG-004:** Card de dívidas não mostrava o valor da parcela
-  - Exibe "Parcela 3x de R$ 66,67" quando há mais de 1 parcela
-- **BUG-005:** Vencimentos na tela Início mostravam o valor total como se fosse pagamento único
-  - Adiciona linha de progresso: "Parcela 2 de 10"
-  - Exibe valor da parcela em destaque e o total em letras menores
-- **BUG-006:** Tela Lançar Dívida não tinha barra de navegação
-  - Envolve layout em ConstraintLayout com bottomNavigation
-- **BUG-007:** Exclusão de categorias em uso por dívidas criava categorias órfãs
-  - Bloqueia exclusão quando há dívidas usando a categoria
-  - Cria nova categoria automaticamente ao editar dívida com categoria órfã
-- **BUG-008:** Erro "Erro ao carregar dados do Usuário" na tela Editar Perfil
-  - Adiciona 3 fallbacks: por ID, por nome e por único usuário
-  - Força logout e redireciona para Login quando sessão está corrompida
-- Layout `activity_cartoes.xml` e `item_cartao.xml` ajustados para evitar erro `Android resource linking failed`
+- BUG-002: Pix/Débito pediam parcelas/vencimento
+- BUG-003: Máscara de valor não formatava corretamente
+- BUG-004: Card sem valor da parcela
+- BUG-005: Vencimentos mostravam valor total como pagamento único
+- BUG-006: Tela Lançar sem barra de navegação
+- BUG-007: Exclusão de categorias em uso
+- BUG-008: Erro ao carregar dados na tela Editar Perfil
 
 ---
 
@@ -92,49 +114,33 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ### Adicionado
 - **Sistema de Lembretes de Fatura (Notificações)**
-  - `NotificationHelper`, `LembreteReceiver` e `AlarmeHelper`
-  - Notificação **3 dias antes do vencimento**, às 9h da manhã
-  - Switch funcional de lembretes em Configurações
-  - Funciona totalmente offline
+  - `NotificationHelper`, `LembreteReceiver`, `AlarmeHelper`
+  - Notificação 3 dias antes do vencimento, às 9h
+  - Switch funcional em Configurações
 - **Tela de Categorias** com CRUD completo
-  - Entidade `Categoria` com campos `usuarioId`, `nome` e `cor`
-  - `CategoriaSeeder` com 8 categorias padrão
 - **Tela de Editar Perfil** completa
 - Campo `usuarioId` nas entidades `Divida` e `Transacao`
 - Campo `valorParcela` na entidade `Divida`
-- Documento `docs/BUGS.md`
-- Documentação em `docs/ARQUITETURA.md`
-
-### Modificado
-- `AppDatabase` atualizado para versão 5
-- `CadastroDividaActivity` agora carrega categorias dinâmicas
-- `CadastroDividaActivity` agora calcula o valor da parcela
-- `ConfiguracoesActivity` tem switch funcional de lembretes
-- `InicioActivity` agora solicita permissão de notificação
-
-### Removido
-- `DatabaseSeeder.java`
-- `DadosMock.java`
+- Documento `docs/BUGS.md` e `docs/ARQUITETURA.md`
 
 ### Corrigido
-- **Problema de arquitetura:** dívidas e transações não estavam vinculadas ao usuário logado
-- **BUG-001:** valor da parcela não era dividido em dívidas parceladas
+- Problema de arquitetura: dívidas/transações não vinculadas ao usuário
+- BUG-001: Valor da parcela não dividido em dívidas parceladas
 
 ---
 
 ## [1.0.0] – Sprint 3 (Room + Autenticação) – 2026-09-19
 
 ### Adicionado
-- Persistência de dados com Room (SQLite)
-- Entidades `Usuario`, `Divida` e `Transacao`
-- DAOs com CRUD completo
+- Persistência com Room (SQLite)
+- Entidades `Usuario`, `Divida`, `Transacao`
 - `AppDatabase` (versão 1) e `DatabaseClient`
 - `SessionManager` para gerenciar sessão
 - Autenticação local com validação no banco
 
 ### Modificado
-- Tela de Login agora valida credenciais no Room
-- Tela de Cadastro agora salva usuário no Room
+- Login e Cadastro agora usam Room
+- Telas Início, Dívidas e Dashboard leem do Room
 
 ---
 
@@ -142,29 +148,21 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ### Adicionado
 - Bottom Navigation com 5 abas
-- Tela de Início (Home) com resumo
-- Tela de Cadastro de Dívida com formulário completo
+- Tela de Início (Home)
+- Tela de Cadastro de Dívida
 - Tela de Configurações
-- Gráfico de rosca (MPAndroidChart) na Dashboard
-
-### Modificado
-- Dashboard movida para a aba "Relatórios"
-- Aba "Lançar" agora abre o Cadastro de Dívida
+- Gráfico de rosca (MPAndroidChart)
 
 ---
 
 ## [0.3.0] – Sprint 1 (Telas Iniciais) – 2026-09-05
 
 ### Adicionado
-- Splash Screen com logo e timer de 2 segundos
-- Tela de Login com validação de campos
-- Tela de Cadastro com confirmação de senha
-- Dashboard com gráfico e filtros por categoria
-- Tela de Dívidas com cards e totais
+- Splash Screen
+- Tela de Login e Cadastro
+- Dashboard com gráfico
+- Tela de Dívidas com cards
 - Fontes personalizadas (Abril Fatface e Lato)
-
-### Modificado
-- Estrutura de cores centralizada em `colors.xml`
 
 ---
 
@@ -172,6 +170,5 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ### Adicionado
 - Estrutura inicial do projeto Android em Java
-- Repositório no GitHub com README e .gitignore
+- Repositório no GitHub
 - Pacotes `model`, `view`, `adapter` e `utils`
-- Classe `Transacao` (modelo de dados)

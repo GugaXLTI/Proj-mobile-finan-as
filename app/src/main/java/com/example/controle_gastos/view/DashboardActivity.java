@@ -15,12 +15,11 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
-import com.example.controle_gastos.adapter.DividaAdapter;
+import com.example.controle_gastos.adapter.DividaDashboardAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.utils.SessionManager;
@@ -38,7 +37,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class DashboardActivity extends AppCompatActivity implements DividaAdapter.OnDividaActionListener {
+public class DashboardActivity extends AppCompatActivity {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
@@ -48,19 +47,17 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
     private Button btnExportar;
     private TextView tvTituloLista, tvTotalLista;
 
-    // ⭐ Navegação de mês
     private TextView btnMesAnteriorDash, btnMesProximoDash, tvMesAtualDash, tvBadgeAtualDash;
 
     private List<Divida> todasDividas;
     private List<Divida> dividasFiltradas;
-    private DividaAdapter dividaAdapter;
+    private DividaDashboardAdapter dividaAdapter;
 
     private float totalParaPercentual = 0f;
 
     private AppDatabase db;
     private SessionManager session;
 
-    // ⭐ Mês/ano sendo visualizado
     private int mesSelecionado;
     private int anoSelecionado;
 
@@ -92,7 +89,6 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         tvTituloLista = findViewById(R.id.tvTituloLista);
         tvTotalLista = findViewById(R.id.tvTotalLista);
 
-        // ⭐ Navegação de mês
         btnMesAnteriorDash = findViewById(R.id.btnMesAnteriorDash);
         btnMesProximoDash = findViewById(R.id.btnMesProximoDash);
         tvMesAtualDash = findViewById(R.id.tvMesAtualDash);
@@ -106,7 +102,6 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
 
         rvLancamentos.setLayoutManager(new LinearLayoutManager(this));
 
-        // Inicia no mês atual
         Calendar c = Calendar.getInstance();
         mesSelecionado = c.get(Calendar.MONTH) + 1;
         anoSelecionado = c.get(Calendar.YEAR);
@@ -116,7 +111,6 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         configurarExportar();
         configurarNavegacao();
 
-        // ⭐ Listeners das setas
         btnMesAnteriorDash.setOnClickListener(v -> {
             mesSelecionado--;
             if (mesSelecionado < 1) {
@@ -142,9 +136,6 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         carregarDados();
     }
 
-    /**
-     * ⭐ Carrega as dívidas do mês SELECIONADO (não mais "atual" fixo).
-     */
     private void carregarDados() {
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
         todasDividas = new ArrayList<>();
@@ -161,9 +152,6 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         configurarFiltros();
     }
 
-    /**
-     * Atualiza o título do mês e mostra/esconde o badge "Atual".
-     */
     private void atualizarTituloMes() {
         String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
                 "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
@@ -302,10 +290,10 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
         pieChart.setCenterTextSize(15f);
         pieChart.invalidate();
 
-        dividaAdapter = new DividaAdapter(dividasFiltradas, this);
+        // ⭐ Usa o adapter SOMENTE LEITURA
+        dividaAdapter = new DividaDashboardAdapter(dividasFiltradas);
         rvLancamentos.setAdapter(dividaAdapter);
 
-        // ⭐ Título com o mês selecionado
         String[] meses = {"JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
                 "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"};
         String nomeMes = meses[mesSelecionado - 1];
@@ -405,46 +393,5 @@ public class DashboardActivity extends AppCompatActivity implements DividaAdapte
             Intent intent = new Intent(DashboardActivity.this, ConfiguracoesActivity.class);
             startActivity(intent);
         });
-    }
-
-    // ========== Ações dos botões dos cards ==========
-
-    @Override
-    public void onExcluirClick(Divida divida) {
-        new AlertDialog.Builder(this)
-                .setTitle("Excluir dívida")
-                .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?\n\n" +
-                        "A dívida ficará registrada no Histórico como excluída.")
-                .setPositiveButton("Excluir", (dialog, which) -> {
-                    divida.setExcluida(true);
-                    db.dividaDao().atualizar(divida);
-                    carregarDados();
-                    Toast.makeText(this, "Dívida excluída: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
-    }
-
-    @Override
-    public void onEditarClick(Divida divida) {
-        Intent intent = new Intent(DashboardActivity.this, CadastroDividaActivity.class);
-        intent.putExtra("divida_id", divida.getId());
-        startActivity(intent);
-    }
-
-    @Override
-    public void onPagarClick(Divida divida) {
-        if (divida.isPago()) {
-            Toast.makeText(this, "Essa dívida já está paga!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        divida.valorPago = divida.getValorTotal();
-        divida.setPago(true);
-
-        db.dividaDao().atualizar(divida);
-        carregarDados();
-        Toast.makeText(this, "Parcela paga: " + divida.getTitulo() + " (" + divida.getParcela() + ")",
-                Toast.LENGTH_SHORT).show();
     }
 }

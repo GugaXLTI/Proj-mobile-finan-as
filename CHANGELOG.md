@@ -6,6 +6,44 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
+## [Não lançado] – Sprint 6 (Correções e Refinamentos)
+
+### Adicionado
+- **Parcelamento por Mês**
+  - Campo `grupoId` na entidade `Divida` para agrupar parcelas de uma mesma compra
+  - Cadastro de dívida parcelada agora gera **N registros independentes** (um por mês)
+  - Cada parcela tem seu próprio vencimento mensal consecutivo
+  - Novas queries no `DividaDao`:
+    - `maxGrupoId()` — gera próximo ID de grupo
+    - `listarPorGrupo()` — lista parcelas de um grupo
+- **Navegação por Mês no Dashboard**
+  - Setas ← → no topo do Dashboard para navegar entre meses
+  - Badge "Atual" quando o mês selecionado é o corrente
+  - Título da lista reflete o mês visualizado
+- **Adapter somente leitura no Dashboard**
+  - Novo layout `item_divida_dashboard.xml` (sem botões)
+  - Novo adapter `DividaDashboardAdapter` (só exibição)
+  - `DashboardActivity` não implementa mais `OnDividaActionListener`
+
+### Modificado
+- `AppDatabase` atualizado para versão 9 (campo `grupoId` em `Divida`)
+- `CadastroDividaActivity.salvarDivida()` agora gera N registros para crédito parcelado
+- `DividasActivity.onPagarClick()` agora quita o registro inteiro (não divide mais)
+- Dashboard filtra por mês **selecionado** (não mais fixo no atual)
+- Dashboard mostra **todas** as dívidas do mês (pago + não pago) no gráfico e na lista
+- Layout `activity_dashboard.xml` ganhou barra de navegação de mês
+
+### Corrigido
+- **BUG-009:** Bug "Parcela 7/14" nos adapters (Divida, Vencimento, Historico)
+  - Novo método `extrairTotalParcelas()` entende o formato "X/Y"
+  - Cada registro agora é UMA parcela (não divide mais `valorParcelaReal`)
+- **BUG-010:** Pagamento na tela Dívidas somava valor errado
+  - Agora quita o registro inteiro em uma única ação
+  - Cancela alarme de notificação ao pagar
+- Dashboard agora exibe dívidas à vista (Pix/Débito) no mês da compra
+
+---
+
 ## [Não lançado] – Sprint 6 (Histórico, Soft Delete e Exportação)
 
 ### Adicionado

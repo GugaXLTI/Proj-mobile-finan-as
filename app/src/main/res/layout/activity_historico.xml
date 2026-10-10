@@ -21,7 +21,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- ⭐ HEADER: Título + Subtítulo -->
+            <!-- HEADER -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -50,13 +50,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Navegue pelos meses anteriores e baixe o extrato"
+                android:text="Navegue pelos meses ou filtre por período"
                 android:textColor="@color/text_gray"
                 android:textSize="12sp"
                 android:layout_marginBottom="20dp"
                 android:layout_marginStart="36dp" />
 
-            <!-- ⭐ NAVEGAÇÃO DE MÊS -->
+            <!-- NAVEGAÇÃO DE MÊS + BOTÕES DE FILTRO -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -107,9 +107,33 @@
                     android:textColor="@color/text_white"
                     android:textSize="20sp"
                     android:padding="8dp" />
+
+                <!-- ⭐ NOVO: Botão de filtro por período -->
+                <TextView
+                    android:id="@+id/btnFiltroPeriodo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📅"
+                    android:textColor="@color/brand_green"
+                    android:textSize="18sp"
+                    android:padding="8dp"
+                    android:layout_marginStart="4dp" />
+
+                <!-- ⭐ NOVO: Botão de limpar filtro (só aparece quando filtro ativo) -->
+                <TextView
+                    android:id="@+id/btnLimparFiltro"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✕"
+                    android:textColor="#EF4444"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:padding="8dp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="gone" />
             </LinearLayout>
 
-            <!-- ⭐ CARD DE RESUMO DO MÊS -->
+            <!-- CARD DE RESUMO DO PERÍODO -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -129,7 +153,6 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
-                        <!-- Coluna 1: Total -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -139,7 +162,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="TOTAL DO MÊS"
+                                android:text="TOTAL"
                                 android:textColor="@color/text_gray"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
@@ -148,13 +171,14 @@
                                 android:id="@+id/tvTotalMes"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="R$ 3.424,80"
+                                android:text="R$ 0,00"
                                 android:textColor="@color/text_white"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:layout_marginTop="4dp" />
 
                             <TextView
+                                android:id="@+id/tvLabelTotal"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="100% faturas"
@@ -163,7 +187,6 @@
                                 android:layout_marginTop="2dp" />
                         </LinearLayout>
 
-                        <!-- Coluna 2: Já Pago -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -182,22 +205,22 @@
                                 android:id="@+id/tvJaPagoMes"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="R$ 1.950,00"
+                                android:text="R$ 0,00"
                                 android:textColor="@color/brand_green"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:layout_marginTop="4dp" />
 
                             <TextView
+                                android:id="@+id/tvLabelPago"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="57% liquidado"
+                                android:text="0% liquidado"
                                 android:textColor="@color/text_gray"
                                 android:textSize="10sp"
                                 android:layout_marginTop="2dp" />
                         </LinearLayout>
 
-                        <!-- Coluna 3: Falta Pagar -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -216,16 +239,17 @@
                                 android:id="@+id/tvFaltaPagarMes"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="R$ 1.474,80"
+                                android:text="R$ 0,00"
                                 android:textColor="#EF4444"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:layout_marginTop="4dp" />
 
                             <TextView
+                                android:id="@+id/tvLabelFalta"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="43% em aberto"
+                                android:text="0% em aberto"
                                 android:textColor="@color/text_gray"
                                 android:textSize="10sp"
                                 android:layout_marginTop="2dp" />
@@ -234,12 +258,12 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ⭐ BOTÃO BAIXAR RESUMO -->
+            <!-- BOTÃO BAIXAR RESUMO -->
             <Button
                 android:id="@+id/btnBaixarResumo"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="📄  Baixar Resumo do Mês em PDF / TXT"
+                android:text="📄  Baixar Resumo em PDF / TXT"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
                 android:textSize="14sp"
@@ -247,7 +271,7 @@
                 android:background="@drawable/bg_button_green"
                 android:layout_marginBottom="20dp" />
 
-            <!-- ⭐ CHIPS DE FILTRO -->
+            <!-- CHIPS DE FILTRO -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -261,18 +285,18 @@
                     android:orientation="horizontal" />
             </HorizontalScrollView>
 
-            <!-- ⭐ CABEÇALHO DA LISTA -->
+            <!-- CABEÇALHO DA LISTA -->
             <TextView
                 android:id="@+id/tvTituloListaHistorico"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="LANÇAMENTOS DE SETEMBRO: LAZER"
+                android:text="LANÇAMENTOS"
                 android:textColor="@color/text_gray"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
 
-            <!-- ⭐ LISTA DE LANÇAMENTOS -->
+            <!-- LISTA DE LANÇAMENTOS -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvLancamentosHistorico"
                 android:layout_width="match_parent"
@@ -281,7 +305,7 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- ⭐ BARRA DE NAVEGAÇÃO INFERIOR -->
+    <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"

@@ -6,6 +6,62 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
+## [Não lançado] – Sprint 6 (Biometria, Gráfico de Linha, Filtro de Período e Backup)
+
+### Adicionado
+- **Autenticação Biométrica (BiometricPrompt)**
+  - Dependência `androidx.biometric:biometric:1.1.0` no `build.gradle.kts`
+  - Permissão `USE_BIOMETRIC` no `AndroidManifest.xml`
+  - Classe `BiometricHelper` com métodos `podeUsarBiometria()` e `autenticar()`
+  - Botão "👤 Usar biometria" no Login (aparece apenas se ativo no dispositivo)
+  - Switch funcional de biometria em Configurações
+  - Preferências de biometria que **sobrevivem ao logout**
+  - Ao ativar: pede autenticação biométrica para confirmar
+  - Ao fazer login normal: dados biométricos são atualizados
+  - Suporte a digital, face e íris (dependendo do hardware)
+- **Gráfico de Linha — Evolução Mensal**
+  - Novo `LineChart` no Dashboard com estilo escuro
+  - Exibe a evolução dos gastos nos últimos N meses
+  - Chips de período: **3M / 6M / 12M**
+  - Chip selecionado em roxo, demais em cinza
+  - Exibe total acumulado do período selecionado
+  - Considera apenas dívidas **não excluídas** (pagas + não pagas)
+  - Linha verde com curvas bezier e área preenchida translúcida
+- **Filtro de Período Customizado no Histórico**
+  - Botão **📅** na barra de navegação do Histórico
+  - Dois `DatePicker`s em sequência (data inicial + data final)
+  - Botão **✕** vermelho para limpar o filtro (aparece apenas quando ativo)
+  - Título muda para "01/09/2026 a 30/09/2026" quando filtro ativo
+  - Validação: data final deve ser ≥ data inicial
+  - Setas ← → desativam o filtro automaticamente
+  - Exportação (CSV/PDF) usa o período no nome do arquivo
+- **Backup Local (Exportar/Restaurar em JSON)**
+  - Dependência `com.google.code.gson:gson:2.10.1` no `build.gradle.kts`
+  - POJO `BackupData` agrupa todos os dados do usuário
+  - Classe `BackupHelper` com métodos `exportar()`, `lerArquivo()` e `aplicarBackup()`
+  - Método `deletarTodosDoUsuario()` adicionado nos 4 DAOs
+  - Diálogo com 3 opções: Exportar / Restaurar / Limpar Tudo
+  - Arquivo JSON com data/hora no nome (`backup_org_2026-10-10_14-30.json`)
+  - Compartilhamento via FileProvider (Drive, WhatsApp, etc)
+  - Validação do campo `versao` antes de importar
+  - Diálogo de confirmação com **resumo do backup** antes de substituir dados
+  - Reagenda automaticamente alarmes das dívidas não pagas após restaurar
+
+### Modificado
+- `DashboardActivity` agora usa `DividaDashboardAdapter` (somente leitura)
+- `DashboardActivity` ganhou gráfico de linha + chips de período
+- `HistoricoActivity` ganhou filtro de período + labels dinâmicos de percentual
+- `ConfiguracoesActivity` — item "Backup dos Dados" agora abre diálogo com 3 opções
+- `SessionManager` ganhou métodos de biometria que sobrevivem ao logout
+- `DividaDao`, `CartaoDao`, `ChavePixDao`, `CategoriaDao` ganharam `deletarTodosDoUsuario()`
+- Layout `activity_dashboard.xml` ganhou CardView com `LineChart` + chips de período
+- Layout `activity_historico.xml` ganhou botão 📅 e botão ✕
+
+### Corrigido
+- **BUG-011:** Erro de digitação `.sho w()` no `HistoricoActivity` (linha 548)
+
+---
+
 ## [Não lançado] – Sprint 6 (Correções e Refinamentos)
 
 ### Adicionado

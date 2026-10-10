@@ -10,6 +10,12 @@ public class SessionManager {
     private static final String KEY_USER_NOME = "user_nome";
     private static final String KEY_USER_EMAIL = "user_email";
 
+    // ⭐ Chaves de biometria (não são apagadas no logout)
+    private static final String KEY_BIOMETRIA_ATIVA = "biometria_ativa";
+    private static final String KEY_BIOMETRIA_USER_ID = "biometria_user_id";
+    private static final String KEY_BIOMETRIA_NOME = "biometria_user_nome";
+    private static final String KEY_BIOMETRIA_EMAIL = "biometria_user_email";
+
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
 
@@ -18,13 +24,14 @@ public class SessionManager {
         editor = prefs.edit();
     }
 
+    // ============ SESSÃO ============
+
     public void salvarSessao(int userId, String nome) {
         editor.putInt(KEY_USER_ID, userId);
         editor.putString(KEY_USER_NOME, nome);
         editor.apply();
     }
 
-    // ⭐ NOVO: salva também o e-mail (chamado no login)
     public void salvarSessao(int userId, String nome, String email) {
         editor.putInt(KEY_USER_ID, userId);
         editor.putString(KEY_USER_NOME, nome);
@@ -37,7 +44,6 @@ public class SessionManager {
         editor.apply();
     }
 
-    // ⭐ NOVO: atualiza o e-mail na sessão
     public void atualizarEmail(String novoEmail) {
         editor.putString(KEY_USER_EMAIL, novoEmail);
         editor.apply();
@@ -55,13 +61,63 @@ public class SessionManager {
         return prefs.getString(KEY_USER_NOME, "");
     }
 
-    // ⭐ NOVO: retorna o e-mail salvo na sessão
     public String getEmail() {
         return prefs.getString(KEY_USER_EMAIL, "");
     }
 
+    /**
+     * Logout: apaga apenas a sessão principal, mantém a preferência de biometria.
+     */
     public void logout() {
-        editor.clear();
+        editor.remove(KEY_USER_ID);
+        editor.remove(KEY_USER_NOME);
+        editor.remove(KEY_USER_EMAIL);
         editor.apply();
+    }
+
+    // ============ BIOMETRIA ============
+
+    public boolean isBiometriaAtiva() {
+        return prefs.getBoolean(KEY_BIOMETRIA_ATIVA, false);
+    }
+
+    public void setBiometriaAtiva(boolean ativa) {
+        editor.putBoolean(KEY_BIOMETRIA_ATIVA, ativa);
+        editor.apply();
+    }
+
+    /**
+     * Salva os dados do usuário para login biométrico.
+     * Chamado ao ativar a biometria nas Configurações.
+     */
+    public void salvarUsuarioBiometrico(int userId, String nome, String email) {
+        editor.putInt(KEY_BIOMETRIA_USER_ID, userId);
+        editor.putString(KEY_BIOMETRIA_NOME, nome);
+        editor.putString(KEY_BIOMETRIA_EMAIL, email);
+        editor.putBoolean(KEY_BIOMETRIA_ATIVA, true);
+        editor.apply();
+    }
+
+    /**
+     * Limpa os dados biométricos (chamado ao desativar a biometria).
+     */
+    public void limparBiometria() {
+        editor.remove(KEY_BIOMETRIA_USER_ID);
+        editor.remove(KEY_BIOMETRIA_NOME);
+        editor.remove(KEY_BIOMETRIA_EMAIL);
+        editor.putBoolean(KEY_BIOMETRIA_ATIVA, false);
+        editor.apply();
+    }
+
+    public int getBiometriaUserId() {
+        return prefs.getInt(KEY_BIOMETRIA_USER_ID, -1);
+    }
+
+    public String getBiometriaNome() {
+        return prefs.getString(KEY_BIOMETRIA_NOME, "");
+    }
+
+    public String getBiometriaEmail() {
+        return prefs.getString(KEY_BIOMETRIA_EMAIL, "");
     }
 }

@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- ⭐ Permissão para biometria -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -19,7 +22,6 @@
         android:theme="@style/Theme.Controle_gastos"
         tools:targetApi="31">
 
-        <!-- SPLASH (TELA INICIAL) -->
         <activity
             android:name=".view.SplashActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
@@ -30,21 +32,9 @@
             </intent-filter>
         </activity>
 
-        <!-- LOGIN -->
-        <activity
-            android:name=".view.LoginActivity"
-            android:exported="true" />
-
-        <!-- CADASTRO -->
-        <activity
-            android:name=".view.CadastroActivity"
-            android:exported="false" />
-
-        <!-- DASHBOARD -->
-        <activity
-            android:name=".view.DashboardActivity"
-            android:exported="false" />
-
+        <activity android:name=".view.LoginActivity" android:exported="true" />
+        <activity android:name=".view.CadastroActivity" android:exported="false" />
+        <activity android:name=".view.DashboardActivity" android:exported="false" />
         <activity android:name=".view.DividasActivity" android:exported="false" />
         <activity android:name=".view.CadastroDividaActivity" android:exported="false" />
         <activity android:name=".view.ConfiguracoesActivity" android:exported="false" />
@@ -52,16 +42,10 @@
         <activity android:name=".view.CategoriasActivity" android:exported="false" />
         <activity android:name=".view.EditarPerfilActivity" android:exported="false" />
         <activity android:name=".view.HistoricoActivity" android:exported="false" />
-
-        <!-- ⭐ ACTIVITY DE CARTÕES E PIX -->
         <activity android:name=".view.CartoesActivity" android:exported="false" />
 
-        <!-- ⭐ Receiver de Lembretes de Fatura -->
-        <receiver
-            android:name=".receiver.LembreteReceiver"
-            android:exported="false" />
+        <receiver android:name=".receiver.LembreteReceiver" android:exported="false" />
 
-        <!-- ⭐ Receiver para reagendar alarmes após reiniciar o celular -->
         <receiver
             android:name=".receiver.BootReceiver"
             android:enabled="true"
@@ -72,7 +56,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- ⭐ FileProvider para compartilhar CSV e PDF -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

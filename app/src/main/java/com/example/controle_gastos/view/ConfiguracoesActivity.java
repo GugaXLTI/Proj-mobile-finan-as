@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.utils.AlarmeHelper;
+import com.example.controle_gastos.utils.BiometricHelper;
 import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.switchmaterial.SwitchMaterial;
@@ -25,6 +26,9 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     private SessionManager session;
     private AppDatabase db;
 
+    // ⭐ Guarda o último estado para reverter em caso de falha
+    private boolean biometriaEstadoAtual = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,7 +37,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         session = new SessionManager(this);
         db = AppDatabase.getInstance(this);
 
-        // Cria canal de notificação (para o caso de não ter sido criado na Inicio)
         NotificationHelper.criarCanal(this);
 
         itemCartoes = findViewById(R.id.itemCartoes);
@@ -58,8 +61,23 @@ public class ConfiguracoesActivity extends AppCompatActivity {
             tvAvatar.setText(String.valueOf(nome.charAt(0)).toUpperCase());
         }
 
-        // ⭐ CARREGA O ESTADO DO SWITCH DE LEMBRETES
+        // ⭐ Switch de Lembretes
         switchLembretes.setChecked(AlarmeHelper.isLembretesAtivos(this));
+
+        // ⭐ Switch de Biometria
+        biometriaEstadoAtual = session.isBiometriaAtiva();
+
+        // Verifica se o aparelho suporta biometria
+        boolean biometriaDisponivel = BiometricHelper.podeUsarBiometria(this);
+
+        if (!biometriaDisponivel) {
+            switchBiometria.setEnabled(false);
+            switchBiometria.setAlpha(0.5f);
+            switchBiometria.setChecked(false);
+            tvBiometriaAviso();
+        } else {
+            switchBiometria.setChecked(biometriaEstadoAtual);
+        }
 
         // ======== AÇÕES DOS ITENS ========
 
@@ -80,16 +98,20 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         itemBackup.setOnClickListener(v -> mostrarDialogoLimparTudo());
 
-        // ⭐ SWITCH DE LEMBRETES FUNCIONAL
+        // ⭐ Switch de Lembretes Funcional
         switchLembretes.setOnCheckedChangeListener((buttonView, isChecked) -> {
             AlarmeHelper.setLembretesAtivos(ConfiguracoesActivity.this, isChecked);
             String msg = isChecked ? "Lembretes ativados" : "Lembretes desativados";
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         });
 
+        // ⭐ Switch de Biometria Funcional
         switchBiometria.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            String msg = isChecked ? "Biometria ativada" : "Biometria desativada";
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            if (isChecked) {
+                ativarBiometria();
+            } else {
+                desativarBiometria();
+            }
         });
 
         itemDesconectar.setOnClickListener(v -> {
@@ -135,6 +157,65 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         tabConfig.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está em Configurações", Toast.LENGTH_SHORT).show());
+    }
+
+    /**
+     * ⭐ Pede autenticação biométrica e, se sucesso, salva a preferência.
+     */
+    private void ativarBiometria() {
+        BiometricHelper.autenticar(
+                this,
+                "Ativar biometria",
+                "Confirme sua identidade para ativar o login biométrico",
+                new BiometricHelper.Callback() {
+                    @Override
+                    public void onSucesso() {
+                        // Salva a preferência + dados do usuário logado
+                        session.salvarUsuarioBiometrico(
+                                session.getUserId(),
+                                session.getNome(),
+                                session.getEmail()
+                        );
+
+                        biometriaEstadoAtual = true;
+
+                        Toast.makeText(ConfiguracoesActivity.this,
+                                "Biometria ativada com sucesso!",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFalha(String motivo) {
+                        // Reverte o switch sem disparar o listener de novo
+                        switchBiometria.setOnCheckedChangeListener(null);
+                        switchBiometria.setChecked(false);
+                        switchBiometria.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                            if (isChecked) ativarBiometria();
+                            else desativarBiometria();
+                        });
+
+                        Toast.makeText(ConfiguracoesActivity.this,
+                                "Não foi possível ativar a biometria.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+    }
+
+    /**
+     * ⭐ Desativa a biometria.
+     */
+    private void desativarBiometria() {
+        session.limparBiometria();
+        biometriaEstadoAtual = false;
+
+        Toast.makeText(this, "Biometria desativada.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void tvBiometriaAviso() {
+        Toast.makeText(this,
+                "Biometria não disponível neste dispositivo. Cadastre uma digital nas configurações do Android.",
+                Toast.LENGTH_LONG).show();
     }
 
     private void mostrarDialogoLimparTudo() {

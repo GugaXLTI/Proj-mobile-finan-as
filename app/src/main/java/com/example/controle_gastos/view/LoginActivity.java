@@ -15,12 +15,15 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.dao.UsuarioDao;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Usuario;
+import com.example.controle_gastos.utils.BiometricHelper;
 import com.example.controle_gastos.utils.SessionManager;
+import com.google.android.material.button.MaterialButton;
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText editEmail, editSenha;
     private Button btnEntrar, btnGoogle;
+    private MaterialButton btnBiometria;
     private TextView tvEsqueceuSenha, tvRodape;
 
     private AppDatabase db;
@@ -35,16 +38,16 @@ public class LoginActivity extends AppCompatActivity {
             getSupportActionBar().hide();
         }
 
-        // Inicializa o banco e a sessão
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
 
         editEmail = findViewById(R.id.editEmail);
         editSenha = findViewById(R.id.editSenha);
         btnEntrar = findViewById(R.id.btnEntrar);
+        btnGoogle = findViewById(R.id.btnGoogle);
+        btnBiometria = findViewById(R.id.btnBiometria);
         tvEsqueceuSenha = findViewById(R.id.tvEsqueceuSenha);
         tvRodape = findViewById(R.id.tvRodape);
-        btnGoogle = findViewById(R.id.btnGoogle);
 
         destacarTextoCadastro();
 
@@ -62,6 +65,34 @@ public class LoginActivity extends AppCompatActivity {
         btnGoogle.setOnClickListener(v ->
                 Toast.makeText(LoginActivity.this, "Login com Google em breve!", Toast.LENGTH_SHORT).show()
         );
+
+        // ⭐ Biometria
+        btnBiometria.setOnClickListener(v -> realizarLoginBiometrico());
+
+        verificarBiometria();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Verifica de novo, caso o usuário tenha ativado/desativado a biometria nas Configurações
+        verificarBiometria();
+    }
+
+    /**
+     * Mostra o botão de biometria se:
+     * 1. O usuário ativou a biometria nas Configurações
+     * 2. O dispositivo tem hardware + digital cadastrada
+     */
+    private void verificarBiometria() {
+        boolean ativo = session.isBiometriaAtiva();
+        boolean disponivel = BiometricHelper.podeUsarBiometria(this);
+
+        if (ativo && disponivel) {
+            btnBiometria.setVisibility(android.view.View.VISIBLE);
+        } else {
+            btnBiometria.setVisibility(android.view.View.GONE);
+        }
     }
 
     private void realizarLogin() {
@@ -77,17 +108,67 @@ public class LoginActivity extends AppCompatActivity {
         Usuario usuario = usuarioDao.login(email, senha);
 
         if (usuario != null) {
-            // Salva a sessão
-            session.salvarSessao(usuario.getId(), usuario.getNome());
+            session.salvarSessao(usuario.getId(), usuario.getNome(), usuario.getEmail());
+
+            // ⭐ Se a biometria está ativa, atualiza os dados dela (garante que o usuário salvo é o correto)
+            if (session.isBiometriaAtiva()) {
+                session.salvarUsuarioBiometrico(usuario.getId(), usuario.getNome(), usuario.getEmail());
+            }
 
             Toast.makeText(this, "Bem-vindo, " + usuario.getNome() + "!", Toast.LENGTH_SHORT).show();
-
-            Intent intent = new Intent(LoginActivity.this, InicioActivity.class);
-            startActivity(intent);
-            finish();
+            redirecionarParaInicio();
         } else {
             Toast.makeText(this, "E-mail ou senha inválidos!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    /**
+     * ⭐ Login com biometria.
+     */
+    private void realizarLoginBiometrico() {
+        BiometricHelper.autenticar(
+                this,
+                "Login com biometria",
+                "Use sua digital para entrar no ORG",
+                new BiometricHelper.Callback() {
+                    @Override
+                    public void onSucesso() {
+                        // Recupera os dados salvos
+                        int userId = session.getBiometriaUserId();
+                        String nome = session.getBiometriaNome();
+                        String email = session.getBiometriaEmail();
+
+                        if (userId == -1) {
+                            Toast.makeText(LoginActivity.this,
+                                    "Nenhum usuário salvo para biometria.",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        // Restaura a sessão
+                        session.salvarSessao(userId, nome, email);
+
+                        Toast.makeText(LoginActivity.this,
+                                "Bem-vindo de volta, " + nome + "!",
+                                Toast.LENGTH_SHORT).show();
+
+                        redirecionarParaInicio();
+                    }
+
+                    @Override
+                    public void onFalha(String motivo) {
+                        Toast.makeText(LoginActivity.this,
+                                "Biometria não reconhecida. Tente novamente.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+    }
+
+    private void redirecionarParaInicio() {
+        Intent intent = new Intent(LoginActivity.this, InicioActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private void destacarTextoCadastro() {

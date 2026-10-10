@@ -22,7 +22,7 @@ import com.example.controle_gastos.model.ChavePix;
                 Usuario.class, Divida.class, Transacao.class, Categoria.class,
                 Cartao.class, ChavePix.class
         },
-        version = 9, // ⭐ MUDOU DE 8 PARA 9 (campo grupoId em Divida)
+        version = 9, // ⭐ Adicionado grupoId em Divida
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -43,6 +43,15 @@ public abstract class AppDatabase extends RoomDatabase {
                             AppDatabase.class,
                             "controle_gastos_db"
                     )
+                    // ⭐ Migrations reais (não destrutivas)
+                    // Todas as migrations conhecidas são registradas aqui.
+                    .addMigrations(
+                            Migrations.MIGRATION_8_9
+                    )
+                    // ⚠️ Rede de segurança: se não houver migration para
+                    // a versão do usuário, apaga e recria (v1-v7 por ex).
+                    // Isso só afeta usuários muito antigos que já perderam
+                    // dados em versões anteriores.
                     .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()
                     .build();

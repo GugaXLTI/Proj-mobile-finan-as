@@ -36,7 +36,7 @@ As tabelas `Divida` e `Transacao` do banco Room **não possuíam um campo `usuar
 
 ### Por que isso aconteceu
 
-Foi uma **decisão de MVP** para simplificar o desenvolvimento inicial. As dívidas foram criadas como entidades globais, sem pensar na segregação por usuário. Isso é comum em protótipos, mas precisava ser corrigido antes de uma versão de produção.
+Foi uma **decisão de MVP** para simplificar o desenvolvimento inicial.
 
 ---
 
@@ -56,16 +56,7 @@ public class Divida {
 }
 ```
 
-O mesmo foi feito nas entidades `Transacao`, `Categoria`, `Cartao` e `ChavePix`.
-
-### 2. DAOs atualizados para filtrar por usuário
-
-```java
-@Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId")
-List<Divida> listarPorUsuario(int usuarioId);
-```
-
-### 3. AppDatabase atualizado para versão 9
+### 2. AppDatabase atualizado para versão 9
 
 Evolução das versões:
 - **v1** → App funcional com Room básico
@@ -100,24 +91,11 @@ Ao cadastrar uma dívida parcelada (ex: R$ 2.000 em 10x), o card exibia o **valo
 ### Data de implementação
 27/09/2026
 
-### Descrição
-
-Sistema de **notificações locais** que avisa o usuário **3 dias antes** do vencimento de cada dívida, às 9h da manhã.
-
 ### Componentes
 
 1. **`NotificationHelper`** — canal + envio de notificações
 2. **`LembreteReceiver`** — BroadcastReceiver do alarme
 3. **`AlarmeHelper`** — agendamento/cancelamento com `AlarmManager`
-
-### Fluxo
-
-| Ação | Comportamento |
-|------|---------------|
-| Usuário cadastra dívida | Alarme agendado para 3 dias antes |
-| Usuário paga dívida | Alarme cancelado |
-| Usuário exclui dívida | Alarme cancelado |
-| Usuário edita dívida | Alarme antigo cancelado + novo agendado |
 
 ### Limitações
 
@@ -130,10 +108,6 @@ Sistema de **notificações locais** que avisa o usuário **3 dias antes** do ve
 
 ### Data de implementação
 29/09/2026
-
-### Descrição
-
-Reagenda automaticamente os alarmes após reinicialização do celular ou atualização do app.
 
 ### Como funciona
 
@@ -150,37 +124,14 @@ Reagenda automaticamente os alarmes após reinicialização do celular ou atuali
 ### Data da implementação
 28/09/2026
 
-### Descrição
-
-Tela de **Cartões & Chaves Pix** com navegação por abas e CRUD completo.
-
-### Arquitetura
-
-A tela usa **TabLayout + ViewPager2**:
+### Arquitetura da tela
 
 ```
 ┌────────────────────────────────────────┐
 │   CartoesActivity (TabLayout + VP2)   │
 ├────────────────┬───────────────────────┤
 │ CartoesFragment│ ChavesPixFragment     │
-├────────────────┼───────────────────────┤
-│ Cadastro +     │ Cadastro +            │
-│ Lista de       │ Lista de              │
-│ Cartões        │ Chaves Pix            │
 └────────────────┴───────────────────────┘
-```
-
-### Fluxo de integração com Dívida
-
-```
-CadastroDividaActivity
-  ↓ Spinner "Tipo de Dívida"
-  ├─ Crédito → CartaoDao (filtro "Crédito")
-  ├─ Débito → CartaoDao (filtro "Débito")
-  ├─ Pix → ChavePixDao
-  └─ Outros → genérico
-  ↓ ChipSelecaoAdapter
-  ↓ Lista horizontal de chips
 ```
 
 ---
@@ -192,36 +143,9 @@ CadastroDividaActivity
 
 ### Descrição
 
-Sistema de **soft delete** (exclusão lógica). Em vez de apagar o registro, o app **marca como excluída**. Isso permite que a dívida continue aparecendo no Histórico.
+Sistema de **soft delete** (exclusão lógica). Em vez de apagar o registro, o app **marca como excluída**.
 
-### Como funciona
-
-```
-Antes (exclusão física):
-┌──────────────────┐
-│ Dívida "Almoço"  │ → db.deletar() → 🗑️ Desaparece
-└──────────────────┘
-
-Depois (soft delete):
-┌──────────────────┐
-│ Dívida "Almoço"  │ → d.excluida = true → 💾 Fica no banco
-└──────────────────┘                    mas invisível nas telas
-                                        principais
-```
-
-### Componentes
-
-#### 1. `model/Divida.java`
-- Novo campo: `public boolean excluida;`
-
-#### 2. `dao/DividaDao.java`
-- Todas as queries existentes filtram `excluida = 0`
-- Novas queries:
-  - `listarExcluidasPorUsuario(userId)`
-  - `listarTodasParaHistorico(userId)`
-  - `listarPorCategoria(userId, categoria)`
-
-#### 3. Telas afetadas
+### Telas afetadas
 
 | Tela | Comportamento |
 |------|---------------|
@@ -230,23 +154,12 @@ Depois (soft delete):
 | **Dashboard** | Ignora excluídas |
 | **Histórico** | **Mostra** excluídas com ✗ |
 
-#### 4. Exclusão
-
-```java
-divida.setExcluida(true);
-db.dividaDao().atualizar(divida);
-```
-
 ---
 
 ## 📜 Tela de Histórico
 
 ### Data de implementação
 06/10/2026
-
-### Descrição
-
-Tela que mostra o **histórico de dívidas mês a mês**, com navegação, filtros e exportação.
 
 ### Arquitetura
 
@@ -262,18 +175,6 @@ Tela que mostra o **histórico de dívidas mês a mês**, com navegação, filtr
 └──────────────────────────────────────────┘
 ```
 
-### 4 Estados de cada Dívida
-
-| Estado | Condição | Cor | Ícone |
-|--------|----------|-----|-------|
-| ✅ Liquidado | `pago = true` | Verde | ✓ |
-| ⏳ Pendente | `valorPago = 0` e `pago = false` | Amarelo | → |
-| ✗ Excluída | `excluida = true` | Vermelho | ✗ |
-
-### Integração com a tela Início
-
-O card **"Total de Dívidas Acumuladas"** é clicável e abre o Histórico.
-
 ---
 
 ## 💳 Parcelamento por Mês (grupoId)
@@ -283,17 +184,11 @@ O card **"Total de Dívidas Acumuladas"** é clicável e abre o Histórico.
 
 ### Descrição
 
-Foi refatorada a lógica de **parcelamento de dívidas**. Antes, uma compra de R$ 3.000 em 4x gerava **um único registro** com `vencimento` fixo. Isso impedia o app de mostrar as parcelas nos meses seguintes (Novembro, Dezembro, Janeiro).
-
-Agora, cada parcela é um **registro independente** com seu próprio vencimento.
-
-### Comparação
+Cada parcela é um **registro independente** com seu próprio vencimento.
 
 **Antes (1 registro):**
 ```
 Videogame R$ 3.000 em 4x → 1 registro com vencimento 15/10/2026
-→ Só aparece em Outubro
-→ Dashboard, Histórico e Início só veem 1 mês
 ```
 
 **Depois (4 registros):**
@@ -305,40 +200,6 @@ Videogame R$ 3.000 em 4x → 4 registros agrupados por grupoId:
   └─ Parcela 4/4 → venc 15/01/2027 → R$ 750
 ```
 
-### Componentes
-
-#### 1. `model/Divida.java`
-- Novo campo: `public int grupoId;`
-
-#### 2. `dao/DividaDao.java`
-- `maxGrupoId()` — retorna o maior `grupoId`
-- `listarPorGrupo(userId, grupoId)` — lista parcelas de um grupo
-
-#### 3. `CadastroDividaActivity.salvarDivida()`
-Ao cadastrar dívida parcelada:
-1. Calcula `valorParcela = valorTotal / numParcelas`
-2. Obtém `grupoId = maxGrupoId() + 1`
-3. Loop de `0` a `numParcelas - 1`:
-   - Cria registro com `parcela = "X/Y"`
-   - `valorTotal = valorParcela`
-   - `vencimento = vencimentoBase + i meses`
-   - Agenda alarme individual
-
-#### 4. Adapters
-- `DividaAdapter`, `VencimentoAdapter`, `HistoricoAdapter`
-- Todos usam `extrairTotalParcelas()` que entende "X/Y"
-- **Não dividem mais** `valorTotal` por número de parcelas
-
-### Impacto nas telas
-
-| Tela | Comportamento |
-|------|---------------|
-| **Cadastro** | Gera N registros para crédito parcelado |
-| **Início** | Mostra próximos vencimentos (parcela a parcela) |
-| **Dívidas** | Lista todas as parcelas do usuário |
-| **Dashboard** | Filtra por mês — cada parcela aparece no mês certo |
-| **Histórico** | Mostra a parcela no mês correspondente |
-
 ---
 
 ## 📊 Dashboard Somente Leitura
@@ -348,32 +209,7 @@ Ao cadastrar dívida parcelada:
 
 ### Descrição
 
-O Dashboard foi refatorado para ser uma tela **puramente informativa**. Antes, ele tinha botões de **Excluir**, **Editar** e **Pagar**, o que causava confusão com a tela de Dívidas.
-
-### Mudança de comportamento
-
-**Antes:**
-- Cards com 3 botões (Excluir, Editar, Pagar)
-- Usuário podia gerenciar dívidas no Dashboard
-- Confuso: dois lugares para fazer a mesma coisa
-
-**Depois:**
-- Cards **sem botões** — apenas exibem dados
-- Ações ficam exclusivamente na tela **Dívidas**
-- Dashboard foca em **análise/relatórios**
-
-### Componentes criados
-
-- `layout/item_divida_dashboard.xml` — card sem botões
-- `adapter/DividaDashboardAdapter.java` — adapter somente leitura
-- `DashboardActivity` não implementa mais `OnDividaActionListener`
-
-### Navegação por mês
-
-Foi adicionada uma barra de navegação (← Mês →) no Dashboard:
-- Botões ← e → para mudar o mês visualizado
-- Badge "Atual" quando o mês selecionado é o corrente
-- Título da lista reflete o mês visualizado
+Dashboard focado em **análise/relatórios** (sem botões de ação).
 
 ### Diferença: Dashboard vs Dívidas
 
@@ -382,33 +218,232 @@ Foi adicionada uma barra de navegação (← Mês →) no Dashboard:
 | Objetivo | Análise/relatórios | Gerenciamento |
 | Filtro | Por mês (navegável) | Todas (sem filtro) |
 | Botões | ❌ Nenhum | ✅ Excluir, Editar, Pagar |
-| Gráfico | ✅ Rosca por categoria | ❌ Não tem |
 
 ---
 
-## 📤 Exportação de Dados
+## 📤 Exportação de Dados (CSV e PDF)
 
 ### Data de implementação
 06/10/2026
 
 ### Descrição
 
-Exportação do extrato mensal em **CSV** e **PDF**.
+- **CSV** — abre no Excel/Sheets com BOM UTF-8
+- **PDF** — layout escuro fiel ao Figma com iTextG
 
-### CSV (`CsvExportHelper.java`)
-- Arquivo `.csv` com separador `;`
-- BOM UTF-8 para Excel reconhecer acentos
-- Colunas: Título, Categoria, Banco, Parcela, Vencimento, Valor Total, Valor Pago, Falta, Status
+---
 
-### PDF (`PdfExportHelper.java`)
-- Biblioteca **iTextG 5.5.10**
-- Layout escuro fiel ao Figma
-- Cabeçalho "ORG" + Gestão Financeira
-- Card de resumo + lista de lançamentos
+## 🔐 Autenticação Biométrica
 
-### FileProvider
+### Data de implementação
+08/10/2026
 
-Configuração para compartilhar arquivos via Intent.
+### Descrição
+
+Autenticação via **BiometricPrompt** (Android 9+). O usuário pode ativar nas Configurações e usar o botão **"👤 Usar biometria"** no Login.
+
+### Arquitetura
+
+```
+Configurações → Switch Biometria
+    ↓ (ativa)
+SessionManager.salvarUsuarioBiometrico(userId, nome, email)
+    ↓
+Login → Botão "Usar biometria"
+    ↓
+BiometricHelper.autenticar()
+    ↓
+Se sucesso → SessionManager.salvarSessao() → Início
+```
+
+### Componentes
+
+#### 1. `utils/BiometricHelper.java`
+- `podeUsarBiometria(context)` — verifica hardware + digital cadastrada
+- `autenticar(activity, titulo, subtitulo, callback)` — dispara o prompt
+- Callback com `onSucesso()` e `onFalha(motivo)`
+
+#### 2. `utils/SessionManager.java`
+- Chaves de biometria **sobrevivem ao logout**
+- `isBiometriaAtiva()`, `setBiometriaAtiva()`
+- `salvarUsuarioBiometrico()`, `limparBiometria()`
+- `getBiometriaUserId()`, `getBiometriaNome()`, `getBiometriaEmail()`
+
+#### 3. `view/LoginActivity.java`
+- Botão `btnBiometria` (só aparece se ativo + disponível)
+- Método `realizarLoginBiometrico()` — autentica e restaura sessão
+
+#### 4. `view/ConfiguracoesActivity.java`
+- Switch de biometria funcional
+- Ao **ativar:** pede autenticação para confirmar
+- Ao **desativar:** limpa os dados biométricos
+- Se o aparelho não tem hardware → switch desabilitado
+
+### Versões Suportadas
+
+- **Android 9+ (API 28+)** → `BiometricPrompt` (recomendado)
+- Requer permissão `USE_BIOMETRIC` no Manifest
+
+---
+
+## 📈 Gráfico de Linha — Evolução Mensal
+
+### Data de implementação
+10/10/2026
+
+### Descrição
+
+Novo gráfico de linha no Dashboard mostrando a **evolução dos gastos** nos últimos N meses.
+
+### Componentes
+
+#### 1. `layout/activity_dashboard.xml`
+- Novo `CardView` com `LineChart`
+- Cabeçalho "📈 EVOLUÇÃO MENSAL"
+- Texto "Total: R$ X,XX em N meses"
+- `HorizontalScrollView` com chips de período (3M / 6M / 12M)
+
+#### 2. `view/DashboardActivity.java`
+- Constante `PERIODOS_DISPONIVEIS = {3, 6, 12}`
+- Variável `mesesVisiveis` (default 6)
+- Método `configurarGraficoLinha()` — configura aparência escura
+- Método `criarChipsPeriodo()` — monta os 3 chips
+- Método `atualizarGraficoLinha()` — calcula totais dos N meses
+
+### Lógica de Cálculo
+
+Para cada mês dos N selecionados:
+1. Percorre todas as dívidas do usuário
+2. Filtra apenas as do mês atual (pelo `vencimento`)
+3. Soma `valorTotal`
+4. Adiciona ponto no gráfico
+
+### Considerações
+
+- Considera apenas dívidas **não excluídas** (pagas + não pagas)
+- Base: mês selecionado na navegação do Dashboard
+- Chips: 3M / 6M / 12M (configurável em `PERIODOS_DISPONIVEIS`)
+
+---
+
+## 📅 Filtro de Período Customizado no Histórico
+
+### Data de implementação
+10/10/2026
+
+### Descrição
+
+Navegação por mês **continua funcionando**, mas o usuário pode aplicar um **filtro customizado** de período.
+
+### Componentes
+
+#### 1. `layout/activity_historico.xml`
+- Botão **📅** ao lado das setas ← →
+- Botão **✕** vermelho (aparece apenas quando filtro ativo)
+
+#### 2. `view/HistoricoActivity.java`
+- Variáveis `dataInicialFiltro`, `dataFinalFiltro`, `filtroAtivo`
+- Método `abrirDialogoPeriodo()` — 2 DatePickers em sequência
+- Método `aplicarFiltroPeriodo()` — ativa filtro
+- Método `limparFiltroPeriodo()` — volta ao modo mês
+- Método `estaEntreDatas()` — verifica se vencimento está no intervalo
+- Método `compararDatas()` — valida data final ≥ inicial
+
+### Comportamento
+
+| Ação | Comportamento |
+|------|---------------|
+| Toque em 📅 | Abre DatePicker inicial → depois final |
+| Escolhe datas | Filtro aplicado, lista filtrada |
+| Título | Vira "01/09/2026 a 30/09/2026" |
+| Badge "Atual" | Desaparece |
+| Botão ✕ | Aparece |
+| Toque em ← ou → | Limpa filtro automaticamente |
+| Toque em ✕ | Volta ao modo mês |
+
+### Exportação
+
+- CSV/PDF usa o período no nome do arquivo quando filtro ativo
+
+---
+
+## 💾 Backup Local (Exportar/Restaurar em JSON)
+
+### Data de implementação
+10/10/2026
+
+### Descrição
+
+O usuário pode **exportar todos os seus dados** para um arquivo JSON e **restaurá-los** depois.
+
+### Cenários de Uso
+
+1. **Trocar de celular** — exporta no antigo, importa no novo
+2. **Reinstalar o app** — restaura o backup mais recente
+3. **Recuperação de erro** — volta ao estado anterior
+4. **Análise externa** — compartilha com outros
+
+### Componentes
+
+#### 1. `model/BackupData.java`
+- POJO com: `versao`, `dataBackup`, `nomeUsuario`, `totalItens`
+- Listas: `dividas`, `cartoes`, `chavesPix`, `categorias`
+- Método `contarItens()`
+
+#### 2. `utils/BackupHelper.java`
+- `exportar(context, userId)` — gera arquivo JSON
+- `compartilharBackup(context, arquivo)` — abre Intent de compartilhamento
+- `lerArquivo(context, uri)` — lê e valida o JSON
+- `aplicarBackup(context, userId, data)` — substitui dados
+
+#### 3. DAOs atualizados
+- `deletarTodosDoUsuario()` adicionado nos 4 DAOs
+- Usado ao restaurar backup (apaga atual antes de inserir)
+
+#### 4. `view/ConfiguracoesActivity.java`
+- `ActivityResultLauncher` para selecionar arquivo
+- `mostrarDialogoBackup()` — 3 opções: Exportar / Restaurar / Limpar Tudo
+- `processarImportacao(uri)` — valida e mostra resumo
+- `aplicarBackup(data)` — aplica e redireciona para Início
+
+### Estrutura do JSON
+
+```json
+{
+  "versao": 1,
+  "dataBackup": "10/10/2026 22:30",
+  "nomeUsuario": "Gustavo",
+  "totalItens": 15,
+  "dividas": [ ... ],
+  "cartoes": [ ... ],
+  "chavesPix": [ ... ],
+  "categorias": [ ... ]
+}
+```
+
+### Segurança
+
+- ✅ Valida o campo `versao` antes de importar
+- ✅ Mostra resumo (X dívidas, Y cartões...) antes de confirmar
+- ✅ Confirmação obrigatória antes de substituir dados
+- ✅ Se arquivo inválido → Toast de erro, não toca no banco
+- ✅ Reagenda alarmes das dívidas não pagas após importar
+
+### Fluxo UX
+
+**Exportar:**
+1. Configurações → "Backup dos Dados"
+2. Toca em **"📤 Exportar Backup (JSON)"**
+3. Arquivo `backup_org_YYYY-MM-DD_HH-mm.json` é gerado
+4. Menu de compartilhamento abre
+
+**Restaurar:**
+1. Configurações → "Backup dos Dados"
+2. Toca em **"📥 Restaurar Backup"**
+3. Seletor de arquivo abre
+4. Escolhe o JSON
+5. Diálogo mostra resumo + confirmação
+6. Confirma → dados substituídos → redireciona para Início
 
 ---
 
@@ -422,12 +457,55 @@ Configuração para compartilhar arquivos via Intent.
 
 ---
 
+## 🧪 Como testar a Biometria
+
+1. Ative em **Configurações → Segurança & Biometria**
+2. Faça logout
+3. Na tela de Login, toque em **"👤 Usar biometria"**
+4. Coloque a digital
+5. ✅ Login direto para Início
+
+---
+
+## 🧪 Como testar o Gráfico de Linha
+
+1. Abra o Dashboard (aba Relatórios)
+2. ✅ Aparece o gráfico com 3 chips: `3M` `6M` `12M`
+3. Toque em cada chip → ✅ gráfico se adapta
+4. ✅ Total no topo muda conforme o período
+
+---
+
+## 🧪 Como testar o Filtro de Período
+
+1. Abra o Histórico
+2. Toque em **📅**
+3. Escolha data inicial e final
+4. ✅ Lista filtra pelo período
+5. ✅ Título muda para o intervalo
+6. Toque em **✕** → ✅ volta ao modo mês
+
+---
+
+## 🧪 Como testar o Backup
+
+1. Configurações → Backup dos Dados → **📤 Exportar**
+2. Compartilhe o arquivo via Drive
+3. **Limpar Tudo** (para zerar)
+4. Configurações → Backup → **📥 Restaurar**
+5. Escolha o arquivo
+6. ✅ Resumo aparece → confirme
+7. ✅ Dados voltam ao Início
+
+---
+
 ## 🚧 Próximos passos
 
-- [ ] Testes da Sprint 6 pelo Israel
+- [ ] Testes da Sprint 6 pelo Israel (CT-14 a CT-21)
+- [ ] Testar notificações (CT-10 e CT-11)
 - [ ] Aplicar Migration real (não destrutiva)
 - [ ] Autenticação em nuvem (Firebase) — opcional
-- [ ] Biometria real
+- [ ] Sincronização entre dispositivos — opcional
 
 ---
 
@@ -439,3 +517,7 @@ Configuração para compartilhar arquivos via Intent.
 - Exportação CSV/PDF: 06/10/2026
 - Parcelamento por Mês: 07/10/2026
 - Dashboard Somente Leitura: 07/10/2026
+- **Biometria Real: 08/10/2026**
+- **Gráfico de Linha: 10/10/2026**
+- **Filtro de Período: 10/10/2026**
+- **Backup Local: 10/10/2026**

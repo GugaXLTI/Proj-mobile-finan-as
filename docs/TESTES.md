@@ -23,13 +23,15 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 - Edição de perfil
 - Relatórios (Dashboard)
 - Configurações gerais
-- **Tela de Histórico por Mês (navegação, filtros, estados)**
-- **Soft Delete de dívidas**
-- **Exportação CSV do extrato mensal**
-- **Exportação PDF do extrato mensal**
+- Tela de Histórico por Mês
+- Soft Delete de dívidas
+- Exportação CSV do extrato mensal
+- Exportação PDF do extrato mensal
+- Parcelamento por Mês (N registros por compra parcelada)
+- Dashboard somente leitura
 
-### ❌ O que NÃO está incluído (fora do escopo desta Sprint):
-- Autenticação em nuvem (Firebase) — planejada para Sprint 7
+### ❌ O que NÃO está incluído:
+- Autenticação em nuvem (Firebase)
 - Sincronização entre dispositivos
 - Biometria real
 
@@ -39,23 +41,23 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 
 | Item | Descrição |
 |------|-----------|
-| **Dispositivo** | Celular Android físico (preferencial) ou emulador |
-| **Versão do Android** | API 24+ (Android 7.0 ou superior) |
-| **Conexão** | Wi-Fi ou dados móveis (o app funciona offline) |
-| **Build** | Última versão gerada a partir do branch `master` |
-| **Pré-requisitos** | App instalado, notificações permitidas, banco limpo (usuário novo) |
+| **Dispositivo** | Celular Android físico |
+| **Versão do Android** | API 24+ |
+| **Conexão** | Wi-Fi ou dados móveis |
+| **Build** | Última versão do branch `master` |
+| **Pré-requisitos** | App instalado, notificações permitidas |
 
 ---
 
-## 4. Tipos de Testes Realizados
+## 4. Tipos de Testes
 
 | Tipo | Descrição |
 |------|-----------|
-| **Teste Funcional** | Verifica se cada funcionalidade faz o que deveria fazer |
-| **Teste de Integração** | Verifica se as telas conversam entre si (ex: Cartões ↔ Dívidas) |
-| **Teste de Regressão** | Verifica se uma funcionalidade antiga continua funcionando após mudanças |
-| **Teste de Usabilidade** | Verifica se o app é fácil e intuitivo de usar |
-| **Teste de Borda (Edge Cases)** | Verifica o comportamento em situações extremas (campos vazios, valores altos, etc.) |
+| **Funcional** | Verifica cada funcionalidade |
+| **Integração** | Verifica comunicação entre telas |
+| **Regressão** | Verifica funcionalidades antigas |
+| **Usabilidade** | Verifica facilidade de uso |
+| **Borda** | Situações extremas |
 
 ---
 
@@ -67,183 +69,205 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-01.1 | Splash aparece ao abrir o app | Logo aparece por 2s e vai para o Login | ✅ [x] |
-| CT-01.2 | Sessão persistente | Vai direto para a tela Início | ✅ [x] |
-| CT-01.3 | Logout limpa a sessão | Volta para o Login | ✅ [x] |
+| CT-01.1 | Splash aparece ao abrir | Logo aparece por 2s | ✅ [x] |
+| CT-01.2 | Sessão persistente | Vai direto para Início | ✅ [x] |
+| CT-01.3 | Logout limpa sessão | Volta para Login | ✅ [x] |
 
 ### 👤 CT-02: Cadastro e Login
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-02.1 | Cadastro válido | Cadastro realizado, redireciona para Início | ✅ [x] |
-| CT-02.2 | Cadastro com e-mail duplicado | Erro: "E-mail já cadastrado" | ✅ [x] |
-| CT-02.3 | Cadastro com senhas diferentes | Erro: "Senhas não coincidem" | ✅ [x] |
-| CT-02.4 | Cadastro com nome inválido | Erro: "Nome inválido" | ✅ [x] |
-| CT-02.5 | Cadastro com e-mail inválido | Erro: "E-mail inválido" | ✅ [x] |
-| CT-02.6 | Login correto | Redireciona para Início | ✅ [x] |
-| CT-02.7 | Login incorreto | Erro: "Credenciais inválidas" | ✅ [x] |
-| CT-02.8 | Campos vazios no login | Erro de campo obrigatório | ✅ [x] |
+| CT-02.1 | Cadastro válido | Cadastro realizado | ✅ [x] |
+| CT-02.2 | E-mail duplicado | Erro | ✅ [x] |
+| CT-02.3 | Senhas diferentes | Erro | ✅ [x] |
+| CT-02.4 | Nome inválido | Erro | ✅ [x] |
+| CT-02.5 | E-mail inválido | Erro | ✅ [x] |
+| CT-02.6 | Login correto | Redireciona | ✅ [x] |
+| CT-02.7 | Login incorreto | Erro | ✅ [x] |
+| CT-02.8 | Campos vazios | Erro | ✅ [x] |
 
 ### 🏠 CT-03: Tela Início
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-03.1 | Exibe nome do usuário | Nome aparece no topo da tela | ✅ [x] |
-| CT-03.2 | Totais corretos | Total pago + a pagar = geral | ✅ [x] |
-| CT-03.3 | Próximos vencimentos | Aparece com valor da parcela e progresso | ✅ [x] |
-| CT-03.4 | Avatar dinâmico | Avatar mostra a 1ª letra do nome | ✅ [x] |
-| CT-03.5 | Card total clicável | Card "Total de Dívidas" abre o Histórico | ⏳ [ ] |
+| CT-03.1 | Exibe nome | Nome no topo | ✅ [x] |
+| CT-03.2 | Totais corretos | Pago + a pagar = geral | ✅ [x] |
+| CT-03.3 | Próximos vencimentos | Valor da parcela + progresso | ✅ [x] |
+| CT-03.4 | Avatar dinâmico | 1ª letra do nome | ✅ [x] |
+| CT-03.5 | Card total clicável | Abre o Histórico | ⏳ [ ] |
 
 ### 💰 CT-04: Cadastro de Dívida
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-04.1 | Cadastro com Cartão de Crédito | Dívida salva com sucesso | ✅ [x] |
-| CT-04.2 | Filtro de Crédito | Mostra apenas o de crédito | ✅ [x] |
-| CT-04.3 | Filtro de Débito | Esconde Parcelas/Vencimento e mostra débito | ✅ [x] |
-| CT-04.4 | Filtro de Pix | Esconde Parcelas/Vencimento e mostra chaves Pix | ✅ [x] |
-| CT-04.5 | Empty State | Aparece mensagem + botão "Cadastrar agora" | ✅ [x] |
-| CT-04.6 | Cálculo de parcela | Card mostra "Parcela 10x de R$ 200,00" | ✅ [x] |
-| CT-04.7 | Máscara de valor | Formata para "R$ 123,45" (com vírgula) | ✅ [x] |
-| CT-04.8 | Validação de campos vazios | Toast de erro | ✅ [x] |
+| CT-04.1 | Cartão de Crédito | Dívida salva | ✅ [x] |
+| CT-04.2 | Filtro Crédito | Só crédito | ✅ [x] |
+| CT-04.3 | Filtro Débito | Esconde Parcelas/Vencimento | ✅ [x] |
+| CT-04.4 | Filtro Pix | Esconde Parcelas/Vencimento | ✅ [x] |
+| CT-04.5 | Empty State | Botão "Cadastrar agora" | ✅ [x] |
+| CT-04.6 | Cálculo de parcela | Card mostra valor da parcela | ✅ [x] |
+| CT-04.7 | Máscara de valor | R$ 123,45 com vírgula | ✅ [x] |
+| CT-04.8 | Campos vazios | Toast de erro | ✅ [x] |
 
 ### 📋 CT-05: Tela de Dívidas
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-05.1 | Exibe valor da parcela | Card mostra "Parcela 10x de R$ 200,00" | ✅ [x] |
-| CT-05.2 | Total correto | Soma dos valores bate com o total | ✅ [x] |
-| CT-05.3 | Editar dívida | Abre tela de cadastro preenchida | ✅ [x] |
-| CT-05.4 | Pagar parcela | Paga UMA parcela e mostra "Pagar (1/2)" | ✅ [x] |
-| CT-05.5 | Excluir dívida | Diálogo de confirmação → dívida some | ✅ [x] |
+| CT-05.1 | Exibe valor da parcela | Card mostra valor | ✅ [x] |
+| CT-05.2 | Total correto | Soma bate | ✅ [x] |
+| CT-05.3 | Editar dívida | Abre cadastro preenchido | ✅ [x] |
+| CT-05.4 | Pagar parcela | Paga o registro inteiro | ✅ [x] |
+| CT-05.5 | Excluir dívida | Diálogo → some | ✅ [x] |
 | CT-05.6 | Cancelar exclusão | Dívida permanece | ✅ [x] |
 
 ### 💳 CT-06: Cartões & Chaves Pix
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-06.1 | Abas funcionam | Alterna entre as abas sem travar | ✅ [x] |
-| CT-06.2 | Cadastrar cartão de Crédito | Aparece como "Nubank • Crédito" | ✅ [x] |
-| CT-06.3 | Cadastrar cartão de Débito | Aparece como "Itaú • Débito" | ✅ [x] |
-| CT-06.4 | Cadastrar chave Pix | Aparece na lista com fundo verde | ✅ [x] |
-| CT-06.5 | Editar cartão | Campos preenchidos, botão vira "Atualizar" | ✅ [x] |
-| CT-06.6 | Cancelar edição | Campos limpam, botão volta ao normal | ✅ [x] |
-| CT-06.7 | Atualizar cartão | Dados atualizados na lista | ✅ [x] |
-| CT-06.8 | Excluir cartão | Cartão some da lista | ✅ [x] |
-| CT-06.9 | Excluir chave Pix | Chave some da lista | ✅ [x] |
-| CT-06.10 | Copiar chave Pix | Toast "Chave copiada!" e chave na área de transferência | ✅ [x] |
+| CT-06.1 | Abas funcionam | Alterna sem travar | ✅ [x] |
+| CT-06.2 | Cadastrar Crédito | "Nubank • Crédito" | ✅ [x] |
+| CT-06.3 | Cadastrar Débito | "Itaú • Débito" | ✅ [x] |
+| CT-06.4 | Cadastrar Pix | Fundo verde | ✅ [x] |
+| CT-06.5 | Editar cartão | Botão vira "Atualizar" | ✅ [x] |
+| CT-06.6 | Cancelar edição | Botão volta | ✅ [x] |
+| CT-06.7 | Atualizar cartão | Dados atualizados | ✅ [x] |
+| CT-06.8 | Excluir cartão | Some da lista | ✅ [x] |
+| CT-06.9 | Excluir Pix | Some da lista | ✅ [x] |
+| CT-06.10 | Copiar chave | Toast "Chave copiada!" | ✅ [x] |
 
 ### 📊 CT-07: Dashboard / Relatórios
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-07.1 | Gráfico de rosca exibe dados | Gráfico mostra as fatias | ✅ [x] |
+| CT-07.1 | Gráfico exibe dados | Fatias visíveis | ✅ [x] |
 | CT-07.2 | Percentuais corretos | Total = 100% | ✅ [x] |
-| CT-07.3 | Filtros em pílula funcionam | Gráfico filtra pela categoria | ✅ [x] |
+| CT-07.3 | Filtros em pílula | Gráfico filtra | ✅ [x] |
 
 ### 🏷️ CT-08: Categorias
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-08.1 | Categorias padrão | 8 categorias padrão aparecem | ✅ [x] |
-| CT-08.2 | Criar nova categoria | Categoria aparece na lista | ✅ [x] |
-| CT-08.3 | Prévia em tempo real | Tag muda enquanto digita | ✅ [x] |
-| CT-08.4 | Excluir categoria sem dívidas | Categoria some | ✅ [x] |
-| CT-08.5 | Excluir categoria em uso | Bloqueio com aviso de dívidas | ✅ [x] |
+| CT-08.1 | Categorias padrão | 8 categorias | ✅ [x] |
+| CT-08.2 | Criar categoria | Aparece na lista | ✅ [x] |
+| CT-08.3 | Prévia em tempo real | Tag muda | ✅ [x] |
+| CT-08.4 | Excluir sem dívidas | Some | ✅ [x] |
+| CT-08.5 | Excluir em uso | Bloqueio com aviso | ✅ [x] |
 
 ### 👤 CT-09: Editar Perfil
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-09.1 | Alterar nome | Nome novo aparece em todas as telas | ✅ [x] |
+| CT-09.1 | Alterar nome | Nome em todas as telas | ✅ [x] |
 | CT-09.2 | Alterar e-mail | E-mail atualizado | ✅ [x] |
-| CT-09.3 | E-mail duplicado | Erro: "E-mail já cadastrado" | ✅ [x] |
+| CT-09.3 | E-mail duplicado | Erro | ✅ [x] |
 | CT-09.4 | Alterar senha | Senha atualizada | ✅ [x] |
-| CT-09.5 | Senha atual errada | Erro: "Senha atual incorreta" | ✅ [x] |
-| CT-09.6 | Excluir conta | Volta ao Login, conta apagada | ✅ [x] |
+| CT-09.5 | Senha errada | Erro | ✅ [x] |
+| CT-09.6 | Excluir conta | Volta ao Login | ✅ [x] |
 
 ### 🔔 CT-10: Lembretes de Fatura
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-10.1 | Permissão de notificação | Pede permissão de notificação | ✅ [x] |
-| CT-10.2 | Notificação agendada | Nada aparece agora (agendado) | ✅ [x] |
-| CT-10.3 | Notificação no dia certo | Notificação aparece às 09h | ✅ [x] |
-| CT-10.4 | Cancelar ao pagar | Notificação NÃO aparece | ✅ [x] |
-| CT-10.5 | Cancelar ao excluir | Notificação NÃO aparece | ✅ [x] |
-| CT-10.6 | Switch de lembretes | Novas notificações não são agendadas | ✅ [x] |
+| CT-10.1 | Permissão | Pede permissão | ✅ [x] |
+| CT-10.2 | Notificação agendada | Agendada | ✅ [x] |
+| CT-10.3 | Notificação no dia | Aparece às 09h | ✅ [x] |
+| CT-10.4 | Cancelar ao pagar | Não aparece | ✅ [x] |
+| CT-10.5 | Cancelar ao excluir | Não aparece | ✅ [x] |
+| CT-10.6 | Switch | Novas não são agendadas | ✅ [x] |
 
-### 🔄 CT-11: BootReceiver (Reagendamento)
+### 🔄 CT-11: BootReceiver
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-11.1 | Reagenda após reiniciar | Notificação aparece normalmente | ✅ [x] |
-| CT-11.2 | Respeita switch desligado | Nenhuma notificação é agendada | ✅ [x] |
+| CT-11.1 | Reagenda após reiniciar | Notificação aparece | ✅ [x] |
+| CT-11.2 | Respeita switch | Nada é agendado | ✅ [x] |
 
 ### 🔒 CT-12: Isolamento por Usuário
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
 | CT-12.1 | Cada usuário vê só seus dados | Conta B vê lista vazia | ✅ [x] |
-| CT-12.2 | Sessão ativa | Só dados de B aparecem | ✅ [x] |
-| CT-12.3 | BootReceiver respeita usuário | Alarme só reagenda quando A logar | ✅ [x] |
+| CT-12.2 | Sessão ativa | Só dados de B | ✅ [x] |
+| CT-12.3 | BootReceiver respeita | Alarme só com A logado | ✅ [x] |
 
 ### ⚙️ CT-13: Configurações
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-13.1 | Perfil correto | Nome e avatar corretos | ✅ [x] |
-| CT-13.2 | Botão "Cartões & Pix" | Abre CartoesActivity | ✅ [x] |
-| CT-13.3 | Botão "Categorias" | Abre CategoriasActivity | ✅ [x] |
-| CT-13.4 | Botão "Editar Perfil" | Abre EditarPerfilActivity | ✅ [x] |
-| CT-13.5 | Botão "Limpar Tudo" | Diálogo de confirmação | ✅ [x] |
+| CT-13.1 | Perfil correto | Nome e avatar | ✅ [x] |
+| CT-13.2 | Botão Cartões & Pix | Abre tela | ✅ [x] |
+| CT-13.3 | Botão Categorias | Abre tela | ✅ [x] |
+| CT-13.4 | Botão Editar Perfil | Abre tela | ✅ [x] |
+| CT-13.5 | Botão Limpar Tudo | Diálogo | ✅ [x] |
 | CT-13.6 | Logout | Volta para Login | ✅ [x] |
 
-### 🗑️ CT-14: Soft Delete de Dívidas ⭐ NOVO
+### 🗑️ CT-14: Soft Delete de Dívidas
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-14.1 | Exclusão some da lista | Dívida excluída some da tela de Dívidas | ⏳ [ ] |
-| CT-14.2 | Exclusão não apaga do banco | Dívida excluída aparece no Histórico com ✗ | ⏳ [ ] |
-| CT-14.3 | Exclusão cancela alarme | Notificação da dívida excluída não dispara | ⏳ [ ] |
-| CT-14.4 | Exclusão não soma no total | Total da tela Início ignora excluídas | ⏳ [ ] |
+| CT-14.1 | Exclusão some da lista | Some de Dívidas | ⏳ [ ] |
+| CT-14.2 | Exclusão não apaga | Aparece no Histórico ✗ | ⏳ [ ] |
+| CT-14.3 | Exclusão cancela alarme | Não dispara | ⏳ [ ] |
+| CT-14.4 | Não soma no total | Início ignora | ⏳ [ ] |
 
-### 📜 CT-15: Tela de Histórico ⭐ NOVO
-
-| ID | Descrição | Resultado Esperado | Status |
-|----|-----------|---------------------|--------|
-| CT-15.1 | Abrir Histórico pelo card | Toque no card "Total de Dívidas" abre o Histórico | ⏳ [ ] |
-| CT-15.2 | Navegação entre meses | Setas ← e → mudam o mês | ⏳ [ ] |
-| CT-15.3 | Badge "Atual" | Aparece apenas no mês atual | ⏳ [ ] |
-| CT-15.4 | Card de resumo | Total / Já Pago / Falta Pagar corretos | ⏳ [ ] |
-| CT-15.5 | Chips de filtro dinâmicos | Chips mostram apenas categorias do mês | ⏳ [ ] |
-| CT-15.6 | Filtro por categoria | Chip filtra a lista corretamente | ⏳ [ ] |
-| CT-15.7 | Estado Liquidado | Dívida paga aparece com ✓ verde | ⏳ [ ] |
-| CT-15.8 | Estado Parcial | Dívida parcialmente paga mostra "Parcela 1/2" | ⏳ [ ] |
-| CT-15.9 | Estado Pendente | Dívida não paga aparece com → amarelo | ⏳ [ ] |
-| CT-15.10 | Estado Excluída | Dívida excluída aparece com ✗ vermelho e valor riscado | ⏳ [ ] |
-
-### 📤 CT-16: Exportação CSV ⭐ NOVO
+### 📜 CT-15: Tela de Histórico
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-16.1 | Diálogo de formato | Botão abre diálogo "CSV ou PDF" | ⏳ [ ] |
-| CT-16.2 | Gerar CSV | Arquivo `.csv` é gerado com sucesso | ⏳ [ ] |
-| CT-16.3 | Compartilhar via WhatsApp | CSV chega no WhatsApp com acentos corretos | ⏳ [ ] |
-| CT-16.4 | Abrir no Excel/Sheets | Planilha abre com colunas corretas | ⏳ [ ] |
-| CT-16.5 | Exportar só categoria | Escolher uma categoria → CSV só daquela categoria | ⏳ [ ] |
-| CT-16.6 | CSV vazio | Sem dívidas no mês → Toast "Nenhum lançamento" | ⏳ [ ] |
+| CT-15.1 | Abrir pelo card | Abre o Histórico | ⏳ [ ] |
+| CT-15.2 | Navegação entre meses | Setas mudam | ⏳ [ ] |
+| CT-15.3 | Badge "Atual" | Só no mês atual | ⏳ [ ] |
+| CT-15.4 | Card de resumo | Total/Já Pago/Falta | ⏳ [ ] |
+| CT-15.5 | Chips dinâmicos | Só categorias do mês | ⏳ [ ] |
+| CT-15.6 | Filtro por categoria | Filtra lista | ⏳ [ ] |
+| CT-15.7 | Estado Liquidado | ✓ verde | ⏳ [ ] |
+| CT-15.8 | Estado Pendente | → amarelo | ⏳ [ ] |
+| CT-15.9 | Estado Excluída | ✗ vermelho e riscado | ⏳ [ ] |
+| CT-15.10 | Parcela no mês correto | Videogame em 4 meses | ⏳ [ ] |
 
-### 📋 CT-17: Exportação PDF ⭐ NOVO
+### 📤 CT-16: Exportação CSV
 
 | ID | Descrição | Resultado Esperado | Status |
 |----|-----------|---------------------|--------|
-| CT-17.1 | Gerar PDF | Arquivo `.pdf` é gerado com sucesso | ⏳ [ ] |
-| CT-17.2 | Layout do PDF | Cabeçalho "ORG", card resumo e lista | ⏳ [ ] |
-| CT-17.3 | Cores por estado | Estados com cores corretas no PDF | ⏳ [ ] |
-| CT-17.4 | Compartilhar via WhatsApp | PDF chega no WhatsApp abrível | ⏳ [ ] |
-| CT-17.5 | Exportar só categoria | PDF só da categoria selecionada | ⏳ [ ] |
-| CT-17.6 | PDF vazio | Sem dívidas → Toast "Nenhum lançamento" | ⏳ [ ] |
+| CT-16.1 | Diálogo de formato | "CSV ou PDF" | ⏳ [ ] |
+| CT-16.2 | Gerar CSV | Arquivo .csv criado | ⏳ [ ] |
+| CT-16.3 | Compartilhar WhatsApp | Chega com acentos | ⏳ [ ] |
+| CT-16.4 | Abrir no Excel/Sheets | Colunas corretas | ⏳ [ ] |
+| CT-16.5 | Exportar só categoria | Só daquela categoria | ⏳ [ ] |
+| CT-16.6 | CSV vazio | Toast | ⏳ [ ] |
+
+### 📋 CT-17: Exportação PDF
+
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-17.1 | Gerar PDF | Arquivo .pdf criado | ⏳ [ ] |
+| CT-17.2 | Layout do PDF | Cabeçalho, resumo, lista | ⏳ [ ] |
+| CT-17.3 | Cores por estado | Corretas | ⏳ [ ] |
+| CT-17.4 | Compartilhar WhatsApp | PDF abrível | ⏳ [ ] |
+| CT-17.5 | Exportar só categoria | Só aquela | ⏳ [ ] |
+| CT-17.6 | PDF vazio | Toast | ⏳ [ ] |
+
+### 🎯 CT-18: Parcelamento por Mês
+
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-18.1 | Gerar N registros | 4x cria 4 registros | ⏳ [ ] |
+| CT-18.2 | Vencimentos consecutivos | Out, Nov, Dez, Jan | ⏳ [ ] |
+| CT-18.3 | Valor por parcela | Cada registro R$ 750 | ⏳ [ ] |
+| CT-18.4 | Pix/Débito sem parcelas | 1 registro pago | ⏳ [ ] |
+| CT-18.5 | Número da parcela | "Parcela 1/4", "2/4" | ⏳ [ ] |
+| CT-18.6 | Pagamento individual | Cada parcela paga sozinha | ⏳ [ ] |
+
+### 📊 CT-19: Dashboard Mensal e Somente Leitura
+
+| ID | Descrição | Resultado Esperado | Status |
+|----|-----------|---------------------|--------|
+| CT-19.1 | Navegação entre meses | Setas mudam | ⏳ [ ] |
+| CT-19.2 | Badge "Atual" | Só no mês atual | ⏳ [ ] |
+| CT-19.3 | Filtro por mês | Só do mês | ⏳ [ ] |
+| CT-19.4 | Sem botões de ação | Sem Excluir/Editar/Pagar | ⏳ [ ] |
+| CT-19.5 | Pix/Débito aparecem | No gráfico do mês | ⏳ [ ] |
+| CT-19.6 | Gráfico + Lista consistentes | Totais batem | ⏳ [ ] |
 
 ---
 
@@ -251,85 +275,102 @@ Garantir que todas as funcionalidades do aplicativo estejam funcionando conforme
 
 O app é considerado **aprovado para release** quando:
 
-- ✅ Todos os casos de teste das seções CT-01 a CT-17 estiverem com status "Passou"
-- ✅ Nenhum bug de prioridade 🔴 Alta estiver em aberto
-- ✅ Os bugs de prioridade 🟡 Média forem documentados no `docs/BUGS.md`
-- ✅ O app não travar (crash) em nenhum fluxo testado
-- ✅ A navegação entre telas estiver fluida
+- ✅ Todos os CTs de CT-01 a CT-19 estiverem "Passou"
+- ✅ Nenhum bug 🔴 Alta em aberto
+- ✅ Bugs 🟡 Média documentados no `docs/BUGS.md`
+- ✅ App não travar em nenhum fluxo testado
+- ✅ Navegação fluida entre telas
 
 ---
 
 ## 7. Como Reportar um Bug
 
-1. **Anote o CT** que falhou
-2. **Anote os passos** exatos
-3. **Anote o esperado** vs **o que aconteceu**
-4. **Tire um print**
-5. **Abra um registro no `docs/BUGS.md`**
-6. **Marque como 🔴 Aberto**
+1. Anote o **CT** que falhou
+2. Anote os **passos** exatos
+3. Anote o **esperado** vs **o que aconteceu**
+4. Tire um **print**
+5. Abra um registro no `docs/BUGS.md`
+6. Marque como 🔴 **Aberto**
 
 ---
 
 ## 8. Fluxo de Teste Recomendado
 
-1. **Teste de Fumaça (Smoke Test)**
-2. **Teste Funcional Completo**
-3. **Teste de Borda**
-4. **Teste de Regressão**
+1. **Teste de Fumaça**
+2. **Funcional Completo**
+3. **Borda**
+4. **Regressão**
 5. **Registrar bugs** no `BUGS.md`
-6. **Enviar relatório final**
+6. **Relatório final**
 
 ---
 
-## 9. Como Testar as Notificações (CT-10 e CT-11)
+## 9. Como Testar as Notificações
 
-### Passo a Passo
-
-1. **Desative "Data e hora automáticas"** no Android
-2. **Confirme que os lembretes estão ativos no app**
-3. **Cadastre uma dívida com vencimento em hoje + 4 dias**
-4. **Force o fechamento do app**
-5. **Mude a data do celular para amanhã, 08:58**
-6. **Aguarde 2 minutos** → notificação deve aparecer às 09:00
+1. **Desative "Data e hora automáticas"**
+2. **Confirme lembretes ativos no app**
+3. **Cadastre dívida com vencimento em hoje + 4 dias**
+4. **Force fechamento do app**
+5. **Mude data para amanhã, 08:58**
+6. **Aguarde 2 minutos** → notificação às 09:00
 7. **Restaurar:** reative "Data e hora automáticas"
 
-### Teste do BootReceiver (CT-11)
+### BootReceiver
 
 1. Cadastre dívida com vencimento em **hoje + 5 dias**
 2. **Reinicie o celular**
-3. Mude a data para **hoje + 2 dias, 08:58**
-4. Aguarde 09:00 → notificação deve aparecer
+3. Mude data para **hoje + 2 dias, 08:58**
+4. Aguarde 09:00 → notificação aparece
 
 ---
 
-## 10. Como Testar o Soft Delete (CT-14)
+## 10. Como Testar o Soft Delete
 
-1. Cadastre uma dívida com categoria "Lazer"
-2. Exclua essa dívida na tela de Dívidas
-3. ✅ Ela some da lista de Dívidas
-4. ✅ Total da tela Início **não** soma mais ela
-5. ✅ Abra o Histórico no mês do vencimento
-6. ✅ Aparece com status **"Excluída ✗"** em vermelho
-
----
-
-## 11. Como Testar a Exportação (CT-16 e CT-17)
-
-1. Abra o Histórico
-2. Selecione um mês com dívidas
-3. Toque em **"Baixar Resumo"**
-4. Escolha **CSV** → compartilhe no WhatsApp/Drive
-5. Abra o arquivo no Excel/Sheets → confira os dados
-6. Volte e escolha **PDF** → compartilhe e abra
+1. Cadastre dívida com categoria "Lazer"
+2. Exclua na tela Dívidas
+3. ✅ Some da lista de Dívidas
+4. ✅ Total do Início **não** soma mais
+5. ✅ Histórico do mês: **"Excluída ✗"** vermelho
 
 ---
 
-## 12. Histórico de Execuções
+## 11. Como Testar a Exportação
+
+1. Abra o Histórico em um mês com dívidas
+2. Toque em "Baixar Resumo"
+3. Escolha **CSV** → compartilhe
+4. Abra no Excel/Sheets
+5. Volte e escolha **PDF** → compartilhe e abra
+
+---
+
+## 12. Como Testar o Parcelamento
+
+1. Cadastre **Videogame R$ 3.000 em 4x** com 1º vencimento em Novembro
+2. ✅ 4 registros criados no banco
+3. Tela **Dívidas**: 4 parcelas de R$ 750
+4. **Dashboard** Novembro: Videogame 1/4
+5. **Dashboard** Dezembro: Videogame 2/4
+6. Pague 1/4 em Dívidas → botão vira "Pago"
+
+---
+
+## 13. Como Testar o Dashboard Somente Leitura
+
+1. Abra o Dashboard
+2. ✅ Cards **sem botões** Excluir/Editar/Pagar
+3. ✅ Setas ← → funcionam
+4. ✅ Filtros por categoria funcionam
+5. Para pagar, vá em **Dívidas**
+
+---
+
+## 14. Histórico de Execuções
 
 | Data | Testador | Versão | Total | Passou | Falhou | Bugs Abertos |
 |------|----------|--------|-------|--------|--------|--------------|
 | 03/10/2026 | Israel Malheiros | Sprint 5 | 68 | 60 | 8 | 0 |
-| — | Israel Malheiros | Sprint 6 | 21 | — | — | — |
+| 07/10/2026 | Israel Malheiros | Sprint 6 | 33 | — | — | — |
 
 ### Bugs Encontrados e Corrigidos
 
@@ -343,10 +384,12 @@ O app é considerado **aprovado para release** quando:
 | BUG-006 | CT-06.1 | Lançar sem barra de navegação | ✅ Corrigido |
 | BUG-007 | CT-08.4/08.5 | Exclusão de categorias em uso | ✅ Corrigido |
 | BUG-008 | CT-09.1/09.6 | Erro ao carregar dados do usuário | ✅ Corrigido |
+| BUG-009 | CT-18.x | Bug "Parcela 7/14" nos adapters | ✅ Corrigido |
+| BUG-010 | CT-05.4 | Pagamento somava valor errado | ✅ Corrigido |
 
 ---
 
-## 13. Referências
+## 15. Referências
 
 - **`docs/BUGS.md`** — Registro de bugs encontrados
 - **`docs/ARQUITETURA.md`** — Documentação técnica do projeto

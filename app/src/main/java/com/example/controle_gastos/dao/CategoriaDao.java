@@ -33,7 +33,10 @@ public interface CategoriaDao {
     @Query("SELECT COUNT(*) FROM categorias WHERE usuarioId = :usuarioId")
     int contarPorUsuario(int usuarioId);
 
-    // ⭐ Conta quantas dívidas usam uma determinada categoria (pelo nome)
     @Query("SELECT COUNT(*) FROM dividas WHERE usuarioId = :usuarioId AND categoria = :nomeCategoria")
     int contarDividasPorCategoria(int usuarioId, String nomeCategoria);
+
+    // ⭐ Apaga todas as categorias do usuário (usado ao restaurar backup)
+    @Query("DELETE FROM categorias WHERE usuarioId = :usuarioId")
+    void deletarTodosDoUsuario(int usuarioId);
 }

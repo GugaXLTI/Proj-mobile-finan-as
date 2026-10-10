@@ -48,11 +48,15 @@ public interface DividaDao {
 
     // ======== SPRINT 6 — PARCELAMENTO ========
 
-    // ⭐ Busca o maior grupoId existente (para gerar o próximo)
     @Query("SELECT COALESCE(MAX(grupoId), 0) FROM dividas")
     int maxGrupoId();
 
-    // ⭐ Lista todas as parcelas de um grupo
     @Query("SELECT * FROM dividas WHERE usuarioId = :usuarioId AND grupoId = :grupoId AND excluida = 0 ORDER BY vencimento ASC")
     List<Divida> listarPorGrupo(int usuarioId, int grupoId);
+
+    // ======== BACKUP (Sprint 6) ========
+
+    // ⭐ Apaga todas as dívidas do usuário (usado ao restaurar backup)
+    @Query("DELETE FROM dividas WHERE usuarioId = :usuarioId")
+    void deletarTodosDoUsuario(int usuarioId);
 }

@@ -6,10 +6,12 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 import com.example.controle_gastos.model.Cartao;
+
 import java.util.List;
 
 @Dao
 public interface CartaoDao {
+
     @Insert
     void inserir(Cartao cartao);
 
@@ -21,4 +23,8 @@ public interface CartaoDao {
 
     @Query("SELECT * FROM cartoes WHERE usuarioId = :usuarioId ORDER BY id DESC")
     List<Cartao> listarPorUsuario(int usuarioId);
+
+    // ⭐ Apaga todos os cartões do usuário (usado ao restaurar backup)
+    @Query("DELETE FROM cartoes WHERE usuarioId = :usuarioId")
+    void deletarTodosDoUsuario(int usuarioId);
 }

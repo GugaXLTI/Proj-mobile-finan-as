@@ -176,7 +176,6 @@ public class HistoricoActivity extends AppCompatActivity {
 
     private void atualizarTituloMes() {
         if (filtroAtivo) {
-            // Modo filtro: mostra o intervalo de datas
             tvMesAtual.setText(dataInicialFiltro + " a " + dataFinalFiltro);
             tvBadgeAtual.setVisibility(View.GONE);
             btnFiltroPeriodo.setVisibility(View.GONE);
@@ -184,7 +183,6 @@ public class HistoricoActivity extends AppCompatActivity {
             return;
         }
 
-        // Modo mês
         String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
                 "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
         tvMesAtual.setText(meses[mesSelecionado - 1] + " " + anoSelecionado);
@@ -207,7 +205,6 @@ public class HistoricoActivity extends AppCompatActivity {
         dividasDoMes.clear();
 
         if (filtroAtivo) {
-            // ⭐ Modo filtro: aplica filtro de período
             for (Divida d : todasDividas) {
                 if (estaEntreDatas(d.getVencimento(), dataInicialFiltro, dataFinalFiltro)) {
                     dividasDoMes.add(d);
@@ -216,7 +213,6 @@ public class HistoricoActivity extends AppCompatActivity {
             return;
         }
 
-        // Modo mês: filtra pelo mês/ano selecionado
         for (Divida d : todasDividas) {
             String venc = d.getVencimento();
             if (venc == null || venc.isEmpty()) continue;
@@ -248,7 +244,6 @@ public class HistoricoActivity extends AppCompatActivity {
             Date fim = sdf.parse(dataFim);
             if (venc == null || ini == null || fim == null) return false;
 
-            // Considera o fim do dia do filtro (23h59)
             Calendar fimCal = Calendar.getInstance();
             fimCal.setTime(fim);
             fimCal.set(Calendar.HOUR_OF_DAY, 23);
@@ -369,11 +364,6 @@ public class HistoricoActivity extends AppCompatActivity {
     // ⭐ FILTRO DE PERÍODO
     // ==========================================
 
-    /**
-     * Abre um diálogo com 2 DatePickers em sequência:
-     * 1. Data inicial
-     * 2. Data final
-     */
     private void abrirDialogoPeriodo() {
         Calendar c = Calendar.getInstance();
 
@@ -381,8 +371,6 @@ public class HistoricoActivity extends AppCompatActivity {
                 (view, year, month, dayOfMonth) -> {
                     String dataInicial = String.format(LOCALE_BR, "%02d/%02d/%04d",
                             dayOfMonth, month + 1, year);
-
-                    // Após escolher a inicial, abre o picker da final
                     abrirPickerDataFinal(dataInicial);
                 },
                 c.get(Calendar.YEAR),
@@ -393,9 +381,6 @@ public class HistoricoActivity extends AppCompatActivity {
         dialogInicial.show();
     }
 
-    /**
-     * Abre o segundo DatePicker (data final).
-     */
     private void abrirPickerDataFinal(String dataInicial) {
         Calendar c = Calendar.getInstance();
 
@@ -404,7 +389,6 @@ public class HistoricoActivity extends AppCompatActivity {
                     String dataFinal = String.format(LOCALE_BR, "%02d/%02d/%04d",
                             dayOfMonth, month + 1, year);
 
-                    // Valida: data final deve ser >= inicial
                     if (compararDatas(dataFinal, dataInicial) < 0) {
                         Toast.makeText(this,
                                 "A data final deve ser depois da inicial!",
@@ -422,9 +406,6 @@ public class HistoricoActivity extends AppCompatActivity {
         dialogFinal.show();
     }
 
-    /**
-     * Aplica o filtro e atualiza a tela.
-     */
     private void aplicarFiltroPeriodo(String dataInicial, String dataFinal) {
         dataInicialFiltro = dataInicial;
         dataFinalFiltro = dataFinal;
@@ -438,19 +419,12 @@ public class HistoricoActivity extends AppCompatActivity {
                 Toast.LENGTH_SHORT).show();
     }
 
-    /**
-     * Remove o filtro e volta ao modo mês.
-     */
     private void limparFiltroPeriodo() {
         dataInicialFiltro = null;
         dataFinalFiltro = null;
         filtroAtivo = false;
     }
 
-    /**
-     * Compara duas datas no formato "dd/MM/yyyy".
-     * Retorna negativo se d1 < d2, 0 se iguais, positivo se d1 > d2.
-     */
     private int compararDatas(String d1, String d2) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());

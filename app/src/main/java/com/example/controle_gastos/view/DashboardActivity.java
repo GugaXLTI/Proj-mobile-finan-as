@@ -3,6 +3,7 @@ package com.example.controle_gastos.view;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
@@ -16,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
@@ -23,6 +25,7 @@ import com.example.controle_gastos.adapter.DividaDashboardAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.utils.SessionManager;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -45,7 +48,6 @@ public class DashboardActivity extends AppCompatActivity {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    // ⭐ Períodos disponíveis no gráfico de linha
     private static final int[] PERIODOS_DISPONIVEIS = {3, 6, 12};
     private static final int PERIODO_PADRAO = 6;
 
@@ -70,7 +72,6 @@ public class DashboardActivity extends AppCompatActivity {
     private int mesSelecionado;
     private int anoSelecionado;
 
-    // ⭐ Quantidade de meses visíveis no gráfico de linha
     private int mesesVisiveis = PERIODO_PADRAO;
 
     private final int[] CORES_FIGMA = {
@@ -215,9 +216,6 @@ public class DashboardActivity extends AppCompatActivity {
         pieChart.setDrawEntryLabels(false);
     }
 
-    /**
-     * ⭐ Configura a aparência do gráfico de linha.
-     */
     private void configurarGraficoLinha() {
         lineChart.getDescription().setEnabled(false);
         lineChart.setTouchEnabled(true);
@@ -229,6 +227,7 @@ public class DashboardActivity extends AppCompatActivity {
         lineChart.getLegend().setEnabled(false);
         lineChart.setNoDataText("Sem dados para exibir");
         lineChart.setNoDataTextColor(Color.parseColor("#64748B"));
+        lineChart.setExtraOffsets(8f, 16f, 8f, 8f);
 
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -241,17 +240,24 @@ public class DashboardActivity extends AppCompatActivity {
         YAxis yAxisLeft = lineChart.getAxisLeft();
         yAxisLeft.setDrawGridLines(true);
         yAxisLeft.setGridColor(Color.parseColor("#1E293B"));
+        yAxisLeft.setGridLineWidth(1f);
         yAxisLeft.setDrawAxisLine(false);
         yAxisLeft.setTextColor(Color.parseColor("#94A3B8"));
         yAxisLeft.setTextSize(10f);
-        yAxisLeft.setDrawLabels(false);
+        yAxisLeft.setDrawLabels(true);
+        yAxisLeft.setSpaceTop(30f); // espaço para valores acima dos pontos
+        yAxisLeft.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                if (value <= 0.01f) return "R$ 0";
+                if (value >= 1000) return String.format(LOCALE_BR, "R$ %.1fk", value / 1000f);
+                return String.format(LOCALE_BR, "R$ %.0f", value);
+            }
+        });
 
         lineChart.getAxisRight().setEnabled(false);
     }
 
-    /**
-     * ⭐ Cria os chips de período (3M / 6M / 12M).
-     */
     private void criarChipsPeriodo() {
         containerPeriodos.removeAllViews();
 
@@ -272,7 +278,6 @@ public class DashboardActivity extends AppCompatActivity {
 
             chip.setOnClickListener(v -> {
                 mesesVisiveis = periodo;
-                // Atualiza a aparência dos chips
                 for (int i = 0; i < containerPeriodos.getChildCount(); i++) {
                     View child = containerPeriodos.getChildAt(i);
                     if (child instanceof TextView) {
@@ -308,14 +313,22 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     /**
-     * ⭐ Calcula o total dos últimos N meses e popula o gráfico de linha.
-     * N = mesesVisiveis (3, 6 ou 12).
+     * ⭐ Gráfico de linha CAPRICHADO:
+     *  - Valores em cima de cada ponto (R$ 750, R$ 500, ...)
+     *  - Ponto do maior gasto destacado em ROXO
+     *  - Linha de média mensal (tracejada)
+     *  - Preenchimento com gradiente (verde → transparente)
+     *  - Animação suave
+     *  - Centralizado no mês selecionado
      */
     private void atualizarGraficoLinha() {
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
 
+        int mesesPassados = mesesVisiveis / 2;
+
         Calendar c = Calendar.getInstance();
         c.set(anoSelecionado, mesSelecionado - 1, 1);
+        c.add(Calendar.MONTH, -mesesPassados);
 
         List<Entry> entries = new ArrayList<>();
         final List<String> labelsMeses = new ArrayList<>();
@@ -324,42 +337,85 @@ public class DashboardActivity extends AppCompatActivity {
 
         double totalPeriodo = 0;
 
-        for (int i = mesesVisiveis - 1; i >= 0; i--) {
-            Calendar cMes = (Calendar) c.clone();
-            cMes.add(Calendar.MONTH, -i);
-            int mesRef = cMes.get(Calendar.MONTH) + 1;
-            int anoRef = cMes.get(Calendar.YEAR);
+        for (int i = 0; i < mesesVisiveis; i++) {
+            int mesRef = c.get(Calendar.MONTH) + 1;
+            int anoRef = c.get(Calendar.YEAR);
 
             double totalMes = 0;
             for (Divida d : todas) {
-                if (pertenceAoMes(d, mesRef, anoRef)) {
+                if (pertenceMesmoMes(d, mesRef, anoRef)) {
                     totalMes += d.getValorTotal();
                 }
             }
 
-            entries.add(new Entry(mesesVisiveis - 1 - i, (float) totalMes));
+            entries.add(new Entry(i, (float) totalMes));
             labelsMeses.add(nomesMeses[mesRef - 1]);
             totalPeriodo += totalMes;
+
+            c.add(Calendar.MONTH, 1);
         }
 
+        // ⭐ Calcula média e maior valor
+        double media = totalPeriodo / Math.max(mesesVisiveis, 1);
+        float maiorValor = 0;
+        int indexMaior = -1;
+        for (int i = 0; i < entries.size(); i++) {
+            if (entries.get(i).getY() > maiorValor) {
+                maiorValor = entries.get(i).getY();
+                indexMaior = i;
+            }
+        }
+
+        // ⭐ Configura o dataset
         LineDataSet dataSet = new LineDataSet(entries, "Gastos");
         dataSet.setColor(Color.parseColor("#10B981"));
-        dataSet.setLineWidth(2.5f);
-        dataSet.setCircleColor(Color.parseColor("#10B981"));
-        dataSet.setCircleRadius(4f);
-        dataSet.setCircleHoleColor(Color.parseColor("#131C2E"));
-        dataSet.setCircleHoleRadius(2f);
-        dataSet.setDrawValues(false);
+        dataSet.setLineWidth(3f);
         dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        dataSet.setDrawFilled(true);
-        dataSet.setFillColor(Color.parseColor("#10B981"));
-        dataSet.setFillAlpha(40);
         dataSet.setDrawCircles(true);
         dataSet.setDrawCircleHole(true);
+        dataSet.setCircleHoleColor(Color.parseColor("#131C2E"));
+        dataSet.setCircleHoleRadius(3f);
+        dataSet.setCircleRadius(5f);
+
+        // ⭐ Cores individuais dos círculos (destaque do maior)
+        List<Integer> coresCirculos = new ArrayList<>();
+        for (int i = 0; i < entries.size(); i++) {
+            if (i == indexMaior && maiorValor > 0) {
+                coresCirculos.add(Color.parseColor("#A855F7")); // roxo = destaque
+            } else {
+                coresCirculos.add(Color.parseColor("#10B981")); // verde
+            }
+        }
+        dataSet.setCircleColors(coresCirculos);
+
+        // ⭐ Gradiente de preenchimento (via drawable)
+        Drawable gradiente = ContextCompat.getDrawable(this, R.drawable.bg_line_chart_gradient);
+        if (gradiente != null) {
+            dataSet.setFillDrawable(gradiente);
+        } else {
+            dataSet.setFillColor(Color.parseColor("#10B981"));
+            dataSet.setFillAlpha(40);
+        }
+        dataSet.setDrawFilled(true);
+
+        // ⭐ Valores em cima dos pontos
+        dataSet.setDrawValues(true);
+        dataSet.setValueTextSize(10f);
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTypeface(Typeface.DEFAULT_BOLD);
+        dataSet.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                if (value <= 0.01f) return "";
+                if (value >= 1000) return String.format(LOCALE_BR, "R$ %.1fk", value / 1000f);
+                return String.format(LOCALE_BR, "R$ %.0f", value);
+            }
+        });
 
         LineData lineData = new LineData(dataSet);
         lineChart.setData(lineData);
 
+        // ⭐ Eixo X (meses)
         lineChart.getXAxis().setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
@@ -371,17 +427,40 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
-        // Ajusta a densidade de labels conforme o período
         if (mesesVisiveis <= 6) {
             lineChart.getXAxis().setLabelCount(mesesVisiveis, true);
         } else {
-            lineChart.getXAxis().setLabelCount(6, true); // 12 meses: mostra 6 labels
+            lineChart.getXAxis().setLabelCount(6, true);
         }
 
-        lineChart.invalidate();
+        // ⭐ Linha de média (tracejada)
+        lineChart.getAxisLeft().removeAllLimitLines();
+        if (media > 0.01) {
+            LimitLine linhaMedia = new LimitLine((float) media,
+                    String.format(LOCALE_BR, "Média: R$ %.0f", media));
+            linhaMedia.setLineColor(Color.parseColor("#F59E0B"));
+            linhaMedia.setLineWidth(1.5f);
+            linhaMedia.enableDashedLine(12, 8, 0);
+            linhaMedia.setTextColor(Color.parseColor("#F59E0B"));
+            linhaMedia.setTextSize(10f);
+            linhaMedia.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT_TOP);
+            lineChart.getAxisLeft().addLimitLine(linhaMedia);
+        }
 
+        // ⭐ Animação suave
+        lineChart.animateX(700);
+
+        // ⭐ Total no topo
         tvTotalEvolucao.setText(String.format(LOCALE_BR,
-                "Total: R$ %.2f em %d meses", totalPeriodo, mesesVisiveis));
+                "Total: R$ %.2f em %d meses  •  Média: R$ %.2f",
+                totalPeriodo, mesesVisiveis, media));
+    }
+
+    /**
+     * ⭐ Helper separado (renomeado para não conflitar com o outro método).
+     */
+    private boolean pertenceMesmoMes(Divida d, int mes, int ano) {
+        return pertenceAoMes(d, mes, ano);
     }
 
     private void atualizarDashboard(String categoriaFiltro) {

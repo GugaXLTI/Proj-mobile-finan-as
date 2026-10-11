@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -24,6 +25,8 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaDashboardAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.CsvExportHelper;
+import com.example.controle_gastos.utils.PdfExportHelper;
 import com.example.controle_gastos.utils.SessionManager;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
@@ -37,6 +40,7 @@ import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -73,6 +77,9 @@ public class DashboardActivity extends AppCompatActivity {
     private int anoSelecionado;
 
     private int mesesVisiveis = PERIODO_PADRAO;
+
+    // ⭐ Guarda a categoria selecionada para a exportação
+    private String categoriaAtual = "Todos";
 
     private final int[] CORES_FIGMA = {
             Color.parseColor("#A855F7"),
@@ -245,7 +252,7 @@ public class DashboardActivity extends AppCompatActivity {
         yAxisLeft.setTextColor(Color.parseColor("#94A3B8"));
         yAxisLeft.setTextSize(10f);
         yAxisLeft.setDrawLabels(true);
-        yAxisLeft.setSpaceTop(30f); // espaço para valores acima dos pontos
+        yAxisLeft.setSpaceTop(30f);
         yAxisLeft.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
@@ -312,15 +319,6 @@ public class DashboardActivity extends AppCompatActivity {
         chip.setBackground(d);
     }
 
-    /**
-     * ⭐ Gráfico de linha CAPRICHADO:
-     *  - Valores em cima de cada ponto (R$ 750, R$ 500, ...)
-     *  - Ponto do maior gasto destacado em ROXO
-     *  - Linha de média mensal (tracejada)
-     *  - Preenchimento com gradiente (verde → transparente)
-     *  - Animação suave
-     *  - Centralizado no mês selecionado
-     */
     private void atualizarGraficoLinha() {
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
 
@@ -355,7 +353,6 @@ public class DashboardActivity extends AppCompatActivity {
             c.add(Calendar.MONTH, 1);
         }
 
-        // ⭐ Calcula média e maior valor
         double media = totalPeriodo / Math.max(mesesVisiveis, 1);
         float maiorValor = 0;
         int indexMaior = -1;
@@ -366,7 +363,6 @@ public class DashboardActivity extends AppCompatActivity {
             }
         }
 
-        // ⭐ Configura o dataset
         LineDataSet dataSet = new LineDataSet(entries, "Gastos");
         dataSet.setColor(Color.parseColor("#10B981"));
         dataSet.setLineWidth(3f);
@@ -377,18 +373,16 @@ public class DashboardActivity extends AppCompatActivity {
         dataSet.setCircleHoleRadius(3f);
         dataSet.setCircleRadius(5f);
 
-        // ⭐ Cores individuais dos círculos (destaque do maior)
         List<Integer> coresCirculos = new ArrayList<>();
         for (int i = 0; i < entries.size(); i++) {
             if (i == indexMaior && maiorValor > 0) {
-                coresCirculos.add(Color.parseColor("#A855F7")); // roxo = destaque
+                coresCirculos.add(Color.parseColor("#A855F7"));
             } else {
-                coresCirculos.add(Color.parseColor("#10B981")); // verde
+                coresCirculos.add(Color.parseColor("#10B981"));
             }
         }
         dataSet.setCircleColors(coresCirculos);
 
-        // ⭐ Gradiente de preenchimento (via drawable)
         Drawable gradiente = ContextCompat.getDrawable(this, R.drawable.bg_line_chart_gradient);
         if (gradiente != null) {
             dataSet.setFillDrawable(gradiente);
@@ -398,7 +392,6 @@ public class DashboardActivity extends AppCompatActivity {
         }
         dataSet.setDrawFilled(true);
 
-        // ⭐ Valores em cima dos pontos
         dataSet.setDrawValues(true);
         dataSet.setValueTextSize(10f);
         dataSet.setValueTextColor(Color.WHITE);
@@ -415,7 +408,6 @@ public class DashboardActivity extends AppCompatActivity {
         LineData lineData = new LineData(dataSet);
         lineChart.setData(lineData);
 
-        // ⭐ Eixo X (meses)
         lineChart.getXAxis().setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
@@ -433,7 +425,6 @@ public class DashboardActivity extends AppCompatActivity {
             lineChart.getXAxis().setLabelCount(6, true);
         }
 
-        // ⭐ Linha de média (tracejada)
         lineChart.getAxisLeft().removeAllLimitLines();
         if (media > 0.01) {
             LimitLine linhaMedia = new LimitLine((float) media,
@@ -447,23 +438,20 @@ public class DashboardActivity extends AppCompatActivity {
             lineChart.getAxisLeft().addLimitLine(linhaMedia);
         }
 
-        // ⭐ Animação suave
         lineChart.animateX(700);
 
-        // ⭐ Total no topo
         tvTotalEvolucao.setText(String.format(LOCALE_BR,
                 "Total: R$ %.2f em %d meses  •  Média: R$ %.2f",
                 totalPeriodo, mesesVisiveis, media));
     }
 
-    /**
-     * ⭐ Helper separado (renomeado para não conflitar com o outro método).
-     */
     private boolean pertenceMesmoMes(Divida d, int mes, int ano) {
         return pertenceAoMes(d, mes, ano);
     }
 
     private void atualizarDashboard(String categoriaFiltro) {
+        categoriaAtual = categoriaFiltro;
+
         dividasFiltradas.clear();
         for (Divida d : todasDividas) {
             if (categoriaFiltro.equals("Todos") || d.getCategoria().equals(categoriaFiltro)) {
@@ -629,9 +617,81 @@ public class DashboardActivity extends AppCompatActivity {
         btn.setBackground(drawable);
     }
 
+    // ==========================================
+    // ⭐ EXPORTAÇÃO (CSV e PDF)
+    // ==========================================
+
     private void configurarExportar() {
-        btnExportar.setOnClickListener(v ->
-                Toast.makeText(this, "Exportação em breve!", Toast.LENGTH_SHORT).show());
+        btnExportar.setOnClickListener(v -> mostrarDialogoExportacao());
+    }
+
+    private void mostrarDialogoExportacao() {
+        String[] opcoes = {"📄  Exportar como CSV (Excel)", "📋  Exportar como PDF (Relatório)"};
+
+        new AlertDialog.Builder(this)
+                .setTitle("Escolha o formato")
+                .setItems(opcoes, (dialog, which) -> {
+                    if (which == 0) {
+                        exportarCsv();
+                    } else {
+                        exportarPdf();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void exportarCsv() {
+        if (dividasFiltradas.isEmpty()) {
+            Toast.makeText(this, "Nenhum lançamento para exportar neste mês.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String mesAno = getMesAnoString();
+        String sufixo = categoriaAtual.equals("Todos")
+                ? ""
+                : "_" + categoriaAtual.toLowerCase().replace(" ", "_");
+
+        File arquivo = CsvExportHelper.gerarCsv(this, dividasFiltradas, mesAno + sufixo);
+
+        if (arquivo == null) {
+            Toast.makeText(this, "Erro ao gerar o arquivo CSV.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "CSV gerado com sucesso!", Toast.LENGTH_SHORT).show();
+        CsvExportHelper.compartilharCsv(this, arquivo);
+    }
+
+    private void exportarPdf() {
+        if (dividasFiltradas.isEmpty()) {
+            Toast.makeText(this, "Nenhum lançamento para exportar neste mês.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String mesAno = getMesAnoString();
+        File arquivo = PdfExportHelper.gerarPdf(this, dividasFiltradas, mesAno, categoriaAtual);
+
+        if (arquivo == null) {
+            Toast.makeText(this, "Erro ao gerar o PDF.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "PDF gerado com sucesso!", Toast.LENGTH_SHORT).show();
+        PdfExportHelper.compartilharPdf(this, arquivo);
+    }
+
+    /**
+     * ⭐ Retorna "Outubro 2026" (mesmo formato usado no Histórico).
+     */
+    private String getMesAnoString() {
+        String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
+        return meses[mesSelecionado - 1] + " " + anoSelecionado;
     }
 
     private void configurarNavegacao() {

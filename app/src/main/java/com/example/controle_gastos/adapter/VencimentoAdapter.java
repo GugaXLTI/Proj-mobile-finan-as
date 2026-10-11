@@ -7,7 +7,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
-import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.VencimentoItem;
 
 import java.util.List;
 import java.util.Locale;
@@ -16,10 +16,10 @@ public class VencimentoAdapter extends RecyclerView.Adapter<VencimentoAdapter.Vi
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    private List<Divida> dividas;
+    private List<VencimentoItem> items;
 
-    public VencimentoAdapter(List<Divida> dividas) {
-        this.dividas = dividas;
+    public VencimentoAdapter(List<VencimentoItem> items) {
+        this.items = items;
     }
 
     @NonNull
@@ -32,65 +32,37 @@ public class VencimentoAdapter extends RecyclerView.Adapter<VencimentoAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Divida d = dividas.get(position);
+        VencimentoItem item = items.get(position);
 
-        // Inicial do banco
-        String inicial = d.getBanco() != null && !d.getBanco().isEmpty()
-                ? d.getBanco().substring(0, 1).toUpperCase()
-                : "?";
-        holder.tvInicial.setText(inicial);
+        holder.tvInicial.setText(item.inicial);
+        holder.tvTitulo.setText(item.titulo);
 
-        holder.tvTitulo.setText(d.getTitulo());
-        holder.tvDetalhe.setText("Vence em " + d.getVencimento());
-
-        int totalParcelas = extrairTotalParcelas(d.getParcela());
-
-        if (totalParcelas > 1) {
-            // ⭐ Parcelado: mostra "Parcela 2/4" + valor da parcela + total do grupo
-            holder.tvParcela.setText("Parcela " + d.getParcela());
+        if (item.parcelado) {
+            // ⭐ Parcelado: mostra "3 parcelas restantes" + próxima + total restante
             holder.tvParcela.setVisibility(View.VISIBLE);
+            holder.tvParcela.setText(item.parcelasRestantes +
+                    (item.parcelasRestantes == 1 ? " parcela restante" : " parcelas restantes"));
 
-            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", d.getValorTotal()));
+            holder.tvDetalhe.setText("Próxima: " + item.proximoVencimento);
 
-            // Total do grupo = valor da parcela × total de parcelas
-            double totalGrupo = d.getValorTotal() * totalParcelas;
-            holder.tvTotal.setText(String.format(LOCALE_BR, "Total: R$ %.2f", totalGrupo));
+            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", item.valorProxima));
+            holder.tvValor.setTextColor(0xFFEF4444);
+
             holder.tvTotal.setVisibility(View.VISIBLE);
+            holder.tvTotal.setText(String.format(LOCALE_BR, "Total restante: R$ %.2f", item.totalRestante));
         } else {
-            // ⭐ À vista: só valor
+            // ⭐ À vista: só o valor
             holder.tvParcela.setVisibility(View.GONE);
+            holder.tvDetalhe.setText("Vence em " + item.proximoVencimento);
+            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", item.valorProxima));
+            holder.tvValor.setTextColor(0xFFEF4444);
             holder.tvTotal.setVisibility(View.GONE);
-            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", d.getValorTotal()));
         }
     }
 
     @Override
     public int getItemCount() {
-        return dividas.size();
-    }
-
-    private int extrairTotalParcelas(String parcela) {
-        if (parcela == null) return 1;
-        if (parcela.contains("/")) {
-            try {
-                String[] partes = parcela.split("/");
-                String total = partes[1].replaceAll("[^0-9]", "");
-                if (!total.isEmpty()) {
-                    int n = Integer.parseInt(total);
-                    return n > 0 ? n : 1;
-                }
-            } catch (Exception e) {
-                return 1;
-            }
-        }
-        try {
-            String numeros = parcela.replaceAll("[^0-9]", "");
-            if (numeros.isEmpty()) return 1;
-            int n = Integer.parseInt(numeros);
-            return n > 0 ? n : 1;
-        } catch (NumberFormatException e) {
-            return 1;
-        }
+        return items.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

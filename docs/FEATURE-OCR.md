@@ -14,40 +14,19 @@ Em ambos os casos, o fluxo é: Cache/OCR → Parser → Pré-preenchimento → R
 
 ## 2. Fluxo Técnico
 
-┌─────────────────────────────────────────────────────────────┐
-│ 1. ENTRADA │
-│ a) ACTION_SEND (imagem/PDF) → ReceiptShareActivity │
-│ b) Botão "Importar comprovante" → seletor de arquivos │
-└─────────────────────┬───────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ 2. CACHE DE OCR (Room) │
-│ ReceiptCacheHelper.buscarTexto() │
-│ → Se achar (Cache HIT), pula direto para o Parser │
-└─────────────────────┬───────────────────────────────────────┘
-│ (Cache MISS)
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ 3. BITMAP + OCR │
-│ ReceiptImageLoader (reduz para 2048px) + ML Kit (OCR) │
-│ → Salva o texto no Cache (ReceiptCacheHelper.salvar) │
-└─────────────────────┬───────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ 4. PARSER (ReceiptParser) │
-│ Regex e Dicionários (Bancos, Categorias) │
-│ → Gera um objeto ParsedReceipt │
-└─────────────────────┬───────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ 5. PRÉ-PREENCHIMENTO │
-│ CadastroDividaActivity.aplicarParsedReceipt() │
-│ → Campos preenchidos, usuário revisa e salva │
-└─────────────────────────────────────────────────────────────┘
----
+
+graph TD
+    A[1. ENTRADA<br>ACTION_SEND ou Botão Importar] --> B{2. CACHE DE OCR<br>ReceiptCacheHelper.buscarTexto}
+    B -- Cache HIT (Encontrado) --> D[4. PARSER]
+    B -- Cache MISS (Não encontrado) --> C[3. BITMAP + OCR<br>ReceiptImageLoader + ML Kit]
+    C --> D[4. PARSER<br>ReceiptParser]
+    D --> E[5. PRÉ-PREENCHIMENTO<br>CadastroDividaActivity]
+    
+    style A fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style B fill:#d4edda,stroke:#28a745,stroke-width:2px
+    style C fill:#fff3cd,stroke:#ffc107,stroke-width:2px
+    style D fill:#cce5ff,stroke:#007bff,stroke-width:2px
+    style E fill:#d1ecf1,stroke:#17a2b8,stroke-width:2px
 
 ## 3. Arquivos Envolvidos
 

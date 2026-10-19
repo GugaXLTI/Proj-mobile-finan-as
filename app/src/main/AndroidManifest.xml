@@ -44,6 +44,20 @@
         <activity android:name=".view.HistoricoActivity" android:exported="false" />
         <activity android:name=".view.CartoesActivity" android:exported="false" />
 
+        <!-- ⭐ Recebe comprovantes compartilhados de outros apps (WhatsApp, Gmail, Galeria, etc.) -->
+        <activity
+            android:name=".view.ReceiptShareActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:label="Cadastrar dívida por comprovante">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity>
+
         <receiver android:name=".receiver.LembreteReceiver" android:exported="false" />
 
         <receiver

@@ -17,10 +17,6 @@ public class Migrations {
     /**
      * Migração v8 → v9
      * Adiciona o campo 'grupoId' (parcelamento por mês) na tabela 'dividas'.
-     *
-     * Contexto: antes, uma compra parcelada gerava 1 registro único.
-     * Agora, gera N registros (um por parcela), agrupados por grupoId.
-     * Registros antigos ficam com grupoId = 0 (sem grupo).
      */
     public static final Migration MIGRATION_8_9 = new Migration(8, 9) {
         @Override
@@ -31,17 +27,30 @@ public class Migrations {
         }
     };
 
-    // ============================================================
-    // ⭐ PRÓXIMAS MIGRATIONS
-    // Adicione aqui quando subir a versão do AppDatabase.
-    //
-    // Exemplo para v9 → v10 (quando criar a próxima feature):
-    //
-    // public static final Migration MIGRATION_9_10 = new Migration(9, 10) {
-    //     @Override
-    //     public void migrate(SupportSQLiteDatabase database) {
-    //         database.execSQL("ALTER TABLE dividas ADD COLUMN novoCampo TEXT");
-    //     }
-    // };
-    // ============================================================
+    /**
+     * Migração v9 → v10
+     * Cria a tabela 'comprovantes_processados' (cache de OCR).
+     *
+     * Índice único em (usuarioId, uri) para permitir REPLACE e
+     * isolamento por usuário.
+     */
+    public static final Migration MIGRATION_9_10 = new Migration(9, 10) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `comprovantes_processados` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`usuarioId` INTEGER NOT NULL, " +
+                            "`uri` TEXT, " +
+                            "`textoOcr` TEXT, " +
+                            "`mimeType` TEXT, " +
+                            "`timestamp` INTEGER NOT NULL)"
+            );
+            database.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS " +
+                            "`index_comprovantes_processados_usuarioId_uri` " +
+                            "ON `comprovantes_processados` (`usuarioId`, `uri`)"
+            );
+        }
+    };
 }

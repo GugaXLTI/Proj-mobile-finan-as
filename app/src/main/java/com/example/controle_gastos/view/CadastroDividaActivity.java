@@ -2,9 +2,13 @@ package com.example.controle_gastos.view;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -13,10 +17,15 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.CategoriaSpinnerAdapter;
 import com.example.controle_gastos.adapter.ChipSelecaoAdapter;
@@ -25,8 +34,13 @@ import com.example.controle_gastos.model.Cartao;
 import com.example.controle_gastos.model.Categoria;
 import com.example.controle_gastos.model.ChavePix;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.ParsedReceipt;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.CategoriaSeeder;
+import com.example.controle_gastos.utils.ReceiptCacheHelper;
+import com.example.controle_gastos.utils.ReceiptImageLoader;
+import com.example.controle_gastos.utils.ReceiptOcr;
+import com.example.controle_gastos.utils.ReceiptParser;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
 
@@ -37,11 +51,12 @@ import java.util.Locale;
 
 public class CadastroDividaActivity extends AppCompatActivity {
 
+    private static final String TAG = "CadastroDivida";
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
     private Spinner spinnerTipoDivida, spinnerCategoria, spinnerParcelas;
     private EditText editDescricao, editValor, editDataCompra, editVencimento;
-    private MaterialButton btnSalvar;
+    private MaterialButton btnSalvar, btnImportarComprovante;
     private RecyclerView rvSelecao;
     private LinearLayout containerVazio, containerParcelas, containerVencimento;
     private TextView btnNovoItem, btnNovaCategoria, tvTituloSelecao;
@@ -58,6 +73,16 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private List<Categoria> categoriasDoBanco = new ArrayList<>();
 
     private List<String[]> itensSelecao = new ArrayList<>();
+
+    private final ActivityResultLauncher<String[]> pickComprovanteLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri == null) {
+                    Log.d(TAG, "Seleção de comprovante cancelada.");
+                    return;
+                }
+                Log.d(TAG, "Comprovante selecionado: " + uri);
+                processarComprovanteEscolhido(uri);
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +102,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
         editDataCompra = findViewById(R.id.editDataCompra);
         editVencimento = findViewById(R.id.editVencimento);
         btnSalvar = findViewById(R.id.btnSalvarDivida);
+        btnImportarComprovante = findViewById(R.id.btnImportarComprovante);
         rvSelecao = findViewById(R.id.rvSelecao);
         containerVazio = findViewById(R.id.containerVazio);
         containerParcelas = findViewById(R.id.containerParcelas);
@@ -99,17 +125,17 @@ public class CadastroDividaActivity extends AppCompatActivity {
         configurarDatePicker(editVencimento);
         configurarMascaraValor(editValor);
 
-        btnNovaCategoria.setOnClickListener(v -> {
-            startActivity(new Intent(this, CategoriasActivity.class));
-        });
+        btnNovaCategoria.setOnClickListener(v ->
+                startActivity(new Intent(this, CategoriasActivity.class)));
 
-        btnNovoItem.setOnClickListener(v -> {
-            startActivity(new Intent(this, CartoesActivity.class));
-        });
+        btnNovoItem.setOnClickListener(v ->
+                startActivity(new Intent(this, CartoesActivity.class)));
 
-        btnCadastrarAgora.setOnClickListener(v -> {
-            startActivity(new Intent(this, CartoesActivity.class));
-        });
+        btnCadastrarAgora.setOnClickListener(v ->
+                startActivity(new Intent(this, CartoesActivity.class)));
+
+        btnImportarComprovante.setOnClickListener(v ->
+                pickComprovanteLauncher.launch(new String[]{"image/*", "application/pdf"}));
 
         spinnerTipoDivida.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
@@ -128,8 +154,14 @@ public class CadastroDividaActivity extends AppCompatActivity {
                 if (dividaEmEdicao != null) {
                     preencherCampos(dividaEmEdicao);
                     btnSalvar.setText("Atualizar Dívida");
+                    btnImportarComprovante.setVisibility(View.GONE);
                 }
             }
+        }
+
+        if (getIntent().getBooleanExtra("extra_prefill_receipt", false)) {
+            ParsedReceipt parsed = lerParsedDoIntent(getIntent());
+            aplicarParsedReceipt(parsed);
         }
 
         btnSalvar.setOnClickListener(v -> salvarDivida());
@@ -156,6 +188,176 @@ public class CadastroDividaActivity extends AppCompatActivity {
             startActivity(new Intent(this, ConfiguracoesActivity.class));
             finish();
         });
+    }
+
+    // ============================================================
+    // Processar comprovante escolhido no seletor
+    // ============================================================
+
+    private void processarComprovanteEscolhido(Uri uri) {
+        btnImportarComprovante.setEnabled(false);
+        btnImportarComprovante.setText("Analisando...");
+        btnImportarComprovante.setIconResource(R.drawable.ic_loading);
+        btnImportarComprovante.setIconTint(null);
+
+        String mime = getContentResolver().getType(uri);
+        Log.d(TAG, "MIME do comprovante: " + mime);
+
+        final int userId = session.getUserId();
+
+        new Thread(() -> {
+            // 1) Verifica cache
+            String textoCache = ReceiptCacheHelper.buscarTexto(this, userId, uri);
+            if (textoCache != null && !textoCache.isEmpty()) {
+                Log.d(TAG, "Usando texto do cache (OCR não será executado).");
+                runOnUiThread(() -> {
+                    ParsedReceipt parsed = ReceiptParser.parse(textoCache, session.getNome());
+
+                    // ⭐ CT-24.3 FIX: Se não tem valor, não é um comprovante válido
+                    if (parsed.getValor() == null) {
+                        resetarBotaoImportar();
+                        Toast.makeText(this,
+                                "Nenhum valor encontrado. A imagem não parece ser um comprovante válido.",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    aplicarParsedReceipt(parsed);
+                    resetarBotaoImportar();
+                    Toast.makeText(this,
+                            "Comprovante importado (cache). Confira e salve.",
+                            Toast.LENGTH_LONG).show();
+                });
+                return;
+            }
+
+            // 2) Cache miss → bitmap
+            Bitmap bitmap;
+            if (mime != null && mime.equals("application/pdf")) {
+                bitmap = ReceiptImageLoader.carregarPdf(this, uri);
+            } else {
+                bitmap = ReceiptImageLoader.carregarImagem(this, uri);
+            }
+
+            if (bitmap == null) {
+                runOnUiThread(() -> {
+                    resetarBotaoImportar();
+                    Toast.makeText(this,
+                            "Não conseguimos abrir esse arquivo. Tente outro comprovante ou preencha manualmente.",
+                            Toast.LENGTH_LONG).show();
+                });
+                return;
+            }
+
+            // 3) OCR
+            ReceiptOcr.extrairTexto(bitmap, new ReceiptOcr.Callback() {
+                @Override
+                public void onSucesso(String texto) {
+                    if (texto == null || texto.trim().isEmpty()) {
+                        resetarBotaoImportar();
+                        Toast.makeText(CadastroDividaActivity.this,
+                                "O comprovante está ilegível. Tente uma foto mais nítida ou preencha manualmente.",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    ParsedReceipt parsed = ReceiptParser.parse(texto, session.getNome());
+
+                    // ⭐ CT-24.3 FIX: Se não tem valor, não é um comprovante válido
+                    if (parsed.getValor() == null) {
+                        resetarBotaoImportar();
+                        Toast.makeText(CadastroDividaActivity.this,
+                                "Nenhum valor encontrado. A imagem não parece ser um comprovante válido.",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    ReceiptCacheHelper.salvarTexto(CadastroDividaActivity.this, userId, uri, texto, mime);
+                    Log.d(TAG, "Parsed do botão: " + parsed);
+
+                    aplicarParsedReceipt(parsed);
+                    resetarBotaoImportar();
+
+                    Toast.makeText(CadastroDividaActivity.this,
+                            "Comprovante importado. Confira e salve.", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onErro(Exception e) {
+                    Log.e(TAG, "Erro no OCR", e);
+                    resetarBotaoImportar();
+                    Toast.makeText(CadastroDividaActivity.this,
+                            "Não conseguimos analisar o comprovante. Você pode preencher manualmente.",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+        }).start();
+    }
+
+    private void resetarBotaoImportar() {
+        btnImportarComprovante.setEnabled(true);
+        btnImportarComprovante.setText("Importar comprovante");
+        btnImportarComprovante.setIconResource(android.R.drawable.ic_menu_camera);
+        btnImportarComprovante.setIconTint(
+                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.brand_green)));
+    }
+
+    private ParsedReceipt lerParsedDoIntent(Intent i) {
+        ParsedReceipt p = new ParsedReceipt();
+        p.setTitulo(i.getStringExtra("extra_prefill_titulo"));
+        p.setValor(i.getDoubleExtra("extra_prefill_valor", 0.0));
+        p.setData(i.getStringExtra("extra_prefill_data"));
+        p.setBanco(i.getStringExtra("extra_prefill_banco"));
+        p.setBeneficiario(i.getStringExtra("extra_prefill_beneficiario"));
+        p.setCategoria(i.getStringExtra("extra_prefill_categoria"));
+        p.setParcelas(i.getIntExtra("extra_prefill_parcelas", 1));
+        return p;
+    }
+
+    private void aplicarParsedReceipt(ParsedReceipt parsed) {
+        if (parsed == null) return;
+
+        for (int k = 0; k < spinnerTipoDivida.getAdapter().getCount(); k++) {
+            Object item = spinnerTipoDivida.getAdapter().getItem(k);
+            if (item != null && "Pix".equals(item.toString())) {
+                spinnerTipoDivida.setSelection(k);
+                break;
+            }
+        }
+
+        if (parsed.getTitulo() != null && !parsed.getTitulo().trim().isEmpty()) {
+            editDescricao.setText(parsed.getTitulo().trim());
+        }
+
+        if (parsed.getValor() != null && parsed.getValor() > 0) {
+            String valorFormatado = String.format(LOCALE_BR, "R$ %.2f", parsed.getValor());
+            editValor.setText(valorFormatado);
+            editValor.setSelection(valorFormatado.length());
+        }
+
+        if (parsed.getData() != null && !parsed.getData().trim().isEmpty()) {
+            editDataCompra.setText(parsed.getData().trim());
+            editVencimento.setText(parsed.getData().trim());
+        }
+
+        if (parsed.getCategoria() != null && !parsed.getCategoria().trim().isEmpty()) {
+            for (int k = 0; k < categoriasDoBanco.size(); k++) {
+                if (categoriasDoBanco.get(k).getNome().equalsIgnoreCase(parsed.getCategoria().trim())) {
+                    spinnerCategoria.setSelection(k);
+                    break;
+                }
+            }
+        }
+
+        if (spinnerParcelas.getAdapter() != null && spinnerParcelas.getAdapter().getCount() > 0) {
+            spinnerParcelas.setSelection(0);
+        }
+
+        String msg = "Comprovante pré-preenchido. Confira e salve.";
+        if (parsed.getBanco() != null && !parsed.getBanco().trim().isEmpty()) {
+            msg = "Comprovante do " + parsed.getBanco() + " pré-preenchido. Confira e salve.";
+        }
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 
     private boolean isTipoAVista(String tipo) {
@@ -467,9 +669,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        // ============================================================
-        // MODO EDIÇÃO: edita apenas o registro atual
-        // ============================================================
         if (dividaEmEdicao != null) {
             AlarmeHelper.cancelar(this, dividaEmEdicao);
             dividaEmEdicao.titulo = descricao;
@@ -488,11 +687,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        // ============================================================
-        // MODO CRIAÇÃO
-        // ============================================================
-
-        // ⭐ CASO 1: Pix/Débito à vista
         if (isAVista) {
             Divida nova = new Divida(
                     session.getUserId(), descricao, valor, valor, valor,
@@ -506,7 +700,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        // ⭐ CASO 2: Crédito à vista (1x)
         int numParcelas = extrairNumeroParcelas(parcelas);
         if (numParcelas == 1) {
             Divida nova = new Divida(
@@ -523,7 +716,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        // ⭐ CASO 3: Crédito parcelado — gera N registros
         int grupoId = db.dividaDao().maxGrupoId() + 1;
         double valorParcela = valor / numParcelas;
 
@@ -548,7 +740,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
                     session.getUserId(),
                     grupoId,
                     descricao,
-                    valorParcela,  // valorTotal = valor da parcela
+                    valorParcela,
                     valorParcela,
                     0.0,
                     bancoSelecionado,
@@ -573,9 +765,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         finish();
     }
 
-    /**
-     * Converte "dd/MM/yyyy" para Calendar. Retorna null se inválido.
-     */
     private Calendar converterParaCalendar(String data) {
         try {
             String[] partes = data.split("/");

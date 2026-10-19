@@ -37,7 +37,26 @@
                 android:text="Cartões, faturas, empréstimos ou outras pendências"
                 android:textColor="@color/text_gray"
                 android:textSize="13sp"
-                android:layout_marginBottom="24dp" />
+                android:layout_marginBottom="16dp" />
+
+            <!-- ⭐ Botão de importar comprovante -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnImportarComprovante"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="20dp"
+                android:text="Importar comprovante"
+                android:textAllCaps="false"
+                android:textColor="@color/brand_green"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:icon="@android:drawable/ic_menu_camera"
+                app:iconGravity="textStart"
+                app:iconTint="@color/brand_green"
+                app:strokeColor="@color/brand_green"
+                app:strokeWidth="1dp" />
 
             <!-- Tipo de Dívida -->
             <TextView

@@ -14,20 +14,19 @@ Em ambos os casos, o fluxo é: Cache/OCR → Parser → Pré-preenchimento → R
 
 ## 2. Fluxo Técnico
 
+O processamento acontece na seguinte ordem:
 
-graph TD
-    A[1. ENTRADA<br>ACTION_SEND ou Botão Importar] --> B{2. CACHE DE OCR<br>ReceiptCacheHelper.buscarTexto}
-    B -- Cache HIT (Encontrado) --> D[4. PARSER]
-    B -- Cache MISS (Não encontrado) --> C[3. BITMAP + OCR<br>ReceiptImageLoader + ML Kit]
-    C --> D[4. PARSER<br>ReceiptParser]
-    D --> E[5. PRÉ-PREENCHIMENTO<br>CadastroDividaActivity]
+1. **Entrada:** O app recebe o arquivo via `ACTION_SEND` (compartilhamento externo) ou pelo botão "Importar comprovante" (interno).
+2. **Verificação de Cache:** O `ReceiptCacheHelper` busca a URI no banco de dados Room.
+   - Se encontrar (Cache HIT), pula direto para a etapa 4.
+   - Se não encontrar (Cache MISS), segue para a etapa 3.
+3. **Extração de Texto:** O `ReceiptImageLoader` converte o arquivo em Bitmap (reduzindo se necessário) e o ML Kit realiza o OCR para extrair o texto bruto.
+4. **Interpretação (Parser):** O `ReceiptParser` analisa o texto e retorna um objeto `ParsedReceipt` com os campos estruturados.
+5. **Pré-preenchimento:** A `CadastroDividaActivity` recebe os dados, aplica nos campos do formulário para revisão do usuário e salva a dívida.
+
+---
+
     
-    style A fill:#f9f9f9,stroke:#333,stroke-width:2px
-    style B fill:#d4edda,stroke:#28a745,stroke-width:2px
-    style C fill:#fff3cd,stroke:#ffc107,stroke-width:2px
-    style D fill:#cce5ff,stroke:#007bff,stroke-width:2px
-    style E fill:#d1ecf1,stroke:#17a2b8,stroke-width:2px
-
 ## 3. Arquivos Envolvidos
 
 ### Arquivos NOVOS (Feature OCR)

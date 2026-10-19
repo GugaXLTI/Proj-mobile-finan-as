@@ -1,7 +1,7 @@
 # App Gestão de Finanças
 
 ## Status do Projeto
-🚀 **Em desenvolvimento – Sprint 6 (Histórico, Soft Delete, Exportação, Biometria, Gráfico de Linha, Backup e Migration) – Room + Autenticação + Categorias + Editar Perfil + Lembretes + Cartões + Chaves Pix + Histórico + CSV/PDF + Biometria + Backup Local** 🚀
+🚀 **Em desenvolvimento – Sprint 7 (Leitura Automática de Comprovantes - OCR) – Room + Autenticação + Categorias + Editar Perfil + Lembretes + Cartões + Chaves Pix + Histórico + CSV/PDF + Biometria + Backup + Migration + OCR** 🚀
 
 - ✅ Splash Screen (com verificação de sessão)
 - ✅ Tela de Login (autenticação no Room)
@@ -23,16 +23,19 @@
 - ✅ Soft Delete de dívidas (excluídas ficam registradas no histórico)
 - ✅ Exportação de extrato em CSV (Excel/Sheets)
 - ✅ Exportação de extrato em PDF (relatório estilizado)
-- ✅ **Exportação CSV/PDF também no Dashboard**
+- ✅ Exportação CSV/PDF também no Dashboard
 - ✅ Card "Total de Dívidas" na tela Início abre o Histórico
-- ✅ **Autenticação Biométrica (BiometricPrompt)**
-- ✅ **Gráfico de Linha (Evolução Mensal) com seletor 3M/6M/12M**
-- ✅ **Gráfico com valores, média mensal e destaque do maior gasto**
-- ✅ **Filtro de Período Customizado no Histórico**
-- ✅ **Backup Local (Exportar/Restaurar em JSON)**
-- ✅ **Migration não destrutiva (v8 → v9)**
-- ✅ **Agrupamento de parcelas na tela Início (Xbox 4x = 1 card)**
-- ✅ **Alerta inteligente na tela Início (conta só o que vence no mês)**
+- ✅ Autenticação Biométrica (BiometricPrompt)
+- ✅ Gráfico de Linha (Evolução Mensal) com seletor 3M/6M/12M
+- ✅ Gráfico com valores, média mensal e destaque do maior gasto
+- ✅ Filtro de Período Customizado no Histórico
+- ✅ Backup Local (Exportar/Restaurar em JSON)
+- ✅ Migration não destrutiva (v8 → v9)
+- ✅ Agrupamento de parcelas na tela Início (Xbox 4x = 1 card)
+- ✅ Alerta inteligente na tela Início (conta só o que vence no mês)
+- ✅ **Leitura Automática de Comprovantes (OCR) com Google ML Kit**
+- ✅ **Recebimento de compartilhamento externo (imagem/PDF)**
+- ✅ **Pré-preenchimento automático do Cadastro de Dívida**
 - ✅ Bottom Navigation funcional
 - ✅ Persistência de dados com Room (SQLite)
 - ✅ Sessão persistente com SharedPreferences
@@ -47,7 +50,7 @@
 - ✅ Bloqueio de exclusão de categorias em uso
 - ✅ Plano de Testes documentado (docs/TESTES.md)
 
-> **Observação:** o MVP final será entregue no Sprint 7, com autenticação em nuvem e sincronização.
+> **Observação:** o MVP final será entregue no Sprint 8 (se houver), com autenticação em nuvem e sincronização.
 
 ---
 
@@ -58,10 +61,11 @@ O app permite ao usuário:
 - Criar conta com nome, e-mail e senha (autenticação local)
 - Fazer login com validação no banco de dados
 - Manter a sessão ativa entre aberturas do app
-- **Entrar com biometria (digital, face ou íris)**
+- Entrar com biometria (digital, face ou íris)
+- **Lançar dívidas automaticamente a partir do compartilhamento de um comprovante (OCR)**
 - Visualizar o resumo de dívidas e vencimentos na tela de Início
 - Acompanhar gastos por categoria com gráfico de rosca
-- **Acompanhar a evolução mensal com gráfico de linha (3M/6M/12M)**
+- Acompanhar a evolução mensal com gráfico de linha (3M/6M/12M)
 - Gerenciar dívidas (cadastrar, editar, pagar, excluir)
 - Criar e personalizar categorias com cores próprias
 - Editar perfil (nome, e-mail, senha) e excluir conta
@@ -70,11 +74,11 @@ O app permite ao usuário:
 - Cadastrar, editar e excluir cartões de crédito/débito
 - Cadastrar, editar e excluir chaves Pix de credores
 - Navegar pelo histórico mensal de dívidas
-- **Filtrar histórico por período customizado**
+- Filtrar histórico por período customizado
 - Visualizar os 4 estados de cada dívida no histórico
 - Exportar o extrato mensal em CSV (Excel/Sheets)
 - Exportar o extrato mensal em PDF (relatório estilizado)
-- **Fazer backup local em JSON (exportar/restaurar)**
+- Fazer backup local em JSON (exportar/restaurar)
 - Manter seus dados isolados por conta
 
 ---
@@ -85,7 +89,7 @@ O app permite ao usuário:
 - **Versionamento:** Git + GitHub
 - **Sistema Operacional:** Android (mínimo API 24 – Android 7.0)
 - **Design:** Figma
-- **Bibliotecas:** Room (SQLite), MPAndroidChart, Material Design Components, RecyclerView, CardView, ViewPager2, SharedPreferences, AlarmManager, iTextG (PDF), BiometricPrompt, Gson
+- **Bibliotecas:** Room (SQLite), MPAndroidChart, Material Design Components, RecyclerView, CardView, ViewPager2, SharedPreferences, AlarmManager, iTextG (PDF), BiometricPrompt, Gson, **Google ML Kit (OCR)**
 
 ---
 
@@ -105,17 +109,17 @@ O app permite ao usuário:
 Tela de abertura com logo, fontes personalizadas (Abril Fatface e Lato), timer de 2 segundos e verificação de sessão ativa.
 
 ### Tela de Login / Cadastro
-Validação de campos, verificação no Room, e-mail com Regex, senhas coincidentes. **Suporta biometria quando ativada nas Configurações.**
+Validação de campos, verificação no Room, e-mail com Regex, senhas coincidentes. Suporta biometria quando ativada nas Configurações.
 
 ### Tela de Início (Home)
-Resumo de dívidas, total já pago, **alerta inteligente (conta só o que vence no mês)** e próximos vencimentos. **Parcelas do mesmo grupo são agrupadas em um único card.** O card "Total de Dívidas Acumuladas" é clicável e abre o Histórico.
+Resumo de dívidas, total já pago, alerta inteligente (conta só o que vence no mês) e próximos vencimentos. Parcelas do mesmo grupo são agrupadas em um único card. O card "Total de Dívidas Acumuladas" é clicável e abre o Histórico.
 
 ### Dashboard (Relatórios)
 - Gráfico de rosca com distribuição por categoria
-- **Gráfico de linha com evolução mensal (3M/6M/12M)**
-- **Valores em cima dos pontos, média mensal e destaque em roxo do maior gasto**
-- **Navegação por mês (← Setembro 2026 →)**
-- **Botão de exportação CSV/PDF integrado**
+- Gráfico de linha com evolução mensal (3M/6M/12M)
+- Valores em cima dos pontos, média mensal e destaque em roxo do maior gasto
+- Navegação por mês (← Setembro 2026 →)
+- Botão de exportação CSV/PDF integrado
 - Filtros em pílula por categoria
 - Adapter somente leitura (sem botões de ação)
 
@@ -123,7 +127,10 @@ Resumo de dívidas, total já pago, **alerta inteligente (conta só o que vence 
 Cards com título, valor da parcela e progresso. Botões: Excluir (soft delete), Editar, Pagar (parcela por parcela).
 
 ### Cadastro de Dívida
-Formulário fiel ao Figma com tipo, banco, descrição, categoria (com bolinha colorida), valor, parcelas, datas. Pix e Débito são à vista. **Crédito parcelado gera N registros independentes (1 por mês).**
+Formulário fiel ao Figma com tipo, banco, descrição, categoria (com bolinha colorida), valor, parcelas, datas. Pix e Débito são à vista. Crédito parcelado gera N registros independentes (1 por mês). **Aceita pré-preenchimento automático via OCR.**
+
+### Tela de Processamento OCR ⭐ NOVO
+Tela que recebe o comprovante compartilhado de outros apps, exibe um loading ("Comprovante recebido. Processando..."), extrai o texto via ML Kit, interpreta os dados e redireciona para o Cadastro de Dívida já preenchido.
 
 ### Tela de Histórico
 Navegação por mês, badge "Atual", card de resumo (Total, Já Pago, Falta Pagar), chips de filtro por categoria e lista de lançamentos com 4 estados:
@@ -152,8 +159,8 @@ Notificações 3 dias antes do vencimento, às 9h. Funciona offline com AlarmMan
 - Gerenciamento de cartões/Pix
 - Categorias
 - Switch de lembretes
-- **Switch de biometria**
-- **Backup dos Dados (Exportar / Restaurar / Limpar Tudo)**
+- Switch de biometria
+- Backup dos Dados (Exportar / Restaurar / Limpar Tudo)
 - Logout
 
 ### Bottom Navigation
@@ -190,14 +197,15 @@ app/src/main/java/com/example/controle_gastos/
 ├── database/       → AppDatabase (versão 9) + Migrations
 ├── utils/          → SessionManager, CategoriaSeeder, NotificationHelper,
 │                     AlarmeHelper, CsvExportHelper, PdfExportHelper,
-│                     BiometricHelper, BackupHelper
+│                     BiometricHelper, BackupHelper, OcrHelper,
+│                     ComprovanteParser
 ├── receiver/       → LembreteReceiver, BootReceiver
 ├── adapter/        → Adapters (dívidas, categorias, cartões, chips,
 │                     histórico, divida dashboard, vencimento)
 └── view/           → 15+ Activities (Splash, Login, Início, Histórico, etc)
 ```
 
-**Novos na Sprint 6:**
+**Novos na Sprint 6/7:**
 - `utils/BiometricHelper.java`
 - `utils/BackupHelper.java`
 - `model/BackupData.java`
@@ -208,6 +216,10 @@ app/src/main/java/com/example/controle_gastos/
 - `view/HistoricoActivity.java`
 - `res/drawable/bg_line_chart_gradient.xml`
 - `res/xml/file_paths.xml`
+- **`utils/OcrHelper.java`**
+- **`utils/ComprovanteParser.java`**
+- **`view/ComprovanteActivity.java`**
+- **`layout/activity_processando_comprovante.xml`**
 
 ---
 
@@ -222,6 +234,7 @@ app/src/main/java/com/example/controle_gastos/
 - `feat: adiciona migration não destrutiva para o banco de dados`
 - `feat: agrupa parcelas por grupoId e melhora alerta mensal na tela Início`
 - `feat: implementa exportação CSV e PDF no Dashboard`
+- `feat: implementa leitura automática de comprovantes via OCR (ML Kit)`
 - `fix: gráfico de evolução mensal agora mostra meses futuros centrados`
 - `fix: capricha gráfico de evolução mensal com valores, média e destaque`
 - `fix: corrige lógica de pagamento parcelado na tela de Dívidas`
@@ -236,6 +249,7 @@ app/src/main/java/com/example/controle_gastos/
 - Exportação XLSX (além de CSV)
 - Simulador de pagamento com QR Code
 - Melhorias no fluxo de backup (lista de backups internos)
+- **Melhorar o parser do OCR para suportar mais layouts de bancos**
 
 ---
 

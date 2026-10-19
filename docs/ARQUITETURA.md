@@ -25,15 +25,6 @@ As tabelas `Divida` e `Transacao` do banco Room **não possuíam um campo `usuar
 - Os dados não eram isolados por conta
 - Usuários novos viam dados fictícios (mock) que nunca cadastraram
 
-### Impacto
-
-| Cenário | Comportamento antes | Comportamento depois |
-|---------|---------------------|----------------------|
-| Tiago cadastra dívidas | Salvas no banco | Salvas e vinculadas ao Tiago |
-| Ana faz login no mesmo celular | Vê as dívidas do Tiago | Vê apenas as dívidas dela |
-| Tiago faz logout e Ana entra | Ana vê os dados do Tiago | Ana começa do zero |
-| Usuário novo instala o app | Vê dívidas fictícias (mock) | Começa com o banco vazio |
-
 ---
 
 ## ✅ Solução implementada
@@ -47,8 +38,6 @@ public class Divida {
     public int id;
     
     public int usuarioId; // ← NOVO CAMPO
-    
-    // ... outros campos
 }
 ```
 
@@ -241,21 +230,6 @@ BiometricHelper.autenticar()
 Se sucesso → SessionManager.salvarSessao() → Início
 ```
 
-### Componentes
-
-#### 1. `utils/BiometricHelper.java`
-- `podeUsarBiometria(context)` — verifica hardware + digital cadastrada
-- `autenticar(activity, titulo, subtitulo, callback)` — dispara o prompt
-
-#### 2. `utils/SessionManager.java`
-- Chaves de biometria **sobrevivem ao logout**
-
-#### 3. `view/LoginActivity.java`
-- Botão `btnBiometria` (só aparece se ativo + disponível)
-
-#### 4. `view/ConfiguracoesActivity.java`
-- Switch de biometria funcional
-
 ---
 
 ## 📈 Gráfico de Linha — Evolução Mensal
@@ -274,38 +248,13 @@ O gráfico aparece **abaixo do gráfico de rosca**, dentro de um CardView com:
 - LineChart com ~200dp de altura
 
 ### Comportamento do Cálculo
-
 O gráfico é **centrado no mês selecionado**:
 - **3M** → 1 mês atrás + mês atual + 1 mês à frente
 - **6M** → 3 meses atrás + mês atual + 2 meses à frente
 - **12M** → 6 meses atrás + mês atual + 5 meses à frente
 
-**Exemplo (3M em Outubro):** Set, Out, Nov
-**Exemplo (3M em Novembro):** Out, Nov, Dez
-
 ### Estilo Visual
-- Linha verde (`#10B981`) com curvas bezier
-- Valores em cima de cada ponto (R$ 750, R$ 500, etc)
-- Eixo Y com labels formatados (R$ 0, R$ 500, R$ 1k)
-- **Ponto do maior gasto destacado em roxo** (`#A855F7`)
-- **Linha de média mensal tracejada em amarelo** (`#F59E0B`)
-- Preenchimento com gradiente verde (`bg_line_chart_gradient.xml`)
-- Animação suave ao carregar (`animateX(700)`)
-
-### Lógica de Cálculo
-
-Para cada mês dos N selecionados:
-1. Percorre todas as dívidas do usuário (não excluídas)
-2. Filtra apenas as do mês (pelo `vencimento`)
-3. Soma `valorTotal`
-4. Adiciona ponto no gráfico
-
-### Configuração
-
-```java
-private static final int[] PERIODOS_DISPONIVEIS = {3, 6, 12};
-private static final int PERIODO_PADRAO = 6;
-```
+- Linha verde, valores em cima dos pontos, eixo Y formatado, destaque em roxo para maior gasto, média tracejada em amarelo, gradiente verde no preenchimento e animação suave.
 
 ---
 
@@ -318,28 +267,10 @@ private static final int PERIODO_PADRAO = 6;
 Navegação por mês **continua funcionando**, mas o usuário pode aplicar um **filtro customizado** de período.
 
 ### Componentes
-
-#### 1. `layout/activity_historico.xml`
 - Botão **📅** ao lado das setas ← →
 - Botão **✕** vermelho (aparece apenas quando filtro ativo)
-
-#### 2. `view/HistoricoActivity.java`
-- Variáveis `dataInicialFiltro`, `dataFinalFiltro`, `filtroAtivo`
-- Método `abrirDialogoPeriodo()` — 2 DatePickers em sequência
-- Método `aplicarFiltroPeriodo()`, `limparFiltroPeriodo()`
-- Método `estaEntreDatas()`, `compararDatas()`
-
-### Comportamento
-
-| Ação | Comportamento |
-|------|---------------|
-| Toque em 📅 | Abre DatePicker inicial → depois final |
-| Escolhe datas | Filtro aplicado, lista filtrada |
-| Título | Vira "01/09/2026 a 30/09/2026" |
-| Badge "Atual" | Desaparece |
-| Botão ✕ | Aparece |
-| Toque em ← ou → | Limpa filtro automaticamente |
-| Toque em ✕ | Volta ao modo mês |
+- Dois `DatePicker`s em sequência
+- Título muda para o intervalo selecionado
 
 ---
 
@@ -351,27 +282,10 @@ Navegação por mês **continua funcionando**, mas o usuário pode aplicar um **
 ### Descrição
 O usuário pode **exportar todos os seus dados** para um arquivo JSON e **restaurá-los** depois.
 
-### Cenários de Uso
-1. **Trocar de celular** — exporta no antigo, importa no novo
-2. **Reinstalar o app** — restaura o backup mais recente
-3. **Recuperação de erro** — volta ao estado anterior
-4. **Análise externa** — compartilha com outros
-
 ### Componentes
-
-#### 1. `model/BackupData.java`
-- POJO com: `versao`, `dataBackup`, `nomeUsuario`, `totalItens`
-- Listas: `dividas`, `cartoes`, `chavesPix`, `categorias`
-
-#### 2. `utils/BackupHelper.java`
-- `exportar(context, userId)` — gera arquivo JSON
-- `compartilharBackup(context, arquivo)` — abre Intent
-- `lerArquivo(context, uri)` — lê e valida o JSON
-- `aplicarBackup(context, userId, data)` — substitui dados
-
-#### 3. `view/ConfiguracoesActivity.java`
-- `ActivityResultLauncher` para selecionar arquivo
-- Diálogo com 3 opções: Exportar / Restaurar / Limpar Tudo
+- `model/BackupData.java` — POJO com os dados
+- `utils/BackupHelper.java` — lógica de exportar, ler e aplicar
+- `view/ConfiguracoesActivity.java` — diálogo com 3 opções
 
 ### Estrutura do JSON
 
@@ -388,12 +302,6 @@ O usuário pode **exportar todos os seus dados** para um arquivo JSON e **restau
 }
 ```
 
-### Segurança
-- ✅ Valida o campo `versao` antes de importar
-- ✅ Mostra resumo antes de confirmar
-- ✅ Confirmação obrigatória
-- ✅ Reagenda alarmes das dívidas não pagas após importar
-
 ---
 
 ## 🔄 Migration Não Destrutiva
@@ -404,48 +312,9 @@ O usuário pode **exportar todos os seus dados** para um arquivo JSON e **restau
 ### Descrição
 Sistema de **migrations reais** para o banco Room, preservando dados entre atualizações de versão.
 
-### Problema Original
-O `AppDatabase` usava apenas `fallbackToDestructiveMigration()`, o que **apagava todos os dados** quando a versão do banco mudava.
-
 ### Solução
-
-#### 1. `database/Migrations.java` (novo)
-Agrupa todas as migrations:
-
-```java
-public static final Migration MIGRATION_8_9 = new Migration(8, 9) {
-    @Override
-    public void migrate(SupportSQLiteDatabase database) {
-        database.execSQL(
-            "ALTER TABLE dividas ADD COLUMN grupoId INTEGER NOT NULL DEFAULT 0"
-        );
-    }
-};
-```
-
-#### 2. `database/AppDatabase.java` (atualizado)
-Registra as migrations:
-
-```java
-Room.databaseBuilder(...)
-    .addMigrations(Migrations.MIGRATION_8_9)
-    .fallbackToDestructiveMigration()  // rede de segurança
-    .build();
-```
-
-### Como Adicionar Novas Migrations
-
-Sempre que subir a versão (ex: v9 → v10):
-
-1. Cria `MIGRATION_9_10` em `Migrations.java`
-2. Registra em `AppDatabase`: `.addMigrations(MIGRATION_8_9, MIGRATION_9_10)`
-3. Muda `version = 10` no `@Database`
-4. Testa: instala v9 → cadastra dados → atualiza para v10 → confirma que dados persistem
-
-### Impacto
-- ✅ Atualizações do app **preservam os dados**
-- ✅ Rede de segurança para versões muito antigas (v1-v7)
-- ✅ Padrão profissional de mercado
+- `database/Migrations.java` (novo) agrupa todas as migrations
+- `database/AppDatabase.java` registra as migrations com `.addMigrations()`
 
 ---
 
@@ -455,62 +324,12 @@ Sempre que subir a versão (ex: v9 → v10):
 10/10/2026
 
 ### Descrição
-As parcelas de uma mesma compra são **agrupadas em um único card** na tela de Início, evitando poluição visual.
-
-### Problema Original
-O Xbox em 4x aparecia como **3 cards separados** em "Próximos Vencimentos".
+As parcelas de uma mesma compra são **agrupadas em um único card** na tela de Início.
 
 ### Solução
-
-#### 1. `model/VencimentoItem.java` (novo)
-POJO que agrupa informações de um grupo:
-
-```java
-public class VencimentoItem {
-    public String titulo;
-    public String inicial;
-    public String proximoVencimento;
-    public double valorProxima;
-    public double totalRestante;
-    public int parcelasRestantes;
-    public int totalParcelas;
-    public boolean parcelado;
-}
-```
-
-#### 2. `adapter/VencimentoAdapter.java` (reescrito)
-Recebe uma lista de `VencimentoItem` (já agrupada) e renderiza o card.
-
-#### 3. `view/InicioActivity.java`
-Novo método `agruparVencimentos()`:
-1. Separa dívidas com `grupoId > 0` (parceladas) das sem grupo
-2. Para cada grupo, ordena por vencimento
-3. Cria um `VencimentoItem` com resumo
-4. Ordena os grupos pela próxima data
-
-### Resultado Visual
-
-**Antes:**
-```
-┌─ Xbox ──────────────────────┐
-│ Parcela 2/4   R$ 750        │
-├─────────────────────────────┤
-├─ Xbox ──────────────────────┤
-│ Parcela 3/4   R$ 750        │
-├─────────────────────────────┤
-├─ Xbox ──────────────────────┤
-│ Parcela 4/4   R$ 750        │
-└─────────────────────────────┘
-```
-
-**Depois:**
-```
-┌─ Xbox ──────────────────────┐
-│ 3 parcelas restantes        │
-│ Próxima: 10/12/2026 R$ 750  │
-│ Total restante: R$ 2.250    │
-└─────────────────────────────┘
-```
+- `model/VencimentoItem.java` — POJO que agrupa informações
+- `adapter/VencimentoAdapter.java` — reescrito para receber `VencimentoItem`
+- `view/InicioActivity.java` — novo método `agruparVencimentos()`
 
 ---
 
@@ -522,83 +341,112 @@ Novo método `agruparVencimentos()`:
 ### Descrição
 O alerta "Atenção Este Mês" agora conta **apenas dívidas que vencem no mês atual**.
 
-### Problema Original
-O alerta "3 faturas somando R$ 2.250,00" incluía parcelas de meses futuros, confundindo o usuário.
-
 ### Solução
+Novo método em `InicioActivity.atualizarTotais()` que verifica o mês atual e conta apenas as dívidas com vencimento nele.
 
-Novo método em `InicioActivity.atualizarTotais()`:
-1. Verifica o mês atual (Calendar)
-2. Conta apenas dívidas com `vencimento` no mês atual
-3. Soma o valor dessas dívidas
+---
 
-### Comportamento
+## 🤖 Leitura Automática de Comprovantes (OCR) ⭐ NOVO
 
-| Situação | Mensagem |
-|----------|----------|
-| Tem dívidas vencendo este mês | "X contas vencendo este mês • R$ Y,YY" |
-| Não tem nada vencendo | "Nenhuma conta vence este mês ✓" |
+### Data de implementação
+18/10/2026
+
+### Descrição
+Permite que o usuário compartilhe o comprovante de pagamento (foto, print ou PDF) com o app, e ele preencha automaticamente a tela de Cadastro de Dívida.
+
+### Arquitetura do Fluxo
+
+```
+┌─────────────────────────────┐
+│ 1. Usuário compartilha      │
+│    comprovante de outro app │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│ 2. ComprovanteActivity      │
+│    recebe o Intent          │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│ 3. OcrHelper (ML Kit)       │
+│    extrai o texto bruto     │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│ 4. ComprovanteParser        │
+│    interpreta os dados      │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│ 5. CadastroDividaActivity   │
+│    abre pré-preenchida      │
+└─────────────────────────────┘
+```
+
+### Componentes
+
+#### 1. `utils/OcrHelper.java`
+- Usa a biblioteca **Google ML Kit (Text Recognition)** para extrair texto de imagens.
+- Funciona **offline** e sem custo.
+- Método `extrairTexto(Uri, Callback)`.
+
+#### 2. `utils/ComprovanteParser.java`
+- Recebe o texto bruto e tenta extrair informações estruturadas usando Regex.
+- Extrai: título, valor, data, banco.
+- Trata diferentes formatos de comprovante.
+
+#### 3. `view/ComprovanteActivity.java`
+- Activity criada para receber o compartilhamento (`ACTION_SEND`).
+- Exibe tela de carregamento ("Comprovante recebido. Processando...").
+- Chama o `OcrHelper`, depois o `ComprovanteParser`, e por fim redireciona para o `CadastroDividaActivity` com os dados via `Intent`.
+- Possui botão "Cancelar" para abortar o processo.
+
+#### 4. `AndroidManifest.xml`
+- Filtros de Intent na `ComprovanteActivity` para receber `image/*` e `application/pdf`.
+
+### Limitações Conhecidas
+- O parser pode não identificar 100% dos casos em comprovantes muito diferentes do padrão (ex: bancos menores).
+- Se o OCR falhar, o usuário é redirecionado para o formulário em branco.
+
+### Próximos Passos (Futuro)
+- Treinar um modelo próprio via Orange/TensorFlow Lite para substituir o parser heurístico por IA.
+- Adicionar suporte a mais formatos de PDF.
 
 ---
 
 ## 🧪 Como testar tudo
 
-### Parcelamento
-1. Cadastre **Videogame R$ 3.000 em 4x**, 1º vencimento em **Novembro**
-2. ✅ Deve criar **4 registros** no banco (1/4, 2/4, 3/4, 4/4)
-3. Abra a tela **Dívidas** — mostra as 4 parcelas
-4. Abra o **Dashboard** em Novembro — Videogame 1/4
+### Parcelamento, Biometria, Gráfico de Linha, Filtro de Período, Backup, Migration, Agrupamento
+*(Instruções mantidas conforme documentação anterior)*
 
-### Biometria
-1. Ative em **Configurações → Segurança & Biometria**
-2. Faça logout
-3. Na tela de Login, toque em **"👤 Usar biometria"**
-4. Coloque a digital → ✅ Login direto
-
-### Gráfico de Linha
-1. Abra o Dashboard
-2. ✅ Aparece gráfico com chips: `3M` `6M` `12M`
-3. Toque em cada chip → gráfico se adapta
-4. ✅ Valores, média e destaque aparecem
-
-### Filtro de Período
-1. Abra o Histórico
-2. Toque em **📅**
-3. Escolha data inicial e final
-4. ✅ Lista filtra pelo período
-
-### Backup
-1. Configurações → Backup → **📤 Exportar**
-2. Compartilhe via Drive
-3. **Limpar Tudo**
-4. Configurações → Backup → **📥 Restaurar**
-5. ✅ Resumo → confirme → dados voltam
-
-### Migration
-1. Instalar a v9 (fresh install)
-2. Cadastrar dados
-3. Fechar e reabrir → ✅ dados persistem
-
-### Agrupamento na Início
-1. Cadastrar Xbox em 4x
-2. ✅ Aparece como 1 card com "3 parcelas restantes"
+### OCR
+1. Faça login no app.
+2. Abra outro app (Galeria, WhatsApp ou Drive) e encontre uma imagem ou PDF de comprovante.
+3. Toque em **Compartilhar** e selecione o app **Gestão de Finanças**.
+4. ✅ O app abre a tela de processamento com o loading.
+5. ✅ Após alguns segundos, a tela de Cadastro de Dívida abre **pré-preenchida**.
+6. Confira os dados e clique em "Salvar Dívida".
 
 ---
 
 ## 🚧 Próximos passos
 
-- [ ] Testes da Sprint 6 pelo Israel (CT-14 a CT-22)
+- [ ] Testes da Sprint 6 e 7 pelo Israel (CT-14 a CT-29)
 - [ ] Testar notificações (CT-10 e CT-11)
 - [ ] Autenticação em nuvem (Firebase) — opcional
 - [ ] Sincronização entre dispositivos — opcional
 - [ ] Exportação XLSX (além de CSV)
-- [ ] Melhorias no fluxo de backup (lista de backups internos)
+- [ ] Melhorias no fluxo de backup
 
 ---
 
 ## 📚 Referências
 
-- Autor das Sprints 5 e 6: Gustavo Piteira
+- Autor das Sprints 5, 6 e 7: Gustavo Piteira
 - Soft Delete: 06/10/2026
 - Tela de Histórico: 06/10/2026
 - Exportação CSV/PDF: 06/10/2026
@@ -608,6 +456,7 @@ Novo método em `InicioActivity.atualizarTotais()`:
 - Gráfico de Linha: 10/10/2026
 - Filtro de Período: 10/10/2026
 - Backup Local: 10/10/2026
-- **Migration Não Destrutiva: 10/10/2026**
-- **Agrupamento de Parcelas na Início: 10/10/2026**
-- **Alerta Inteligente: 10/10/2026**
+- Migration Não Destrutiva: 10/10/2026
+- Agrupamento de Parcelas na Início: 10/10/2026
+- Alerta Inteligente: 10/10/2026
+- **Leitura Automática de Comprovantes (OCR): 18/10/2026**

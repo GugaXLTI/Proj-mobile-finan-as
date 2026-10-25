@@ -26,7 +26,7 @@ import com.example.controle_gastos.model.ChavePix;
                 Usuario.class, Divida.class, Transacao.class, Categoria.class,
                 Cartao.class, ChavePix.class, ComprovanteProcessado.class
         },
-        version = 10, // ⭐ v10: cache de OCR (comprovantes_processados)
+        version = 11, // ⭐ ALTERADO (T125): Subindo para versão 11 (Salário)
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -48,13 +48,12 @@ public abstract class AppDatabase extends RoomDatabase {
                             AppDatabase.class,
                             "controle_gastos_db"
                     )
-                    // ⭐ Migrations reais (não destrutivas)
+                    // ⭐ ALTERADO (T125): Adicionando a MIGRATION_10_11
                     .addMigrations(
                             Migrations.MIGRATION_8_9,
-                            Migrations.MIGRATION_9_10
+                            Migrations.MIGRATION_9_10,
+                            Migrations.MIGRATION_10_11
                     )
-                    // ⚠️ Rede de segurança: se não houver migration para
-                    // a versão do usuário, apaga e recria.
                     .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()
                     .build();

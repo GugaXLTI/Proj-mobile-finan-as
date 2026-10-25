@@ -59,6 +59,7 @@
     </LinearLayout>
 
     <!-- Conteúdo rolável -->
+
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -89,18 +90,8 @@
                 android:id="@+id/tvSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:text="Preencha seus dados para começar"
-                android:textColor="@color/text_gray"
-                android:textSize="14sp" />
-
-            <!-- Label: Nome -->
-            <TextView
-                android:id="@+id/labelNome"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:text="Nome"
                 android:textColor="@color/text_gray"
                 android:textSize="14sp" />
 
@@ -110,12 +101,12 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="32dp"
                 app:boxBackgroundColor="@color/bg_input"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
                 app:boxStrokeColor="@android:color/transparent"
                 app:boxStrokeWidth="0dp"
                 app:boxStrokeWidthFocused="0dp"
@@ -124,152 +115,118 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etNome"
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:hint="digite seu nome"
+                    android:layout_height="56dp"
+                    android:hint="Ex: JoaoSilva"
                     android:inputType="textPersonName"
                     android:paddingHorizontal="16dp"
                     android:textColor="@color/text_white"
                     android:textColorHint="@color/text_hint"
-                    android:textSize="14sp" />
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Label: E-mail -->
-            <TextView
-                android:id="@+id/labelEmail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="E-mail"
-                android:textColor="@color/text_gray"
-                android:textSize="14sp" />
-
-            <!-- Campo: E-mail -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/inputLayoutEmail"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:boxBackgroundColor="@color/bg_input"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusTopStart="8dp"
-                app:boxStrokeColor="@android:color/transparent"
-                app:boxStrokeWidth="0dp"
-                app:boxStrokeWidthFocused="0dp"
-                app:hintEnabled="false">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etEmail"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:hint="digite seu melhor e-mail"
-                    android:inputType="textEmailAddress"
-                    android:paddingHorizontal="16dp"
-                    android:textColor="@color/text_white"
-                    android:textColorHint="@color/text_hint"
-                    android:textSize="14sp" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Label: Senha -->
-            <TextView
-                android:id="@+id/labelPassword"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Senha"
-                android:textColor="@color/text_gray"
-                android:textSize="14sp" />
-
-            <!-- Campo: Senha -->
+            <!-- Campo: Senha (Com ícone de olho) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/inputLayoutPassword"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="16dp"
                 app:boxBackgroundColor="@color/bg_input"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
                 app:boxStrokeColor="@android:color/transparent"
                 app:boxStrokeWidth="0dp"
                 app:boxStrokeWidthFocused="0dp"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/text_hint"
                 app:hintEnabled="false">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPassword"
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:hint="crie uma senha segura"
+                    android:layout_height="56dp"
+                    android:hint="Crie uma senha segura"
                     android:inputType="textPassword"
                     android:paddingHorizontal="16dp"
                     android:textColor="@color/text_white"
                     android:textColorHint="@color/text_hint"
-                    android:textSize="14sp" />
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Label: Confirmar Senha -->
-            <TextView
-                android:id="@+id/labelConfirmPassword"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Confirmar Senha"
-                android:textColor="@color/text_gray"
-                android:textSize="14sp" />
-
-            <!-- Campo: Confirmar Senha -->
+            <!-- Campo: Confirmar Senha (Com ícone de olho) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/inputLayoutConfirmPassword"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="16dp"
                 app:boxBackgroundColor="@color/bg_input"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
                 app:boxStrokeColor="@android:color/transparent"
                 app:boxStrokeWidth="0dp"
                 app:boxStrokeWidthFocused="0dp"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/text_hint"
                 app:hintEnabled="false">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etConfirmPassword"
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:hint="repita sua senha"
+                    android:layout_height="56dp"
+                    android:hint="Repita sua senha"
                     android:inputType="textPassword"
                     android:paddingHorizontal="16dp"
                     android:textColor="@color/text_white"
                     android:textColorHint="@color/text_hint"
-                    android:textSize="14sp" />
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- ⭐ Aviso de Backup em Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                app:cardBackgroundColor="#1A1E29"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#F59E0B"
+                app:strokeWidth="1dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:text="💡 Seus dados são salvos localmente. Exporte um backup em JSON nas configurações para não perder nada."
+                    android:textColor="#F59E0B"
+                    android:textSize="12sp"
+                    android:lineSpacingExtra="2dp" />
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Botão Cadastrar -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCadastrar"
                 android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="32dp"
+                android:layout_height="56dp"
+                android:layout_marginTop="24dp"
                 android:backgroundTint="@color/brand_green"
-                android:text="Cadastrar"
+                android:text="Criar Conta"
                 android:textAllCaps="false"
                 android:textColor="#000000"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                app:cornerRadius="8dp" />
+                app:cornerRadius="12dp" />
 
             <!-- Rodapé -->
             <LinearLayout
                 android:id="@+id/layoutLoginLink"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="32dp"
                 android:layout_marginBottom="16dp"
                 android:gravity="center"
                 android:orientation="horizontal">

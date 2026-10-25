@@ -15,7 +15,7 @@ import com.google.android.material.textfield.TextInputEditText;
 
 public class CadastroActivity extends AppCompatActivity {
 
-    private TextInputEditText etNome, etEmail, etPassword, etConfirmPassword;
+    private TextInputEditText etNome, etPassword, etConfirmPassword;
     private MaterialButton btnCadastrar;
     private TextView tvLogin;
     private ImageView btnBack;
@@ -27,12 +27,10 @@ public class CadastroActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro);
 
-        // Inicializa o banco
         db = AppDatabase.getInstance(this);
 
-        // Vincular componentes
         etNome = findViewById(R.id.etNome);
-        etEmail = findViewById(R.id.etEmail);
+        // etEmail foi removido
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnCadastrar = findViewById(R.id.btnCadastrar);
@@ -52,34 +50,28 @@ public class CadastroActivity extends AppCompatActivity {
 
     private void realizarCadastro() {
         String nome = etNome.getText().toString().trim();
-        String email = etEmail.getText().toString().trim();
         String senha = etPassword.getText().toString().trim();
         String confirmarSenha = etConfirmPassword.getText().toString().trim();
 
         // ======== VALIDAÇÃO 1: Campos preenchidos ========
-        if (nome.isEmpty() || email.isEmpty() || senha.isEmpty() || confirmarSenha.isEmpty()) {
+        if (nome.isEmpty() || senha.isEmpty() || confirmarSenha.isEmpty()) {
             Toast.makeText(this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // ======== VALIDAÇÃO 2: Nome (mínimo 2 letras, apenas letras) ========
+        // ======== VALIDAÇÃO 2: Nome (mínimo 2 letras) ========
         if (nome.length() < 2) {
             Toast.makeText(this, "O nome deve ter pelo menos 2 caracteres.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (!nome.matches("^[A-Za-zÀ-ÿ\\s]+$")) {
-            Toast.makeText(this, "O nome deve conter apenas letras.", Toast.LENGTH_SHORT).show();
+        // Não permitir espaços ou números no nome de usuário para facilitar o login
+        if (!nome.matches("^[A-Za-zÀ-ÿ0-9_]+$")) {
+            Toast.makeText(this, "O nome deve conter apenas letras, números e _ (sem espaços).", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // ======== VALIDAÇÃO 3: Formato do e-mail (Regex) ========
-        if (!isEmailValido(email)) {
-            Toast.makeText(this, "E-mail inválido! Verifique o formato (ex: nome@dominio.com).", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        // ======== VALIDAÇÃO 4: Senha ========
+        // ======== VALIDAÇÃO 3: Senha ========
         if (senha.length() < 6) {
             Toast.makeText(this, "A senha deve ter pelo menos 6 caracteres.", Toast.LENGTH_SHORT).show();
             return;
@@ -90,17 +82,19 @@ public class CadastroActivity extends AppCompatActivity {
             return;
         }
 
-        // ======== VALIDAÇÃO 5: E-mail duplicado ========
+        // ======== VALIDAÇÃO 4: Nome duplicado ========
         UsuarioDao usuarioDao = db.usuarioDao();
-        Usuario existente = usuarioDao.buscarPorEmail(email);
+        // ⭐ ATENÇÃO: Adicione o método buscarPorNome no seu UsuarioDao
+        Usuario existente = usuarioDao.buscarPorNome(nome);
 
         if (existente != null) {
-            Toast.makeText(this, "Este e-mail já está cadastrado!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Este nome de usuário já está em uso!", Toast.LENGTH_SHORT).show();
             return;
         }
 
         // ======== CADASTRO ========
-        Usuario novoUsuario = new Usuario(nome, email, senha);
+        // ⭐ Passamos string vazia no e-mail para manter a compatibilidade da entidade
+        Usuario novoUsuario = new Usuario(nome, "", senha);
         long idGerado = usuarioDao.inserir(novoUsuario);
 
         if (idGerado > 0) {
@@ -112,10 +106,4 @@ public class CadastroActivity extends AppCompatActivity {
             Toast.makeText(this, "Erro ao cadastrar. Tente novamente.", Toast.LENGTH_SHORT).show();
         }
     }
-
-    // ======== VALIDAÇÃO DE E-MAIL COM REGEX ========
-    private boolean isEmailValido(String email) {
-        String regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
-        return email.matches(regex);
-    }
-}
+  }

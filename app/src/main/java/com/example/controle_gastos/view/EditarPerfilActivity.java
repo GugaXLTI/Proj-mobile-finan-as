@@ -18,8 +18,7 @@ public class EditarPerfilActivity extends AppCompatActivity {
 
     private ImageView btnVoltarPerfil;
     private TextView tvAvatarPerfil, btnEliminarConta;
-    private EditText editNomePerfil, editEmailPerfil, editSenhaAtual,
-            editNovaSenha, editConfirmarNovaSenha;
+    private EditText editNomePerfil, editSenhaAtual, editNovaSenha, editConfirmarNovaSenha;
     private MaterialButton btnSalvarPerfil;
 
     private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
@@ -39,7 +38,7 @@ public class EditarPerfilActivity extends AppCompatActivity {
         btnVoltarPerfil = findViewById(R.id.btnVoltarPerfil);
         tvAvatarPerfil = findViewById(R.id.tvAvatarPerfil);
         editNomePerfil = findViewById(R.id.editNomePerfil);
-        editEmailPerfil = findViewById(R.id.editEmailPerfil);
+        // editEmailPerfil removido
         editSenhaAtual = findViewById(R.id.editSenhaAtual);
         editNovaSenha = findViewById(R.id.editNovaSenha);
         editConfirmarNovaSenha = findViewById(R.id.editConfirmarNovaSenha);
@@ -83,21 +82,10 @@ public class EditarPerfilActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * ⭐ Carrega o usuário logado com 3 fallbacks para evitar o erro "Erro ao carregar dados".
-     *
-     * 1. Busca por ID (sessão)
-     * 2. Busca por nome (sessão)
-     * 3. Se só tem 1 usuário no banco, pega ele
-     * 4. Se nada funcionar, força logout
-     */
     private void carregarUsuario() {
         int userId = session.getUserId();
-
-        // Tentativa 1: por ID
         usuarioLogado = db.usuarioDao().buscarPorId(userId);
 
-        // Tentativa 2: por nome da sessão
         if (usuarioLogado == null) {
             String nomeSessao = session.getNome();
             if (nomeSessao != null && !nomeSessao.isEmpty()) {
@@ -105,7 +93,6 @@ public class EditarPerfilActivity extends AppCompatActivity {
             }
         }
 
-        // Tentativa 3: se só existe 1 usuário no banco
         if (usuarioLogado == null) {
             int total = db.usuarioDao().contarUsuarios();
             if (total == 1) {
@@ -113,7 +100,6 @@ public class EditarPerfilActivity extends AppCompatActivity {
             }
         }
 
-        // Nada funcionou: sessão expirada
         if (usuarioLogado == null) {
             new AlertDialog.Builder(this)
                     .setTitle("Sessão expirada")
@@ -130,14 +116,11 @@ public class EditarPerfilActivity extends AppCompatActivity {
             return;
         }
 
-        // ⭐ Se o userId da sessão não bate com o do banco, atualiza
         if (usuarioLogado.getId() != userId) {
             session.salvarSessao(usuarioLogado.getId(), usuarioLogado.getNome(), usuarioLogado.getEmail());
         }
 
-        // Preenche os campos
         editNomePerfil.setText(usuarioLogado.getNome());
-        editEmailPerfil.setText(usuarioLogado.getEmail());
 
         String nome = usuarioLogado.getNome();
         if (nome != null && !nome.isEmpty()) {
@@ -147,7 +130,6 @@ public class EditarPerfilActivity extends AppCompatActivity {
 
     private void salvarAlteracoes() {
         String novoNome = editNomePerfil.getText().toString().trim();
-        String novoEmail = editEmailPerfil.getText().toString().trim();
         String senhaAtual = editSenhaAtual.getText().toString().trim();
         String novaSenha = editNovaSenha.getText().toString().trim();
         String confirmarNovaSenha = editConfirmarNovaSenha.getText().toString().trim();
@@ -157,8 +139,8 @@ public class EditarPerfilActivity extends AppCompatActivity {
             return;
         }
 
-        if (novoNome.isEmpty() || novoEmail.isEmpty() || senhaAtual.isEmpty()) {
-            Toast.makeText(this, "Preencha nome, e-mail e senha atual!", Toast.LENGTH_SHORT).show();
+        if (novoNome.isEmpty() || senhaAtual.isEmpty()) {
+            Toast.makeText(this, "Preencha o nome e a senha atual!", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -167,13 +149,9 @@ public class EditarPerfilActivity extends AppCompatActivity {
             return;
         }
 
-        if (!novoNome.matches("^[A-Za-zÀ-ÿ\\s]+$")) {
-            Toast.makeText(this, "O nome deve conter apenas letras.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (!isEmailValido(novoEmail)) {
-            Toast.makeText(this, "E-mail inválido! Verifique o formato.", Toast.LENGTH_SHORT).show();
+        // Validação para Nome de Usuário (sem espaços, igual ao cadastro)
+        if (!novoNome.matches("^[A-Za-zÀ-ÿ0-9_]+$")) {
+            Toast.makeText(this, "O nome deve conter apenas letras, números e _ (sem espaços).", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -182,10 +160,11 @@ public class EditarPerfilActivity extends AppCompatActivity {
             return;
         }
 
-        if (!novoEmail.equals(usuarioLogado.getEmail())) {
-            Usuario existente = db.usuarioDao().buscarPorEmail(novoEmail);
+        // Verifica se o novo nome já está em uso por OUTRO usuário
+        if (!novoNome.equals(usuarioLogado.getNome())) {
+            Usuario existente = db.usuarioDao().buscarPorNome(novoNome);
             if (existente != null) {
-                Toast.makeText(this, "Este e-mail já está cadastrado por outro usuário!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Este nome de usuário já está em uso!", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
@@ -202,17 +181,14 @@ public class EditarPerfilActivity extends AppCompatActivity {
         }
 
         usuarioLogado.setNome(novoNome);
-        usuarioLogado.setEmail(novoEmail);
+        // Email mantido como estava para não perder compatibilidade
 
         if (!novaSenha.isEmpty()) {
             usuarioLogado.setSenha(novaSenha);
         }
 
         db.usuarioDao().atualizar(usuarioLogado);
-
-        // ⭐ Atualiza nome E e-mail na sessão
-        session.atualizarNome(novoNome);
-        session.atualizarEmail(novoEmail);
+        session.atualizarNome(novoNome); // Atualiza sessão
 
         Toast.makeText(this, "Perfil atualizado com sucesso!", Toast.LENGTH_SHORT).show();
         finish();
@@ -240,10 +216,5 @@ public class EditarPerfilActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
-    }
-
-    private boolean isEmailValido(String email) {
-        String regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
-        return email.matches(regex);
     }
 }

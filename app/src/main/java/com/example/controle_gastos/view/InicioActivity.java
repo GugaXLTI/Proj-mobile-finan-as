@@ -3,9 +3,12 @@ package com.example.controle_gastos.view;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -19,6 +22,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.VencimentoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.model.VencimentoItem;
 import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.SessionManager;
@@ -38,6 +42,15 @@ public class InicioActivity extends AppCompatActivity {
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
     private TextView tvAvatarInicio, tvNomeInicio, tvTotalDividasInicio, tvTotalPagoInicio, tvAlertaMes;
+
+    // ⭐ Variáveis do Dashboard
+    private TextView tvSaldoDisponivelInicio, tvSalarioTotalInicio, tvGastosMesInicio;
+    private ProgressBar progressOrcamento;
+
+    // ⭐ Variável alterada para ImageView
+    private ImageView btnToggleSaldo;
+    private boolean isSaldoOculto = false;
+
     private RecyclerView rvVencimentos;
     private Button btnVerTodosVencimentos;
     private CardView cardTotalDividas;
@@ -68,6 +81,19 @@ public class InicioActivity extends AppCompatActivity {
         btnVerTodosVencimentos = findViewById(R.id.btnVerTodosVencimentos);
         cardTotalDividas = findViewById(R.id.cardTotalDividas);
 
+        // ⭐ Buscando os IDs dos cards de saldo
+        tvSaldoDisponivelInicio = findViewById(R.id.tvSaldoDisponivelInicio);
+        tvSalarioTotalInicio = findViewById(R.id.tvSalarioTotalInicio);
+        tvGastosMesInicio = findViewById(R.id.tvGastosMesInicio);
+        progressOrcamento = findViewById(R.id.progressOrcamento);
+
+        // ⭐ NOVO: Buscando o botão de olho como ImageView
+        btnToggleSaldo = findViewById(R.id.btnToggleSaldo);
+        btnToggleSaldo.setOnClickListener(v -> {
+            isSaldoOculto = !isSaldoOculto;
+            atualizarDashboardFinanceiro(); // Recalcula e atualiza a UI
+        });
+
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
         tabDividas = findViewById(R.id.tabDividas);
@@ -83,6 +109,7 @@ public class InicioActivity extends AppCompatActivity {
         rvVencimentos.setLayoutManager(new LinearLayoutManager(this));
 
         carregarDados();
+        atualizarDashboardFinanceiro();
 
         cardTotalDividas.setOnClickListener(v -> {
             startActivity(new Intent(this, HistoricoActivity.class));
@@ -140,21 +167,67 @@ public class InicioActivity extends AppCompatActivity {
             tvAvatarInicio.setText(String.valueOf(nome.charAt(0)).toUpperCase());
         }
         carregarDados();
+        atualizarDashboardFinanceiro();
+    }
+
+    // ⭐ Método para calcular o Salário - Gastos do mês
+    private void atualizarDashboardFinanceiro() {
+        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
+        if (user != null) {
+            double salario = user.getSalarioMensal();
+
+            Calendar cal = Calendar.getInstance();
+            String mesAnoAtual = String.format(LOCALE_BR, "%02d/%04d",
+                    cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR));
+
+            // Puxa a soma dos gastos do mês atual
+            double gastosMes = db.dividaDao().somarGastosDoMes(session.getUserId(), mesAnoAtual);
+            double saldoDisponivel = salario - gastosMes;
+
+            // ⭐ Lógica para ocultar ou mostrar os valores usando as imagens
+            if (isSaldoOculto) {
+                btnToggleSaldo.setImageResource(R.drawable.ic_eye_closed);
+                tvSalarioTotalInicio.setText("R$ ••••");
+                tvGastosMesInicio.setText("R$ ••••");
+                tvSaldoDisponivelInicio.setText("R$ ••••");
+            } else {
+                btnToggleSaldo.setImageResource(R.drawable.ic_eye_open);
+                tvSalarioTotalInicio.setText(String.format(LOCALE_BR, "R$ %.2f", salario));
+                tvGastosMesInicio.setText(String.format(LOCALE_BR, "R$ %.2f", gastosMes));
+                tvSaldoDisponivelInicio.setText(String.format(LOCALE_BR, "R$ %.2f", saldoDisponivel));
+            }
+
+            // Lógica de cores (Regra de Negócio) - Só aplica cor se não estiver oculto
+            if (!isSaldoOculto) {
+                if (salario <= 0) {
+                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#64748B"));
+                } else if (saldoDisponivel < 0) {
+                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#EF4444")); // Vermelho
+                } else {
+                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#10B981")); // Verde
+                }
+            }
+
+            // Atualiza a barra de progresso visual
+            if (salario > 0) {
+                int porcentagemGasta = (int) ((gastosMes / salario) * 100);
+                progressOrcamento.setProgress(Math.min(porcentagemGasta, 100));
+            } else {
+                progressOrcamento.setProgress(0);
+            }
+        }
     }
 
     private void carregarDados() {
         dividas = db.dividaDao().listarPorUsuario(session.getUserId());
 
-        // ⭐ Filtra apenas não pagas
         List<Divida> naoPagas = new ArrayList<>();
         for (Divida d : dividas) {
             if (!d.isPago()) naoPagas.add(d);
         }
 
-        // ⭐ Agrupa por grupoId
         List<VencimentoItem> items = agruparVencimentos(naoPagas);
 
-        // Mostra no máximo 3
         if (items.size() > 3) {
             items = items.subList(0, 3);
         }
@@ -164,11 +237,6 @@ public class InicioActivity extends AppCompatActivity {
         atualizarTotais();
     }
 
-    /**
-     * ⭐ Agrupa dívidas não pagas por grupoId.
-     *  - Dívidas com grupoId > 0 viram 1 item (com N parcelas restantes).
-     *  - Dívidas sem grupo (grupoId = 0) viram items individuais.
-     */
     private List<VencimentoItem> agruparVencimentos(List<Divida> naoPagas) {
         Map<Integer, List<Divida>> grupos = new HashMap<>();
         List<Divida> semGrupo = new ArrayList<>();
@@ -188,11 +256,8 @@ public class InicioActivity extends AppCompatActivity {
 
         List<VencimentoItem> items = new ArrayList<>();
 
-        // Processa grupos
         for (Map.Entry<Integer, List<Divida>> entry : grupos.entrySet()) {
             List<Divida> parcelas = entry.getValue();
-
-            // Ordena por vencimento
             parcelas.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
 
             Divida proxima = parcelas.get(0);
@@ -213,7 +278,6 @@ public class InicioActivity extends AppCompatActivity {
             items.add(item);
         }
 
-        // Processa individuais
         for (Divida d : semGrupo) {
             VencimentoItem item = new VencimentoItem();
             item.titulo = d.getTitulo();
@@ -227,9 +291,7 @@ public class InicioActivity extends AppCompatActivity {
             items.add(item);
         }
 
-        // Ordena tudo pela próxima data de vencimento
         items.sort((a, b) -> compararDatas(a.proximoVencimento, b.proximoVencimento));
-
         return items;
     }
 
@@ -255,8 +317,6 @@ public class InicioActivity extends AppCompatActivity {
                 totalPago += d.getValorTotal();
             } else {
                 totalAPagar += d.getValorRestante();
-
-                // ⭐ Verifica se vence NO MÊS ATUAL
                 if (venceNoMes(d.getVencimento(), mesAtual, anoAtual)) {
                     totalVencendoMes += d.getValorRestante();
                     contasVencendoMes++;
@@ -267,7 +327,6 @@ public class InicioActivity extends AppCompatActivity {
         tvTotalDividasInicio.setText(String.format(LOCALE_BR, "R$ %.2f", totalAPagar));
         tvTotalPagoInicio.setText(String.format(LOCALE_BR, "R$ %.2f", totalPago));
 
-        // ⭐ Alerta inteligente
         if (contasVencendoMes > 0) {
             String texto = contasVencendoMes +
                     (contasVencendoMes == 1

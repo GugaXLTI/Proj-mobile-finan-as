@@ -3,21 +3,8 @@ package com.example.controle_gastos.database;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-/**
- * Classe que agrupa TODAS as migrations do banco.
- *
- * ⭐ Como usar: ao subir a versão do AppDatabase (ex: v9 → v10),
- *    crie uma nova Migration aqui e registre no AppDatabase.
- *
- * Padrão de nomenclatura: MIGRATION_X_Y
- * onde X = versão de origem e Y = versão de destino.
- */
 public class Migrations {
 
-    /**
-     * Migração v8 → v9
-     * Adiciona o campo 'grupoId' (parcelamento por mês) na tabela 'dividas'.
-     */
     public static final Migration MIGRATION_8_9 = new Migration(8, 9) {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
@@ -27,13 +14,6 @@ public class Migrations {
         }
     };
 
-    /**
-     * Migração v9 → v10
-     * Cria a tabela 'comprovantes_processados' (cache de OCR).
-     *
-     * Índice único em (usuarioId, uri) para permitir REPLACE e
-     * isolamento por usuário.
-     */
     public static final Migration MIGRATION_9_10 = new Migration(9, 10) {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
@@ -50,6 +30,16 @@ public class Migrations {
                     "CREATE UNIQUE INDEX IF NOT EXISTS " +
                             "`index_comprovantes_processados_usuarioId_uri` " +
                             "ON `comprovantes_processados` (`usuarioId`, `uri`)"
+            );
+        }
+    };
+
+    // ⭐ NOVO (T125): Migration para adicionar o campo de salário na tabela usuarios
+    public static final Migration MIGRATION_10_11 = new Migration(10, 11) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL(
+                    "ALTER TABLE usuarios ADD COLUMN salarioMensal REAL NOT NULL DEFAULT 0.0"
             );
         }
     };

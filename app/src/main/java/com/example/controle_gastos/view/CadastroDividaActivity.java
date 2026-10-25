@@ -398,9 +398,13 @@ public class CadastroDividaActivity extends AppCompatActivity {
             rvSelecao.setVisibility(View.GONE);
             containerVazio.setVisibility(View.VISIBLE);
 
+            // ⭐ FIX: Limpa o adapter anterior para não manter seleções de outras categorias na memória
+            chipAdapter = null;
+
             String msg;
             if (tipo.equals("Pix")) {
-                msg = "Nenhuma chave Pix cadastrada.\nCadastre uma chave para continuar.";
+                // ⭐ FIX: Texto ajustado para indicar que é opcional, tirando a obrigatoriedade de "continuar"
+                msg = "Nenhuma chave Pix cadastrada.\nO vínculo com uma chave é opcional para registrar a despesa.";
             } else if (tipo.equals("Cartão de Crédito")) {
                 msg = "Nenhum cartão de crédito cadastrado.\nCadastre um cartão para continuar.";
             } else if (tipo.equals("Cartão de Débito")) {
@@ -648,6 +652,8 @@ public class CadastroDividaActivity extends AppCompatActivity {
         if (chipAdapter != null && chipAdapter.getItemSelecionado() != null) {
             bancoSelecionado = chipAdapter.getItemSelecionado()[2];
         } else {
+            // ⭐ FIX / REGRA DE NEGÓCIO: Se não tem chave Pix cadastrada/selecionada,
+            // assume o nome do tipo de dívida (ex: "Pix") como fallback para salvar o registro.
             bancoSelecionado = tipoDivida;
         }
 

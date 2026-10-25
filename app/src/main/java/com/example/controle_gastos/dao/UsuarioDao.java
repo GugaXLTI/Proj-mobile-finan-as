@@ -19,18 +19,19 @@ public interface UsuarioDao {
     @Delete
     void deletar(Usuario usuario);
 
-    @Query("SELECT * FROM usuarios WHERE email = :email AND senha = :senha LIMIT 1")
-    Usuario login(String email, String senha);
+    // ⭐ ALTERADO: Login agora é feito por Nome e Senha
+    @Query("SELECT * FROM usuarios WHERE nome = :nome AND senha = :senha LIMIT 1")
+    Usuario login(String nome, String senha);
+
+    // ⭐ NOVO: Necessário para o CadastroActivity verificar se o nome já existe
+    @Query("SELECT * FROM usuarios WHERE nome = :nome LIMIT 1")
+    Usuario buscarPorNome(String nome);
 
     @Query("SELECT * FROM usuarios WHERE email = :email LIMIT 1")
     Usuario buscarPorEmail(String email);
 
     @Query("SELECT * FROM usuarios WHERE id = :id LIMIT 1")
     Usuario buscarPorId(int id);
-
-    // ⭐ Fallback: busca por nome (usado quando a sessão perde o ID)
-    @Query("SELECT * FROM usuarios WHERE nome = :nome LIMIT 1")
-    Usuario buscarPorNome(String nome);
 
     // ⭐ Último recurso: pega o único usuário do banco (útil no MVP)
     @Query("SELECT * FROM usuarios LIMIT 1")

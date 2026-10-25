@@ -9,32 +9,43 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp">
+        android:paddingHorizontal="24dp"
+        android:paddingTop="32dp"
+        android:paddingBottom="24dp">
 
-        <!-- Header: Ícone + ORG -->
+        <!-- Top Bar (Padronizado com a tela de Cadastro) -->
         <LinearLayout
-            android:id="@+id/headerLogo"
+            android:id="@+id/topBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <ImageView
-                android:id="@+id/ivIconeOrg"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:contentDescription="Ícone ORG"
-                android:src="@drawable/resource_new" />
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                app:cardBackgroundColor="@color/brand_green"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Carteira"
+                    android:src="@drawable/ic_wallet"
+                    app:tint="#000000" />
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="12dp"
                 android:text="ORG"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_white"
                 android:textSize="18sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -44,182 +55,137 @@
             android:id="@+id/tvTituloLogin"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
+            android:layout_marginTop="40dp"
             android:text="Bem-vindo de volta"
-            android:textColor="#FFFFFF"
-            android:textSize="24sp"
+            android:textColor="@color/text_white"
+            android:textSize="28sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/headerLogo" />
+            app:layout_constraintTop_toBottomOf="@id/topBar" />
 
         <TextView
             android:id="@+id/tvSubtituloLogin"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:text="Acesse sua conta para continuar"
-            android:textColor="#64748B"
-            android:textSize="13sp"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvTituloLogin" />
 
-        <!-- E-mail -->
-        <TextView
-            android:id="@+id/tvLabelEmail"
-            android:layout_width="wrap_content"
+        <!-- Campo: Nome (Padronizado com TextInputLayout) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputLayoutNome"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:text="E-mail"
-            android:textColor="#94A3B8"
-            android:textSize="13sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvSubtituloLogin" />
+            app:boxBackgroundColor="@color/bg_input"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@android:color/transparent"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:hintEnabled="false"
+            app:layout_constraintTop_toBottomOf="@id/tvSubtituloLogin">
 
-        <EditText
-            android:id="@+id/editEmail"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editNome"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:hint="Seu nome de usuário"
+                android:inputType="textPersonName"
+                android:paddingHorizontal="16dp"
+                android:textColor="@color/text_white"
+                android:textColorHint="@color/text_hint"
+                android:textSize="15sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Campo: Senha (Com ícone de olho) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputLayoutSenha"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_input_field"
-            android:hint="seu@email.com"
-            android:inputType="textEmailAddress"
-            android:paddingHorizontal="16dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#475569"
-            android:textSize="14sp"
-            app:layout_constraintTop_toBottomOf="@id/tvLabelEmail" />
-
-        <!-- Senha -->
-        <TextView
-            android:id="@+id/tvLabelSenha"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Senha"
-            android:textColor="#94A3B8"
-            android:textSize="13sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/editEmail" />
+            app:boxBackgroundColor="@color/bg_input"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@android:color/transparent"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/text_hint"
+            app:hintEnabled="false"
+            app:layout_constraintTop_toBottomOf="@id/inputLayoutNome">
 
-        <EditText
-            android:id="@+id/editSenha"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_input_field"
-            android:hint="••••••••"
-            android:inputType="textPassword"
-            android:paddingHorizontal="16dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#475569"
-            android:textSize="14sp"
-            app:layout_constraintTop_toBottomOf="@id/tvLabelSenha" />
-
-        <!-- Esqueceu a senha -->
-        <TextView
-            android:id="@+id/tvEsqueceuSenha"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Esqueceu a senha?"
-            android:textColor="#6366F1"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/editSenha" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editSenha"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:hint="Sua senha secreta"
+                android:inputType="textPassword"
+                android:paddingHorizontal="16dp"
+                android:textColor="@color/text_white"
+                android:textColorHint="@color/text_hint"
+                android:textSize="15sp" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Botão Entrar -->
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnEntrar"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="#10B981"
-            android:stateListAnimator="@null"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:backgroundTint="@color/brand_green"
             android:text="Entrar"
-            android:textColor="#090D16"
-            android:textSize="15sp"
+            android:textAllCaps="false"
+            android:textColor="#000000"
+            android:textSize="16sp"
             android:textStyle="bold"
-            app:cornerRadius="8dp"
-            app:layout_constraintTop_toBottomOf="@id/tvEsqueceuSenha" />
+            app:cornerRadius="12dp"
+            app:layout_constraintTop_toBottomOf="@id/inputLayoutSenha" />
 
-        <!-- ⭐ Botão Biometria (só aparece quando ativo) -->
+        <!-- ⭐ Botão Biometria -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBiometria"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="12dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
             android:text="👤  Usar biometria"
-            android:textColor="#10B981"
-            android:textSize="14sp"
+            android:textAllCaps="false"
+            android:textColor="@color/brand_green"
+            android:textSize="15sp"
+            android:textStyle="bold"
             android:visibility="gone"
-            app:strokeColor="#10B981"
-            app:strokeWidth="1dp"
-            app:cornerRadius="8dp"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/brand_green"
+            app:strokeWidth="1.5dp"
             app:layout_constraintTop_toBottomOf="@id/btnEntrar" />
-
-        <!-- Divisor "ou" -->
-        <LinearLayout
-            android:id="@+id/divisorContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:gravity="center"
-            android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/btnBiometria"
-            app:layout_goneMarginTop="24dp">
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="#1E293B" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="16dp"
-                android:text="ou"
-                android:textColor="#475569"
-                android:textSize="12sp" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="#1E293B" />
-        </LinearLayout>
-
-        <!-- Botão Google -->
-        <Button
-            android:id="@+id/btnGoogle"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="#131C2E"
-            android:stateListAnimator="@null"
-            android:text="Continuar com Google"
-            android:textColor="#CBD5E1"
-            android:textSize="14sp"
-            app:cornerRadius="8dp"
-            app:layout_constraintTop_toBottomOf="@id/divisorContainer" />
 
         <!-- Rodapé (Cadastro) -->
         <TextView
             android:id="@+id/tvRodape"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="40dp"
             android:layout_marginBottom="16dp"
             android:text="Não tem uma conta? Cadastre-se"
-            android:textColor="#64748B"
-            android:textSize="13sp"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnGoogle" />
+            app:layout_constraintTop_toBottomOf="@id/btnBiometria"
+            app:layout_goneMarginTop="40dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

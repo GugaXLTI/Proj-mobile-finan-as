@@ -124,11 +124,11 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Nome Completo -->
+                    <!-- Nome de Usuário -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Nome Completo"
+                        android:text="Nome de Usuário"
                         android:textColor="#94A3B8"
                         android:textSize="12sp"
                         android:layout_marginBottom="6dp" />
@@ -138,29 +138,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_campo_login"
-                        android:hint="Digite seu nome completo"
+                        android:hint="Ex: joaosilva"
                         android:inputType="textPersonName"
-                        android:textColor="@color/text_white"
-                        android:textColorHint="@color/text_hint"
-                        android:paddingHorizontal="12dp"
-                        android:layout_marginBottom="16dp" />
-
-                    <!-- E-mail -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="E-mail de Notificação"
-                        android:textColor="#94A3B8"
-                        android:textSize="12sp"
-                        android:layout_marginBottom="6dp" />
-
-                    <EditText
-                        android:id="@+id/editEmailPerfil"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_campo_login"
-                        android:hint="seu@email.com"
-                        android:inputType="textEmailAddress"
                         android:textColor="@color/text_white"
                         android:textColorHint="@color/text_hint"
                         android:paddingHorizontal="12dp"

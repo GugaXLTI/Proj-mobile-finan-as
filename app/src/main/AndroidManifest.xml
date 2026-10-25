@@ -43,6 +43,7 @@
         <activity android:name=".view.EditarPerfilActivity" android:exported="false" />
         <activity android:name=".view.HistoricoActivity" android:exported="false" />
         <activity android:name=".view.CartoesActivity" android:exported="false" />
+        <activity android:name=".view.OnboardingActivity" />
 
         <!-- ⭐ Recebe comprovantes compartilhados de outros apps (WhatsApp, Gmail, Galeria, etc.) -->
         <activity

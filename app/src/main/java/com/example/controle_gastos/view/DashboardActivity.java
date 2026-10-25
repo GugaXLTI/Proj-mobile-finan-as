@@ -25,6 +25,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaDashboardAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.utils.CsvExportHelper;
 import com.example.controle_gastos.utils.PdfExportHelper;
 import com.example.controle_gastos.utils.SessionManager;
@@ -64,6 +65,9 @@ public class DashboardActivity extends AppCompatActivity {
 
     private TextView btnMesAnteriorDash, btnMesProximoDash, tvMesAtualDash, tvBadgeAtualDash;
 
+    // ⭐ NOVO: Variáveis do Balanço do Mês
+    private TextView tvSalarioDash, tvGastosDash, tvSaldoDash;
+
     private List<Divida> todasDividas;
     private List<Divida> dividasFiltradas;
     private DividaDashboardAdapter dividaAdapter;
@@ -78,7 +82,6 @@ public class DashboardActivity extends AppCompatActivity {
 
     private int mesesVisiveis = PERIODO_PADRAO;
 
-    // ⭐ Guarda a categoria selecionada para a exportação
     private String categoriaAtual = "Todos";
 
     private final int[] CORES_FIGMA = {
@@ -116,6 +119,11 @@ public class DashboardActivity extends AppCompatActivity {
         btnMesProximoDash = findViewById(R.id.btnMesProximoDash);
         tvMesAtualDash = findViewById(R.id.tvMesAtualDash);
         tvBadgeAtualDash = findViewById(R.id.tvBadgeAtualDash);
+
+        // ⭐ NOVO: Bind do Balanço do Mês
+        tvSalarioDash = findViewById(R.id.tvSalarioDash);
+        tvGastosDash = findViewById(R.id.tvGastosDash);
+        tvSaldoDash = findViewById(R.id.tvSaldoDash);
 
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
@@ -555,6 +563,36 @@ public class DashboardActivity extends AppCompatActivity {
                 ? "DÍVIDAS DE " + nomeMes
                 : "DÍVIDAS DE " + nomeMes + " • " + categoriaFiltro.toUpperCase());
         tvTotalLista.setText("Total: R$ " + String.format(LOCALE_BR, "%.2f", totalMes));
+
+        // ⭐ ATUALIZA O BALANÇO DO MÊS
+        atualizarBalancoMensal();
+    }
+
+    // ⭐ NOVO: Calcula e atualiza o Balanço de Salário x Gastos
+    private void atualizarBalancoMensal() {
+        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
+        if (user != null) {
+            double salario = user.getSalarioMensal();
+
+            // Soma os gastos TOTAIS do mês (independente do filtro de categoria)
+            double gastosTotaisMes = 0;
+            for (Divida d : todasDividas) {
+                gastosTotaisMes += d.getValorTotal();
+            }
+
+            double saldo = salario - gastosTotaisMes;
+
+            tvSalarioDash.setText(String.format(LOCALE_BR, "R$ %.2f", salario));
+            tvGastosDash.setText(String.format(LOCALE_BR, "R$ %.2f", gastosTotaisMes));
+            tvSaldoDash.setText(String.format(LOCALE_BR, "R$ %.2f", saldo));
+
+            // Cor do saldo
+            if (saldo < 0) {
+                tvSaldoDash.setTextColor(Color.parseColor("#EF4444")); // Vermelho
+            } else {
+                tvSaldoDash.setTextColor(Color.parseColor("#10B981")); // Verde
+            }
+        }
     }
 
     private void configurarFiltros() {
@@ -616,10 +654,6 @@ public class DashboardActivity extends AppCompatActivity {
         }
         btn.setBackground(drawable);
     }
-
-    // ==========================================
-    // ⭐ EXPORTAÇÃO (CSV e PDF)
-    // ==========================================
 
     private void configurarExportar() {
         btnExportar.setOnClickListener(v -> mostrarDialogoExportacao());
@@ -685,9 +719,6 @@ public class DashboardActivity extends AppCompatActivity {
         PdfExportHelper.compartilharPdf(this, arquivo);
     }
 
-    /**
-     * ⭐ Retorna "Outubro 2026" (mesmo formato usado no Histórico).
-     */
     private String getMesAnoString() {
         String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
                 "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};

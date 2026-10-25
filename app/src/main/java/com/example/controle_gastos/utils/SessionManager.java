@@ -10,7 +10,9 @@ public class SessionManager {
     private static final String KEY_USER_NOME = "user_nome";
     private static final String KEY_USER_EMAIL = "user_email";
 
-    // ⭐ Chaves de biometria (não são apagadas no logout)
+    // ⭐ NOVO (T127): Chave para controle do Onboarding
+    private static final String KEY_ONBOARDING_CONCLUIDO = "onboarding_concluido";
+
     private static final String KEY_BIOMETRIA_ATIVA = "biometria_ativa";
     private static final String KEY_BIOMETRIA_USER_ID = "biometria_user_id";
     private static final String KEY_BIOMETRIA_NOME = "biometria_user_nome";
@@ -65,18 +67,29 @@ public class SessionManager {
         return prefs.getString(KEY_USER_EMAIL, "");
     }
 
-    /**
-     * Logout: apaga apenas a sessão principal, mantém a preferência de biometria.
-     */
     public void logout() {
         editor.remove(KEY_USER_ID);
         editor.remove(KEY_USER_NOME);
         editor.remove(KEY_USER_EMAIL);
+        // ⭐ Nota: Nós NÃO limpamos o onboarding no logout,
+        // para que se ele logar de novo, não precise preencher o salário de novo.
+        editor.apply();
+    }
+
+    // ============ ONBOARDING (T127) ============
+
+    public boolean isOnboardingConcluido() {
+        return prefs.getBoolean(KEY_ONBOARDING_CONCLUIDO, false);
+    }
+
+    public void setOnboardingConcluido(boolean concluido) {
+        editor.putBoolean(KEY_ONBOARDING_CONCLUIDO, concluido);
         editor.apply();
     }
 
     // ============ BIOMETRIA ============
 
+    // ... (Mantenha os mesmos métodos de biometria que você já tinha)
     public boolean isBiometriaAtiva() {
         return prefs.getBoolean(KEY_BIOMETRIA_ATIVA, false);
     }
@@ -86,10 +99,6 @@ public class SessionManager {
         editor.apply();
     }
 
-    /**
-     * Salva os dados do usuário para login biométrico.
-     * Chamado ao ativar a biometria nas Configurações.
-     */
     public void salvarUsuarioBiometrico(int userId, String nome, String email) {
         editor.putInt(KEY_BIOMETRIA_USER_ID, userId);
         editor.putString(KEY_BIOMETRIA_NOME, nome);
@@ -98,9 +107,6 @@ public class SessionManager {
         editor.apply();
     }
 
-    /**
-     * Limpa os dados biométricos (chamado ao desativar a biometria).
-     */
     public void limparBiometria() {
         editor.remove(KEY_BIOMETRIA_USER_ID);
         editor.remove(KEY_BIOMETRIA_NOME);

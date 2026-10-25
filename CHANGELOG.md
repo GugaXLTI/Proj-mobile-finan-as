@@ -69,19 +69,21 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 ### Adicionado
 - **Integração com Google ML Kit (Text Recognition)**
   - Dependência `com.google.mlkit:text-recognition:16.0.0` no `build.gradle.kts`
-  - Classe `OcrHelper` para processar imagens e extrair texto (on-device)
+  - Classe `utils/ReceiptOcr.java` para processar imagens e extrair texto (on-device)
   - Funciona offline e de forma gratuita
 - **Recebimento de Compartilhamento Externo (ACTION_SEND)**
   - Filtros de Intent no `AndroidManifest.xml` para receber `image/*` e `application/pdf`
-  - Tela `ComprovanteActivity` criada para receber o arquivo compartilhado
-  - Layout `activity_processando_comprovante.xml` com loading e botão cancelar
+  - Tela `view/ReceiptShareActivity.java` criada para receber o arquivo compartilhado
+  - Layout `res/layout/activity_receipt_share.xml` com loading e botão cancelar
 - **Parsing e Pré-preenchimento Automático**
-  - Classe `ComprovanteParser` para interpretar o texto bruto extraído
+  - Classe `utils/ReceiptParser.java` para interpretar o texto bruto extraído
   - Extração de valor, data, banco e título via Regex e heurística
-  - `ComprovanteActivity` processa os dados e redireciona para `CadastroDividaActivity` com os campos preenchidos via `Intent`
+  - `ReceiptShareActivity` processa os dados e redireciona para `CadastroDividaActivity` com os campos preenchidos via `Intent`
 - **Adaptação no Cadastro de Dívida**
   - `CadastroDividaActivity` agora aceita `extras` (título, valor, vencimento, banco)
   - Preenchimento automático dos campos ao abrir a tela
+- **Modelos de suporte ao OCR**
+  - `model/ComprovanteProcessado.java`, `model/ParsedReceipt.java` e `dao/ComprovanteProcessadoDao.java`
 
 ### Modificado
 - `AndroidManifest.xml` — novos filtros de Intent e Activity de OCR

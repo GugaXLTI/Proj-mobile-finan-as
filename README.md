@@ -109,7 +109,7 @@ O app permite ao usuário:
 ## 📱 Telas do App
 
 ### Splash Screen
-Tela de abertura com logo, fontes personalizadas (Abril Fatface e Lato), timer de 2 segundos e verificação de sessão ativa.
+Tela de abertura com logo, fontes personalizadas (Abril Fatface e Inter), timer de 2 segundos e verificação de sessão ativa.
 
 ### Tela de Login / Cadastro
 Validação de campos, verificação no Room, e-mail com Regex, senhas coincidentes. Suporta biometria quando ativada nas Configurações.
@@ -132,8 +132,8 @@ Cards com título, valor da parcela e progresso. Botões: Excluir (soft delete),
 ### Cadastro de Dívida
 Redesenhada no novo padrão visual. Botão voltar redondo, título "Lançar nova dívida", valor total em card grande com chips de parcelas (1x, 2x, 3x, 6x, 12x, Outro) e resumo dinâmico ("Nx de R$ X · à vista/parcelado"). Tipo de dívida e Categoria viram chips (categoria com bolinha colorida). Seleção de cartão / chave Pix / banco em lista horizontal de cards com card tracejado "Adicionar". Campos de data com ícone de calendário e botão "Preencher com comprovante" tracejado. Pix e Débito são à vista; Crédito parcelado gera N registros independentes (1 por mês). Aceita pré-preenchimento automático via OCR. Barra inferior reutilizável via `<include>` + `BottomNavHelper`.
 
-### Tela de Processamento OCR ⭐ NOVO
-Tela que recebe o comprovante compartilhado de outros apps, exibe um loading ("Comprovante recebido. Processando..."), extrai o texto via ML Kit, interpreta os dados e redireciona para o Cadastro de Dívida já preenchido.
+### Tela de Processamento OCR (ReceiptShareActivity)
+Tela que recebe o comprovante compartilhado de outros apps, extrai o texto via ML Kit (`ReceiptOcr`), interpreta os dados (`ReceiptParser`) e redireciona para o Cadastro de Dívida já preenchido. Possui tela de loading.
 
 ### Tela de Histórico
 Navegação por mês, badge "Atual", card de resumo (Total, Já Pago, Falta Pagar), chips de filtro por categoria e lista de lançamentos com 4 estados:
@@ -184,7 +184,7 @@ Barra inferior: Início, Lançar, Dívidas, Relatórios e Config. A partir do re
 - **Chip:** altura 44dp, raio 24dp, texto 14sp (fundo #111A2E → #123D33; borda #1E2A44 → #10B981; texto #E2E8F0 → #34D399 quando selecionado).
 - **Barra inferior:** pílula `bg_nav_pill` (#F2101A2B, borda #22304A, raio 32dp), 64dp, margens 20dp laterais e 16dp embaixo, elevation 8dp; aba ativa = ícone + texto #34D399 em `bg_tab_ativo` (#123D33); inativas = só ícone #94A3B8.
 - **Ícones:** vetores 24dp, stroke 1.75, cor via `app:tint`.
-- **Fonte:** Roboto (padrão atual). Inter é a fonte de referência do design e está planejada para aplicação futura (`res/font/` + `themes.xml`). `abril_fatface` permanece apenas em telas antigas.
+- **Fonte:** Roboto (padrão). A fonte Inter já está no projeto (`res/font/inter_medium.xml`) e será aplicada no tema em breve. `abril_fatface` permanece em telas antigas.
 
 ---
 
@@ -212,41 +212,28 @@ Barra inferior: Início, Lançar, Dívidas, Relatórios e Config. A partir do re
 
 ```
 app/src/main/java/com/example/controle_gastos/
-├── model/          → Entidades (@Entity) + BackupData + VencimentoItem
-├── dao/            → DAOs (acesso ao banco)
-├── database/       → AppDatabase (versão 9) + Migrations
-├── utils/          → SessionManager, CategoriaSeeder, NotificationHelper,
-│                     AlarmeHelper, CsvExportHelper, PdfExportHelper,
-│                     BiometricHelper, BackupHelper, OcrHelper,
-│                     ComprovanteParser, BottomNavHelper
-├── receiver/       → LembreteReceiver, BootReceiver
-├── adapter/        → Adapters (dívidas, categorias, cartões, chips,
-│                     histórico, divida dashboard, vencimento)
-└── view/           → 15+ Activities (Splash, Login, Início, Histórico, etc)
+├── adapter/        → Adapters (cartão, categoria, chave pix, chip, dívida, dashboard, histórico, lançamento, legenda, vencimento)
+├── dao/            → DAOs (CartaoDao, CategoriaDao, ChavePixDao, ComprovanteProcessadoDao, DividaDao, TransacaoDao, UsuarioDao)
+├── database/       → AppDatabase, DatabaseClient, Migrations
+├── model/          → Entidades (@Entity) + BackupData, CategoriaResumo, ComprovanteProcessado, ParsedReceipt, VencimentoItem
+├── receiver/       → BootReceiver, LembreteReceiver
+├── utils/          → AlarmeHelper, BackupHelper, BiometricHelper, BottomNavHelper, CategoriaSeeder,
+│                     CsvExportHelper, NotificationHelper, PdfExportHelper, ReceiptCacheHelper,
+│                     ReceiptImageLoader, ReceiptOcr, ReceiptParser, SessionManager
+└── view/           → Activities e Fragments (Splash, Login, Início, Histórico, ReceiptShare, etc)
 ```
 
 **Novos na Sprint 6/7 + Redesign Visual:**
-- `utils/BiometricHelper.java`
-- `utils/BackupHelper.java`
-- `utils/BottomNavHelper.java`
-- `model/BackupData.java`
-- `model/VencimentoItem.java`
-- `database/Migrations.java`
-- `adapter/DividaDashboardAdapter.java`
-- `adapter/HistoricoAdapter.java`
-- `view/HistoricoActivity.java`
-- `res/drawable/bg_line_chart_gradient.xml`
-- `res/xml/file_paths.xml`
-- `utils/OcrHelper.java`
-- `utils/ComprovanteParser.java`
-- `view/ComprovanteActivity.java`
-- `layout/activity_processando_comprovante.xml`
+- `utils/BiometricHelper.java`, `utils/BackupHelper.java`, `utils/BottomNavHelper.java`, `utils/CsvExportHelper.java`, `utils/PdfExportHelper.java`, `utils/ReceiptOcr.java`, `utils/ReceiptParser.java`, `utils/ReceiptCacheHelper.java`, `utils/ReceiptImageLoader.java`
+- `model/BackupData.java`, `model/VencimentoItem.java`, `model/ParsedReceipt.java`, `model/ComprovanteProcessado.java`, `model/CategoriaResumo.java`
+- `database/Migrations.java`, `database/DatabaseClient.java`
+- `dao/ComprovanteProcessadoDao.java`
+- `adapter/DividaDashboardAdapter.java`, `adapter/HistoricoAdapter.java`, `adapter/LancamentoAdapter.java`, `adapter/LegendaAdapter.java`
+- `view/HistoricoActivity.java`, `view/ReceiptShareActivity.java`
+- `res/drawable/bg_line_chart_gradient.xml`, `res/xml/file_paths.xml`
 - `res/layout/layout_bottom_nav.xml` (barra inferior reutilizável via `<include>`)
 - `res/layout/item_conta_atencao.xml` (card "Atenção este mês" da Início)
-- `res/drawable/bg_card_glass.xml`, `bg_card_atencao.xml`, `bg_icone_alerta.xml`, `bg_nav_pill.xml`, `bg_dot_vermelho.xml`, `bg_dot_verde.xml`, `bg_progress_atencao.xml`, `bg_gradient_inicio.xml`, `bg_data_card.xml`, `bg_badge_atencao.xml`, `bg_tab_ativo.xml`
-- `res/drawable/ic_nav_home.xml`, `ic_nav_add.xml`, `ic_nav_card.xml`, `ic_nav_chart.xml`, `ic_nav_settings.xml`
-- `res/drawable/bg_lancar_campo.xml`, `bg_lancar_botao_voltar.xml`, `bg_lancar_comprovante.xml`, `bg_lancar_adicionar.xml`, `bg_lancar_sigla.xml`
-- `res/drawable/ic_lancar_voltar.xml`, `ic_lancar_camera.xml`, `ic_lancar_calendario.xml`, `ic_lancar_mais.xml`
+- `res/drawable/` (diversos novos: `bg_lancar_campo`, `bg_card_glass`, `bg_nav_pill`, `ic_nav_*`, `ic_lancar_*`, etc.)
 - Reescritos: `activity_inicio.xml`, `InicioActivity.java`, `activity_cadastro_divida.xml`, `CadastroDividaActivity.java`
 
 ---
@@ -281,7 +268,7 @@ app/src/main/java/com/example/controle_gastos/
 - **Redesenhar as telas restantes no novo padrão visual** (Dívidas, Dashboard/Relatórios, Configurações, Cartões + Chaves Pix, Categorias, Histórico, Editar Perfil, Login, Cadastro, Onboarding, Splash, Compartilhar comprovante)
 - **Migrar todas as telas para o `<include layout="@layout/layout_bottom_nav">` + `BottomNavHelper.configure(...)`** (a Início ainda usa barra própria; a Lançar já migrou)
 - **Unificar cores em `colors.xml` e textos em `strings.xml`** (hoje duas paletas convivem e há textos hardcoded)
-- **Aplicar a fonte Inter** (`res/font/` + `themes.xml`)
+- **Aplicar a fonte Inter no tema** (`themes.xml` usando `inter_medium.xml` que já está em `res/font/`)
 - **Tirar o Room da main thread** (ViewModel + LiveData ou Executors)
 - **Persistir a data da compra** (exige novo campo em `Divida` + migração do Room)
 - **Tratar o arredondamento de centavos das parcelas** (`valor / N`)

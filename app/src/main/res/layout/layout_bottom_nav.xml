@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Barra de navegação flutuante reutilizável.
+     Use com <include> e depois chame BottomNavHelper.configurar(this, aba). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_nav_pill"
+    android:elevation="8dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="10dp">
+
+    <LinearLayout
+        android:id="@+id/tabInicio"
+        android:layout_width="0dp"
+        android:layout_height="46dp"
+        android:layout_weight="1"
+        android:contentDescription="Início"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/ivTabInicio"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_nav_home"
+            app:tint="#94A3B8" />
+
+        <TextView
+            android:id="@+id/tvTabInicio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Início"
+            android:textColor="#34D399"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/tabLancar"
+        android:layout_width="0dp"
+        android:layout_height="46dp"
+        android:layout_weight="1"
+        android:contentDescription="Lançar"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/ivTabLancar"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_nav_add"
+            app:tint="#94A3B8" />
+
+        <TextView
+            android:id="@+id/tvTabLancar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Lançar"
+            android:textColor="#34D399"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/tabDividas"
+        android:layout_width="0dp"
+        android:layout_height="46dp"
+        android:layout_weight="1"
+        android:contentDescription="Dívidas"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/ivTabDividas"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_nav_card"
+            app:tint="#94A3B8" />
+
+        <TextView
+            android:id="@+id/tvTabDividas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Dívidas"
+            android:textColor="#34D399"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/tabRelatorios"
+        android:layout_width="0dp"
+        android:layout_height="46dp"
+        android:layout_weight="1"
+        android:contentDescription="Relatórios"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/ivTabRelatorios"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_nav_chart"
+            app:tint="#94A3B8" />
+
+        <TextView
+            android:id="@+id/tvTabRelatorios"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Relatórios"
+            android:textColor="#34D399"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/tabConfig"
+        android:layout_width="0dp"
+        android:layout_height="46dp"
+        android:layout_weight="1"
+        android:contentDescription="Configurações"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/ivTabConfig"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_nav_settings"
+            app:tint="#94A3B8" />
+
+        <TextView
+            android:id="@+id/tvTabConfig"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Config"
+            android:textColor="#34D399"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,5 +1,6 @@
 package com.example.controle_gastos.adapter;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,13 +10,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.model.VencimentoItem;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class VencimentoAdapter extends RecyclerView.Adapter<VencimentoAdapter.ViewHolder> {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
-
     private List<VencimentoItem> items;
 
     public VencimentoAdapter(List<VencimentoItem> items) {
@@ -34,28 +36,41 @@ public class VencimentoAdapter extends RecyclerView.Adapter<VencimentoAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         VencimentoItem item = items.get(position);
 
-        holder.tvInicial.setText(item.inicial);
+        // ⭐ NOVO: Quebrando a data para o quadradinho (DD/MM/YYYY)
+        if (item.proximoVencimento != null && item.proximoVencimento.length() >= 5) {
+            try {
+                String dia = item.proximoVencimento.substring(0, 2);
+                int mesNum = Integer.parseInt(item.proximoVencimento.substring(3, 5));
+                String[] meses = {"JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"};
+                String mesTexto = (mesNum >= 1 && mesNum <= 12) ? meses[mesNum - 1] : "MÊS";
+
+                holder.tvDiaVencimento.setText(dia);
+                holder.tvMesVencimento.setText(mesTexto);
+            } catch (Exception e) {
+                holder.tvDiaVencimento.setText("--");
+                holder.tvMesVencimento.setText("---");
+            }
+        }
+
         holder.tvTitulo.setText(item.titulo);
+        holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", item.valorProxima));
 
         if (item.parcelado) {
-            // ⭐ Parcelado: mostra "3 parcelas restantes" + próxima + total restante
+            // ⭐ Parcelado
             holder.tvParcela.setVisibility(View.VISIBLE);
-            holder.tvParcela.setText(item.parcelasRestantes +
-                    (item.parcelasRestantes == 1 ? " parcela restante" : " parcelas restantes"));
+            holder.tvParcela.setText(item.parcelasRestantes + " parcelas restantes");
 
             holder.tvDetalhe.setText("Próxima: " + item.proximoVencimento);
-
-            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", item.valorProxima));
-            holder.tvValor.setTextColor(0xFFEF4444);
+            holder.tvDetalhe.setTextColor(Color.parseColor("#F59E0B")); // Laranja igual ao print
 
             holder.tvTotal.setVisibility(View.VISIBLE);
-            holder.tvTotal.setText(String.format(LOCALE_BR, "Total restante: R$ %.2f", item.totalRestante));
+            holder.tvTotal.setText(String.format(LOCALE_BR, "Total: R$ %.2f", item.totalRestante));
         } else {
-            // ⭐ À vista: só o valor
+            // ⭐ À vista
             holder.tvParcela.setVisibility(View.GONE);
             holder.tvDetalhe.setText("Vence em " + item.proximoVencimento);
-            holder.tvValor.setText(String.format(LOCALE_BR, "R$ %.2f", item.valorProxima));
-            holder.tvValor.setTextColor(0xFFEF4444);
+            holder.tvDetalhe.setTextColor(Color.parseColor("#94A3B8")); // Cinza
+
             holder.tvTotal.setVisibility(View.GONE);
         }
     }
@@ -66,12 +81,14 @@ public class VencimentoAdapter extends RecyclerView.Adapter<VencimentoAdapter.Vi
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvInicial, tvTitulo, tvDetalhe, tvValor;
+        TextView tvMesVencimento, tvDiaVencimento, tvTitulo, tvDetalhe, tvValor;
         TextView tvParcela, tvTotal;
 
         ViewHolder(View itemView) {
             super(itemView);
-            tvInicial = itemView.findViewById(R.id.tvInicialVencimento);
+            // ⭐ IDs do novo layout item_vencimento.xml
+            tvMesVencimento = itemView.findViewById(R.id.tvMesVencimento);
+            tvDiaVencimento = itemView.findViewById(R.id.tvDiaVencimento);
             tvTitulo = itemView.findViewById(R.id.tvTituloVencimento);
             tvDetalhe = itemView.findViewById(R.id.tvDetalheVencimento);
             tvValor = itemView.findViewById(R.id.tvValorVencimento);

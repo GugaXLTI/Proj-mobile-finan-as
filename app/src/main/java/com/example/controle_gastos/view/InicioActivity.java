@@ -6,60 +6,65 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.widget.Button;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.controle_gastos.R;
-import com.example.controle_gastos.adapter.VencimentoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.Usuario;
-import com.example.controle_gastos.model.VencimentoItem;
 import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.SessionManager;
 
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class InicioActivity extends AppCompatActivity {
 
     private static final int REQ_NOTIFICACAO = 100;
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    private TextView tvAvatarInicio, tvNomeInicio, tvTotalDividasInicio, tvTotalPagoInicio, tvAlertaMes;
-
-    // ⭐ Variáveis do Dashboard
+    // Cabeçalho / saldo
+    private TextView tvAvatarInicio, tvNomeInicio, tvDataAtualInicio;
     private TextView tvSaldoDisponivelInicio, tvSalarioTotalInicio, tvGastosMesInicio;
+    private TextView tvTotalDividasInicio, tvTotalPagoInicio;
     private ProgressBar progressOrcamento;
-
-    // ⭐ Variável alterada para ImageView
     private ImageView btnToggleSaldo;
     private boolean isSaldoOculto = false;
 
-    private RecyclerView rvVencimentos;
-    private Button btnVerTodosVencimentos;
-    private CardView cardTotalDividas;
+    // Card "Atenção este mês"
+    private TextView tvAlertaMes, tvBadgeContas, tvTotalAPagarMes, tvCompromete;
+    private LinearLayout llContasMes, llTotalAPagar;
+    private ProgressBar progressAtencao;
+    private TextView btnVerTodosVencimentos;
 
-    private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
+    // Navegação (aba ativa = LinearLayout, demais = ImageView)
+    private LinearLayout tabInicio;
+    private ImageView tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     private AppDatabase db;
     private SessionManager session;
-    private List<Divida> dividas;
+
+    private List<Divida> dividas = new ArrayList<>();
+    private final List<Divida> contasDoMes = new ArrayList<>();
+    private double totalVencendoMes = 0;
+    private double salarioAtual = 0;
+    private double saldoAtual = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,24 +79,28 @@ public class InicioActivity extends AppCompatActivity {
 
         tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
-        tvTotalDividasInicio = findViewById(R.id.tvTotalDividasInicio);
-        tvTotalPagoInicio = findViewById(R.id.tvTotalPagoInicio);
-        tvAlertaMes = findViewById(R.id.tvAlertaMes);
-        rvVencimentos = findViewById(R.id.rvVencimentos);
-        btnVerTodosVencimentos = findViewById(R.id.btnVerTodosVencimentos);
-        cardTotalDividas = findViewById(R.id.cardTotalDividas);
+        tvDataAtualInicio = findViewById(R.id.tvDataAtualInicio);
 
-        // ⭐ Buscando os IDs dos cards de saldo
         tvSaldoDisponivelInicio = findViewById(R.id.tvSaldoDisponivelInicio);
         tvSalarioTotalInicio = findViewById(R.id.tvSalarioTotalInicio);
         tvGastosMesInicio = findViewById(R.id.tvGastosMesInicio);
         progressOrcamento = findViewById(R.id.progressOrcamento);
+        tvTotalDividasInicio = findViewById(R.id.tvTotalDividasInicio);
+        tvTotalPagoInicio = findViewById(R.id.tvTotalPagoInicio);
 
-        // ⭐ NOVO: Buscando o botão de olho como ImageView
+        tvAlertaMes = findViewById(R.id.tvAlertaMes);
+        tvBadgeContas = findViewById(R.id.tvBadgeContas);
+        llContasMes = findViewById(R.id.llContasMes);
+        llTotalAPagar = findViewById(R.id.llTotalAPagar);
+        tvTotalAPagarMes = findViewById(R.id.tvTotalAPagarMes);
+        tvCompromete = findViewById(R.id.tvCompromete);
+        progressAtencao = findViewById(R.id.progressAtencao);
+        btnVerTodosVencimentos = findViewById(R.id.btnVerTodosVencimentos);
+
         btnToggleSaldo = findViewById(R.id.btnToggleSaldo);
         btnToggleSaldo.setOnClickListener(v -> {
             isSaldoOculto = !isSaldoOculto;
-            atualizarDashboardFinanceiro(); // Recalcula e atualiza a UI
+            atualizarDashboardFinanceiro();
         });
 
         tabInicio = findViewById(R.id.tabInicio);
@@ -100,37 +109,26 @@ public class InicioActivity extends AppCompatActivity {
         tabRelatorios = findViewById(R.id.tabRelatorios);
         tabConfig = findViewById(R.id.tabConfig);
 
-        String nome = session.getNome();
-        if (nome != null && !nome.isEmpty()) {
-            tvNomeInicio.setText(nome);
-            tvAvatarInicio.setText(String.valueOf(nome.charAt(0)).toUpperCase());
-        }
+        atualizarNomeEAvatar();
 
-        rvVencimentos.setLayoutManager(new LinearLayoutManager(this));
+        SimpleDateFormat sdf = new SimpleDateFormat("MMMM 'de' yyyy", LOCALE_BR);
+        String mesAno = sdf.format(new Date());
+        tvDataAtualInicio.setText(mesAno.substring(0, 1).toUpperCase(LOCALE_BR) + mesAno.substring(1));
 
         carregarDados();
         atualizarDashboardFinanceiro();
 
-        cardTotalDividas.setOnClickListener(v -> {
-            startActivity(new Intent(this, HistoricoActivity.class));
-        });
-
-        btnVerTodosVencimentos.setOnClickListener(v -> {
-            startActivity(new Intent(this, DividasActivity.class));
-        });
+        btnVerTodosVencimentos.setOnClickListener(v ->
+                startActivity(new Intent(this, DividasActivity.class)));
 
         tabInicio.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está no Início", Toast.LENGTH_SHORT).show());
-
         tabLancar.setOnClickListener(v ->
                 startActivity(new Intent(this, CadastroDividaActivity.class)));
-
         tabDividas.setOnClickListener(v ->
                 startActivity(new Intent(this, DividasActivity.class)));
-
         tabRelatorios.setOnClickListener(v ->
                 startActivity(new Intent(this, DashboardActivity.class)));
-
         tabConfig.setOnClickListener(v ->
                 startActivity(new Intent(this, ConfiguracoesActivity.class)));
     }
@@ -161,16 +159,22 @@ public class InicioActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        String nome = session.getNome();
-        if (nome != null && !nome.isEmpty()) {
-            tvNomeInicio.setText(nome);
-            tvAvatarInicio.setText(String.valueOf(nome.charAt(0)).toUpperCase());
-        }
+        atualizarNomeEAvatar();
         carregarDados();
         atualizarDashboardFinanceiro();
     }
 
-    // ⭐ Método para calcular o Salário - Gastos do mês
+    private void atualizarNomeEAvatar() {
+        String nome = session.getNome();
+        if (nome != null && !nome.isEmpty()) {
+            tvNomeInicio.setText(nome);
+            tvAvatarInicio.setText(String.valueOf(nome.charAt(0)).toUpperCase(LOCALE_BR));
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // SALDO
+    // ------------------------------------------------------------------
     private void atualizarDashboardFinanceiro() {
         Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
         if (user != null) {
@@ -180,11 +184,12 @@ public class InicioActivity extends AppCompatActivity {
             String mesAnoAtual = String.format(LOCALE_BR, "%02d/%04d",
                     cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR));
 
-            // Puxa a soma dos gastos do mês atual
             double gastosMes = db.dividaDao().somarGastosDoMes(session.getUserId(), mesAnoAtual);
             double saldoDisponivel = salario - gastosMes;
 
-            // ⭐ Lógica para ocultar ou mostrar os valores usando as imagens
+            salarioAtual = salario;
+            saldoAtual = saldoDisponivel;
+
             if (isSaldoOculto) {
                 btnToggleSaldo.setImageResource(R.drawable.ic_eye_closed);
                 tvSalarioTotalInicio.setText("R$ ••••");
@@ -192,121 +197,42 @@ public class InicioActivity extends AppCompatActivity {
                 tvSaldoDisponivelInicio.setText("R$ ••••");
             } else {
                 btnToggleSaldo.setImageResource(R.drawable.ic_eye_open);
-                tvSalarioTotalInicio.setText(String.format(LOCALE_BR, "R$ %.2f", salario));
-                tvGastosMesInicio.setText(String.format(LOCALE_BR, "R$ %.2f", gastosMes));
-                tvSaldoDisponivelInicio.setText(String.format(LOCALE_BR, "R$ %.2f", saldoDisponivel));
-            }
+                tvSalarioTotalInicio.setText(moeda(salario));
+                tvGastosMesInicio.setText(moeda(gastosMes));
+                tvSaldoDisponivelInicio.setText(moeda(saldoDisponivel));
 
-            // Lógica de cores (Regra de Negócio) - Só aplica cor se não estiver oculto
-            if (!isSaldoOculto) {
                 if (salario <= 0) {
                     tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#64748B"));
                 } else if (saldoDisponivel < 0) {
-                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#EF4444")); // Vermelho
+                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#F87171"));
                 } else {
-                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#10B981")); // Verde
+                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#34D399"));
                 }
             }
 
-            // Atualiza a barra de progresso visual
             if (salario > 0) {
-                int porcentagemGasta = (int) ((gastosMes / salario) * 100);
-                progressOrcamento.setProgress(Math.min(porcentagemGasta, 100));
+                int pct = (int) ((gastosMes / salario) * 100);
+                progressOrcamento.setProgress(Math.min(pct, 100));
             } else {
                 progressOrcamento.setProgress(0);
             }
         }
+        renderizarCardAtencao();
     }
 
+    // ------------------------------------------------------------------
+    // DÍVIDAS / TOTAIS
+    // ------------------------------------------------------------------
     private void carregarDados() {
         dividas = db.dividaDao().listarPorUsuario(session.getUserId());
-
-        List<Divida> naoPagas = new ArrayList<>();
-        for (Divida d : dividas) {
-            if (!d.isPago()) naoPagas.add(d);
-        }
-
-        List<VencimentoItem> items = agruparVencimentos(naoPagas);
-
-        if (items.size() > 3) {
-            items = items.subList(0, 3);
-        }
-
-        rvVencimentos.setAdapter(new VencimentoAdapter(items));
-
         atualizarTotais();
-    }
-
-    private List<VencimentoItem> agruparVencimentos(List<Divida> naoPagas) {
-        Map<Integer, List<Divida>> grupos = new HashMap<>();
-        List<Divida> semGrupo = new ArrayList<>();
-
-        for (Divida d : naoPagas) {
-            if (d.getGrupoId() > 0) {
-                List<Divida> lista = grupos.get(d.getGrupoId());
-                if (lista == null) {
-                    lista = new ArrayList<>();
-                    grupos.put(d.getGrupoId(), lista);
-                }
-                lista.add(d);
-            } else {
-                semGrupo.add(d);
-            }
-        }
-
-        List<VencimentoItem> items = new ArrayList<>();
-
-        for (Map.Entry<Integer, List<Divida>> entry : grupos.entrySet()) {
-            List<Divida> parcelas = entry.getValue();
-            parcelas.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
-
-            Divida proxima = parcelas.get(0);
-
-            VencimentoItem item = new VencimentoItem();
-            item.titulo = proxima.getTitulo();
-            item.inicial = inicialDoBanco(proxima.getBanco());
-            item.proximoVencimento = proxima.getVencimento();
-            item.valorProxima = proxima.getValorTotal();
-            item.parcelasRestantes = parcelas.size();
-            item.totalParcelas = extrairTotalParcelas(proxima.getParcela());
-            item.parcelado = item.totalParcelas > 1;
-
-            double somaRestante = 0;
-            for (Divida p : parcelas) somaRestante += p.getValorRestante();
-            item.totalRestante = somaRestante;
-
-            items.add(item);
-        }
-
-        for (Divida d : semGrupo) {
-            VencimentoItem item = new VencimentoItem();
-            item.titulo = d.getTitulo();
-            item.inicial = inicialDoBanco(d.getBanco());
-            item.proximoVencimento = d.getVencimento();
-            item.valorProxima = d.getValorTotal();
-            item.parcelasRestantes = 1;
-            item.totalParcelas = 1;
-            item.parcelado = false;
-            item.totalRestante = d.getValorRestante();
-            items.add(item);
-        }
-
-        items.sort((a, b) -> compararDatas(a.proximoVencimento, b.proximoVencimento));
-        return items;
-    }
-
-    private String inicialDoBanco(String banco) {
-        if (banco != null && !banco.isEmpty()) {
-            return banco.substring(0, 1).toUpperCase();
-        }
-        return "?";
     }
 
     private void atualizarTotais() {
         double totalAPagar = 0;
         double totalPago = 0;
-        double totalVencendoMes = 0;
-        int contasVencendoMes = 0;
+        totalVencendoMes = 0;
+        contasDoMes.clear();
 
         Calendar c = Calendar.getInstance();
         int mesAtual = c.get(Calendar.MONTH) + 1;
@@ -319,24 +245,133 @@ public class InicioActivity extends AppCompatActivity {
                 totalAPagar += d.getValorRestante();
                 if (venceNoMes(d.getVencimento(), mesAtual, anoAtual)) {
                     totalVencendoMes += d.getValorRestante();
-                    contasVencendoMes++;
+                    contasDoMes.add(d);
                 }
             }
         }
 
-        tvTotalDividasInicio.setText(String.format(LOCALE_BR, "R$ %.2f", totalAPagar));
-        tvTotalPagoInicio.setText(String.format(LOCALE_BR, "R$ %.2f", totalPago));
+        contasDoMes.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
 
-        if (contasVencendoMes > 0) {
-            String texto = contasVencendoMes +
-                    (contasVencendoMes == 1
-                            ? " conta vencendo este mês • R$ "
-                            : " contas vencendo este mês • R$ ") +
-                    String.format(LOCALE_BR, "%.2f", totalVencendoMes);
-            tvAlertaMes.setText(texto);
-        } else {
-            tvAlertaMes.setText("Nenhuma conta vence este mês ✓");
+        tvTotalDividasInicio.setText(moeda(totalAPagar));
+        tvTotalPagoInicio.setText(moeda(totalPago));
+    }
+
+    // ------------------------------------------------------------------
+    // CARD "ATENÇÃO ESTE MÊS"
+    // ------------------------------------------------------------------
+    private void renderizarCardAtencao() {
+        llContasMes.removeAllViews();
+        int n = contasDoMes.size();
+
+        if (n == 0) {
+            tvAlertaMes.setVisibility(View.VISIBLE);
+            llTotalAPagar.setVisibility(View.GONE);
+            tvBadgeContas.setVisibility(View.GONE);
+            return;
         }
+
+        tvAlertaMes.setVisibility(View.GONE);
+        llTotalAPagar.setVisibility(View.VISIBLE);
+        tvBadgeContas.setVisibility(View.VISIBLE);
+        tvBadgeContas.setText(n + (n == 1 ? " conta" : " contas"));
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        SimpleDateFormat sdfData = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR);
+        SimpleDateFormat sdfMes = new SimpleDateFormat("MMM", LOCALE_BR);
+        SimpleDateFormat sdfDia = new SimpleDateFormat("dd", LOCALE_BR);
+
+        for (int i = 0; i < n; i++) {
+            Divida d = contasDoMes.get(i);
+            View item = inflater.inflate(R.layout.item_conta_atencao, llContasMes, false);
+
+            TextView tvMes = item.findViewById(R.id.tvMesConta);
+            TextView tvDia = item.findViewById(R.id.tvDiaConta);
+            TextView tvTitulo = item.findViewById(R.id.tvTituloConta);
+            TextView tvVence = item.findViewById(R.id.tvVenceConta);
+            TextView tvValor = item.findViewById(R.id.tvValorConta);
+            View divisor = item.findViewById(R.id.divisorConta);
+
+            String titulo = d.getTitulo();
+            int total = extrairTotalParcelas(d.getParcela());
+            if (total > 1) {
+                titulo += " · parcela " + extrairNumeroParcela(d.getParcela()) + " de " + total;
+            }
+            tvTitulo.setText(titulo);
+            tvValor.setText(moeda(d.getValorRestante()));
+
+            try {
+                Date data = sdfData.parse(d.getVencimento());
+                if (data != null) {
+                    tvMes.setText(sdfMes.format(data).replace(".", "").toUpperCase(LOCALE_BR));
+                    tvDia.setText(sdfDia.format(data));
+
+                    long dias = diasAte(data);
+                    if (dias < 0) {
+                        tvVence.setText(dias == -1 ? "Venceu ontem" : "Venceu há " + (-dias) + " dias");
+                        tvVence.setTextColor(Color.parseColor("#F87171"));
+                    } else if (dias == 0) {
+                        tvVence.setText("Vence hoje");
+                        tvVence.setTextColor(Color.parseColor("#F59E0B"));
+                    } else if (dias == 1) {
+                        tvVence.setText("Vence amanhã");
+                        tvVence.setTextColor(Color.parseColor("#F59E0B"));
+                    } else {
+                        tvVence.setText("Vence em " + dias + " dias");
+                        tvVence.setTextColor(Color.parseColor(dias <= 5 ? "#F59E0B" : "#94A3B8"));
+                    }
+                }
+            } catch (Exception e) {
+                tvMes.setText("--");
+                tvDia.setText("--");
+                tvVence.setText(d.getVencimento());
+                tvVence.setTextColor(Color.parseColor("#94A3B8"));
+            }
+
+            if (i == n - 1) divisor.setVisibility(View.GONE);
+            llContasMes.addView(item);
+        }
+
+        tvTotalAPagarMes.setText(moeda(totalVencendoMes));
+
+        if (salarioAtual > 0) {
+            int pct = (int) Math.round((totalVencendoMes / salarioAtual) * 100);
+            progressAtencao.setProgress(Math.min(pct, 100));
+
+            String texto = "Compromete " + pct + "% do salário";
+            if (!isSaldoOculto) {
+                double sobra = saldoAtual - totalVencendoMes;
+                texto += sobra >= 0
+                        ? " · Sobra " + moeda(sobra)
+                        : " · Faltam " + moeda(-sobra);
+            }
+            tvCompromete.setText(texto);
+        } else {
+            progressAtencao.setProgress(0);
+            tvCompromete.setText("Total das contas que vencem este mês");
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // HELPERS
+    // ------------------------------------------------------------------
+    private String moeda(double valor) {
+        return NumberFormat.getCurrencyInstance(LOCALE_BR).format(valor);
+    }
+
+    private long diasAte(Date data) {
+        Calendar hoje = Calendar.getInstance();
+        zerarHora(hoje);
+        Calendar alvo = Calendar.getInstance();
+        alvo.setTime(data);
+        zerarHora(alvo);
+        return Math.round((alvo.getTimeInMillis() - hoje.getTimeInMillis()) / 86400000.0);
+    }
+
+    private void zerarHora(Calendar c) {
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
     }
 
     private boolean venceNoMes(String vencimento, int mes, int ano) {
@@ -344,9 +379,7 @@ public class InicioActivity extends AppCompatActivity {
         try {
             String[] partes = vencimento.split("/");
             if (partes.length != 3) return false;
-            int m = Integer.parseInt(partes[1]);
-            int a = Integer.parseInt(partes[2]);
-            return m == mes && a == ano;
+            return Integer.parseInt(partes[1]) == mes && Integer.parseInt(partes[2]) == ano;
         } catch (Exception e) {
             return false;
         }
@@ -384,6 +417,16 @@ public class InicioActivity extends AppCompatActivity {
             int n = Integer.parseInt(numeros);
             return n > 0 ? n : 1;
         } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
+    private int extrairNumeroParcela(String parcela) {
+        if (parcela == null || !parcela.contains("/")) return 1;
+        try {
+            String atual = parcela.split("/")[0].replaceAll("[^0-9]", "");
+            return atual.isEmpty() ? 1 : Integer.parseInt(atual);
+        } catch (Exception e) {
             return 1;
         }
     }

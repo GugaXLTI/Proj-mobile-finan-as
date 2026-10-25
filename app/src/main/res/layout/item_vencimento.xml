@@ -7,80 +7,90 @@
     android:paddingVertical="12dp"
     android:paddingHorizontal="8dp">
 
-    <!-- Círculo com a inicial do banco/categoria -->
-    <TextView
-        android:id="@+id/tvInicialVencimento"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:background="@drawable/bg_avatar"
-        android:gravity="center"
-        android:text="N"
-        android:textColor="#10B981"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+    <!-- ⭐ Quadrado da Data -->
+    <LinearLayout
+        android:id="@+id/layoutData"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_data_card"
+        android:orientation="vertical"
+        android:gravity="center">
 
-    <!-- Informações -->
+        <TextView
+            android:id="@+id/tvMesVencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OUT"
+            android:textColor="#EF4444"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDiaVencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="28"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Título e Detalhes -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_marginStart="12dp">
+        android:layout_marginStart="16dp">
 
         <TextView
             android:id="@+id/tvTituloVencimento"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Fatura Nubank Roxinho"
+            android:text="Fatura Nubank"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
-
-        <!-- ⭐ Nova linha: progresso das parcelas -->
-        <TextView
-            android:id="@+id/tvParcelaVencimento"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Parcela 2 de 10"
-            android:textColor="#10B981"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
 
         <TextView
             android:id="@+id/tvDetalheVencimento"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Vence em 15/10/2026"
-            android:textColor="#64748B"
-            android:textSize="11sp" />
-    </LinearLayout>
+            android:layout_marginTop="2dp"
+            android:text="Vence em 4 dias"
+            android:textColor="#F59E0B"
+            android:textSize="12sp" />
 
-    <!-- Valor (parcela + total) -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="end">
-
+        <!-- Oculto por padrão, mas mantido para a lógica de parcelas -->
         <TextView
-            android:id="@+id/tvValorVencimento"
+            android:id="@+id/tvParcelaVencimento"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="R$ 245,00"
-            android:textColor="#EF4444"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-
-        <!-- ⭐ Nova linha: total da compra -->
-        <TextView
-            android:id="@+id/tvTotalVencimento"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Total: R$ 2.450,00"
-            android:textColor="#64748B"
-            android:textSize="10sp"
+            android:text="Parcela 2 de 4"
+            android:textColor="#10B981"
+            android:textSize="11sp"
+            android:textStyle="bold"
             android:visibility="gone" />
     </LinearLayout>
+
+    <!-- Valor -->
+    <TextView
+        android:id="@+id/tvValorVencimento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="R$ 420,00"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <!-- Oculto por padrão -->
+    <TextView
+        android:id="@+id/tvTotalVencimento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Total: R$ 2.450,00"
+        android:textColor="#64748B"
+        android:textSize="10sp"
+        android:visibility="gone" />
 
 </LinearLayout>

@@ -4,40 +4,61 @@
     android:id="@+id/cardChip"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginEnd="8dp"
-    app:cardBackgroundColor="@color/card_bg"
-    app:cardCornerRadius="12dp"
+    android:layout_marginEnd="12dp"
+    app:cardBackgroundColor="#111A2E"
+    app:cardCornerRadius="18dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/text_gray"
+    app:strokeColor="#1E2A44"
     app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp"
-        android:minWidth="80dp">
+        android:gravity="center_vertical"
+        android:minWidth="150dp"
+        android:orientation="horizontal"
+        android:padding="14dp">
 
         <TextView
             android:id="@+id/tvSiglaChip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_lancar_sigla"
+            android:gravity="center"
             android:text="NU"
-            android:textColor="@color/brand_green"
+            android:textColor="#FFFFFF"
             android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp" />
+            android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvNomeChip"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nubank"
-            android:textColor="@color/text_white"
-            android:textSize="11sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvNomeChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:maxWidth="140dp"
+                android:text="Nubank"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvDetalheChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:maxWidth="140dp"
+                android:text="•••• 1234"
+                android:textColor="#94A3B8"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

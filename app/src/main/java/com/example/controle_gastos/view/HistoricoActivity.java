@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView; // ⭐ IMPORT ADICIONADO
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,6 +19,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.HistoricoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.BottomNavHelper;
 import com.example.controle_gastos.utils.CsvExportHelper;
 import com.example.controle_gastos.utils.PdfExportHelper;
 import com.example.controle_gastos.utils.SessionManager;
@@ -36,7 +38,9 @@ public class HistoricoActivity extends AppCompatActivity {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    private TextView btnVoltarHistorico, btnMesAnterior, btnMesProximo;
+    // ⭐ CORREÇÃO: btnVoltarHistorico é um ImageView, não TextView
+    private ImageView btnVoltarHistorico;
+    private TextView btnMesAnterior, btnMesProximo;
     private TextView tvMesAtual, tvBadgeAtual;
     private TextView tvTotalMes, tvJaPagoMes, tvFaltaPagarMes;
     private TextView tvLabelTotal, tvLabelPago, tvLabelFalta;
@@ -45,8 +49,6 @@ public class HistoricoActivity extends AppCompatActivity {
     private Button btnBaixarResumo;
     private LinearLayout containerFiltrosHistorico;
     private RecyclerView rvLancamentosHistorico;
-
-    private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     private AppDatabase db;
     private SessionManager session;
@@ -60,8 +62,7 @@ public class HistoricoActivity extends AppCompatActivity {
     private int anoSelecionado;
     private String categoriaSelecionada = "Todos";
 
-    // ⭐ Filtro de período
-    private String dataInicialFiltro = null; // "dd/MM/yyyy"
+    private String dataInicialFiltro = null;
     private String dataFinalFiltro = null;
     private boolean filtroAtivo = false;
 
@@ -72,6 +73,9 @@ public class HistoricoActivity extends AppCompatActivity {
 
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
+
+        // Barra inferior
+        BottomNavHelper.configurar(this, BottomNavHelper.RELATORIOS);
 
         btnVoltarHistorico = findViewById(R.id.btnVoltarHistorico);
         btnMesAnterior = findViewById(R.id.btnMesAnterior);
@@ -91,75 +95,48 @@ public class HistoricoActivity extends AppCompatActivity {
         containerFiltrosHistorico = findViewById(R.id.containerFiltrosHistorico);
         rvLancamentosHistorico = findViewById(R.id.rvLancamentosHistorico);
 
-        tabInicio = findViewById(R.id.tabInicio);
-        tabLancar = findViewById(R.id.tabLancar);
-        tabDividas = findViewById(R.id.tabDividas);
-        tabRelatorios = findViewById(R.id.tabRelatorios);
-        tabConfig = findViewById(R.id.tabConfig);
-
         rvLancamentosHistorico.setLayoutManager(new LinearLayoutManager(this));
 
         Calendar c = Calendar.getInstance();
         mesSelecionado = c.get(Calendar.MONTH) + 1;
         anoSelecionado = c.get(Calendar.YEAR);
 
-        carregarDividas();
-        atualizarTela();
-
-        btnVoltarHistorico.setOnClickListener(v -> finish());
+        // ⭐ CORREÇÃO: Ação do botão voltar
+        btnVoltarHistorico.setOnClickListener(v -> {
+            finish();
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
 
         btnMesAnterior.setOnClickListener(v -> {
-            // Se estiver filtrando, volta para o modo mês
             if (filtroAtivo) limparFiltroPeriodo();
-
             mesSelecionado--;
-            if (mesSelecionado < 1) {
-                mesSelecionado = 12;
-                anoSelecionado--;
-            }
+            if (mesSelecionado < 1) { mesSelecionado = 12; anoSelecionado--; }
             categoriaSelecionada = "Todos";
             atualizarTela();
         });
 
         btnMesProximo.setOnClickListener(v -> {
             if (filtroAtivo) limparFiltroPeriodo();
-
             mesSelecionado++;
-            if (mesSelecionado > 12) {
-                mesSelecionado = 1;
-                anoSelecionado++;
-            }
+            if (mesSelecionado > 12) { mesSelecionado = 1; anoSelecionado++; }
             categoriaSelecionada = "Todos";
             atualizarTela();
         });
 
-        // ⭐ Filtro de período
         btnFiltroPeriodo.setOnClickListener(v -> abrirDialogoPeriodo());
         btnLimparFiltro.setOnClickListener(v -> {
             limparFiltroPeriodo();
             atualizarTela();
         });
 
-        // ⭐ Diálogo CSV/PDF
         btnBaixarResumo.setOnClickListener(v -> mostrarDialogoExportacao());
+    }
 
-        tabInicio.setOnClickListener(v -> {
-            startActivity(new Intent(this, InicioActivity.class));
-            finish();
-        });
-        tabLancar.setOnClickListener(v -> startActivity(new Intent(this, CadastroDividaActivity.class)));
-        tabDividas.setOnClickListener(v -> {
-            startActivity(new Intent(this, DividasActivity.class));
-            finish();
-        });
-        tabRelatorios.setOnClickListener(v -> {
-            startActivity(new Intent(this, DashboardActivity.class));
-            finish();
-        });
-        tabConfig.setOnClickListener(v -> {
-            startActivity(new Intent(this, ConfiguracoesActivity.class));
-            finish();
-        });
+    @Override
+    protected void onResume() {
+        super.onResume();
+        carregarDividas();
+        atualizarTela();
     }
 
     private void carregarDividas() {
@@ -183,8 +160,7 @@ public class HistoricoActivity extends AppCompatActivity {
             return;
         }
 
-        String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
+        String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
         tvMesAtual.setText(meses[mesSelecionado - 1] + " " + anoSelecionado);
 
         Calendar c = Calendar.getInstance();
@@ -216,7 +192,6 @@ public class HistoricoActivity extends AppCompatActivity {
         for (Divida d : todasDividas) {
             String venc = d.getVencimento();
             if (venc == null || venc.isEmpty()) continue;
-
             try {
                 String[] partes = venc.split("/");
                 if (partes.length == 3) {
@@ -226,15 +201,10 @@ public class HistoricoActivity extends AppCompatActivity {
                         dividasDoMes.add(d);
                     }
                 }
-            } catch (Exception e) {
-                // ignora vencimentos inválidos
-            }
+            } catch (Exception e) { }
         }
     }
 
-    /**
-     * ⭐ Verifica se a data de vencimento está entre as duas datas do filtro.
-     */
     private boolean estaEntreDatas(String dataVenc, String dataIni, String dataFim) {
         if (dataVenc == null || dataIni == null || dataFim == null) return false;
         try {
@@ -251,9 +221,7 @@ public class HistoricoActivity extends AppCompatActivity {
             fimCal.set(Calendar.SECOND, 59);
 
             return !venc.before(ini) && !venc.after(fimCal.getTime());
-        } catch (Exception e) {
-            return false;
-        }
+        } catch (Exception e) { return false; }
     }
 
     private void atualizarResumo() {
@@ -267,7 +235,6 @@ public class HistoricoActivity extends AppCompatActivity {
         }
 
         double faltaPagar = total - pago;
-
         int percPago = total > 0 ? (int) Math.round((pago / total) * 100) : 0;
         int percFalta = 100 - percPago;
 
@@ -282,7 +249,6 @@ public class HistoricoActivity extends AppCompatActivity {
 
     private void montarFiltros() {
         containerFiltrosHistorico.removeAllViews();
-
         Map<String, Integer> categoriasCount = new HashMap<>();
         for (Divida d : dividasDoMes) {
             int count = categoriasCount.getOrDefault(d.getCategoria(), 0);
@@ -297,19 +263,14 @@ public class HistoricoActivity extends AppCompatActivity {
 
     private void criarChip(String categoria, int count, boolean selecionado) {
         TextView chip = new TextView(this);
-        String texto = categoria.equals("Todos")
-                ? "Todos"
-                : categoria + (count > 1 ? " (" + count + ")" : "");
+        String texto = categoria.equals("Todos") ? "Todos" : categoria + (count > 1 ? " (" + count + ")" : "");
         chip.setText(texto);
         chip.setTextSize(13f);
         chip.setPadding(40, 20, 40, 20);
 
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 12, 0);
         chip.setLayoutParams(params);
-
         aplicarEstiloChip(chip, selecionado);
 
         chip.setOnClickListener(v -> {
@@ -323,7 +284,6 @@ public class HistoricoActivity extends AppCompatActivity {
     private void aplicarEstiloChip(TextView chip, boolean selecionado) {
         GradientDrawable d = new GradientDrawable();
         d.setCornerRadius(50f);
-
         if (selecionado) {
             d.setColor(Color.parseColor("#4C1D95"));
             d.setStroke(1, Color.parseColor("#A855F7"));
@@ -360,48 +320,30 @@ public class HistoricoActivity extends AppCompatActivity {
         rvLancamentosHistorico.setAdapter(adapter);
     }
 
-    // ==========================================
-    // ⭐ FILTRO DE PERÍODO
-    // ==========================================
-
     private void abrirDialogoPeriodo() {
         Calendar c = Calendar.getInstance();
-
         DatePickerDialog dialogInicial = new DatePickerDialog(this,
                 (view, year, month, dayOfMonth) -> {
-                    String dataInicial = String.format(LOCALE_BR, "%02d/%02d/%04d",
-                            dayOfMonth, month + 1, year);
+                    String dataInicial = String.format(LOCALE_BR, "%02d/%02d/%04d", dayOfMonth, month + 1, year);
                     abrirPickerDataFinal(dataInicial);
                 },
-                c.get(Calendar.YEAR),
-                c.get(Calendar.MONTH),
-                c.get(Calendar.DAY_OF_MONTH));
-
+                c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
         dialogInicial.setTitle("Data inicial");
         dialogInicial.show();
     }
 
     private void abrirPickerDataFinal(String dataInicial) {
         Calendar c = Calendar.getInstance();
-
         DatePickerDialog dialogFinal = new DatePickerDialog(this,
                 (view, year, month, dayOfMonth) -> {
-                    String dataFinal = String.format(LOCALE_BR, "%02d/%02d/%04d",
-                            dayOfMonth, month + 1, year);
-
+                    String dataFinal = String.format(LOCALE_BR, "%02d/%02d/%04d", dayOfMonth, month + 1, year);
                     if (compararDatas(dataFinal, dataInicial) < 0) {
-                        Toast.makeText(this,
-                                "A data final deve ser depois da inicial!",
-                                Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "A data final deve ser depois da inicial!", Toast.LENGTH_LONG).show();
                         return;
                     }
-
                     aplicarFiltroPeriodo(dataInicial, dataFinal);
                 },
-                c.get(Calendar.YEAR),
-                c.get(Calendar.MONTH),
-                c.get(Calendar.DAY_OF_MONTH));
-
+                c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
         dialogFinal.setTitle("Data final (a partir de " + dataInicial + ")");
         dialogFinal.show();
     }
@@ -411,12 +353,8 @@ public class HistoricoActivity extends AppCompatActivity {
         dataFinalFiltro = dataFinal;
         filtroAtivo = true;
         categoriaSelecionada = "Todos";
-
         atualizarTela();
-
-        Toast.makeText(this,
-                "Filtro aplicado: " + dataInicial + " a " + dataFinal,
-                Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Filtro aplicado: " + dataInicial + " a " + dataFinal, Toast.LENGTH_SHORT).show();
     }
 
     private void limparFiltroPeriodo() {
@@ -432,26 +370,16 @@ public class HistoricoActivity extends AppCompatActivity {
             Date data2 = sdf.parse(d2);
             if (data1 == null || data2 == null) return 0;
             return data1.compareTo(data2);
-        } catch (Exception e) {
-            return 0;
-        }
+        } catch (Exception e) { return 0; }
     }
-
-    // ==========================================
-    // ⭐ EXPORTAÇÃO (CSV e PDF)
-    // ==========================================
 
     private void mostrarDialogoExportacao() {
         String[] opcoes = {"📄  Exportar como CSV (Excel)", "📋  Exportar como PDF (Relatório)"};
-
         new AlertDialog.Builder(this)
                 .setTitle("Escolha o formato")
                 .setItems(opcoes, (dialog, which) -> {
-                    if (which == 0) {
-                        exportarCsv();
-                    } else {
-                        exportarPdf();
-                    }
+                    if (which == 0) exportarCsv();
+                    else exportarPdf();
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
@@ -464,32 +392,22 @@ public class HistoricoActivity extends AppCompatActivity {
                 paraExportar.add(d);
             }
         }
-
         if (paraExportar.isEmpty()) {
-            Toast.makeText(this, "Nenhum lançamento para exportar.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Nenhum lançamento para exportar.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         String nomePeriodo;
         if (filtroAtivo) {
             nomePeriodo = dataInicialFiltro.replace("/", "-") + "_a_" + dataFinalFiltro.replace("/", "-");
         } else {
             nomePeriodo = tvMesAtual.getText().toString();
         }
-
-        String sufixo = categoriaSelecionada.equals("Todos")
-                ? ""
-                : "_" + categoriaSelecionada.toLowerCase().replace(" ", "_");
-
+        String sufixo = categoriaSelecionada.equals("Todos") ? "" : "_" + categoriaSelecionada.toLowerCase().replace(" ", "_");
         File arquivo = CsvExportHelper.gerarCsv(this, paraExportar, nomePeriodo + sufixo);
-
         if (arquivo == null) {
-            Toast.makeText(this, "Erro ao gerar o arquivo CSV.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Erro ao gerar o arquivo CSV.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         Toast.makeText(this, "CSV gerado com sucesso!", Toast.LENGTH_SHORT).show();
         CsvExportHelper.compartilharCsv(this, arquivo);
     }
@@ -501,28 +419,21 @@ public class HistoricoActivity extends AppCompatActivity {
                 paraExportar.add(d);
             }
         }
-
         if (paraExportar.isEmpty()) {
-            Toast.makeText(this, "Nenhum lançamento para exportar.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Nenhum lançamento para exportar.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         String nomePeriodo;
         if (filtroAtivo) {
             nomePeriodo = dataInicialFiltro + " a " + dataFinalFiltro;
         } else {
             nomePeriodo = tvMesAtual.getText().toString();
         }
-
         File arquivo = PdfExportHelper.gerarPdf(this, paraExportar, nomePeriodo, categoriaSelecionada);
-
         if (arquivo == null) {
-            Toast.makeText(this, "Erro ao gerar o PDF.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Erro ao gerar o PDF.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         Toast.makeText(this, "PDF gerado com sucesso!", Toast.LENGTH_SHORT).show();
         PdfExportHelper.compartilharPdf(this, arquivo);
     }

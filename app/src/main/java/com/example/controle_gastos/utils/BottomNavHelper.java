@@ -17,11 +17,6 @@ import com.example.controle_gastos.view.DashboardActivity;
 import com.example.controle_gastos.view.DividasActivity;
 import com.example.controle_gastos.view.InicioActivity;
 
-/**
- * Configura a barra inferior flutuante (layout_bottom_nav.xml).
- * Uso na Activity, depois do setContentView:
- *     BottomNavHelper.configurar(this, BottomNavHelper.LANCAR);
- */
 public final class BottomNavHelper {
 
     public static final int INICIO = 0;
@@ -59,8 +54,7 @@ public final class BottomNavHelper {
         int padAtiva = Math.round(18 * d);
 
         TypedValue tv = new TypedValue();
-        activity.getTheme().resolveAttribute(
-                android.R.attr.selectableItemBackgroundBorderless, tv, true);
+        activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, tv, true);
 
         for (int i = 0; i < TABS.length; i++) {
             LinearLayout tab = activity.findViewById(TABS[i]);
@@ -97,6 +91,15 @@ public final class BottomNavHelper {
                 if (destino == abaAtiva) return;
                 activity.startActivity(new Intent(activity, destinos[destino]));
                 activity.finish();
+
+                // ⭐ CORREÇÃO: Removido o "android." antes do R.anim
+                if (destino > abaAtiva) {
+                    // Clicou em uma aba à direita (ex: Início -> Lançar)
+                    activity.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                } else {
+                    // Clicou em uma aba à esquerda (ex: Lançar -> Início)
+                    activity.overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+                }
             });
         }
     }

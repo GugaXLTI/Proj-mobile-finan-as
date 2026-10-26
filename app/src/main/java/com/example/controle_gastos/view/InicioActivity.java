@@ -23,6 +23,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.Usuario;
+import com.example.controle_gastos.utils.BottomNavHelper; // ⭐ IMPORT ADICIONADO
 import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.SessionManager;
 
@@ -39,23 +40,17 @@ public class InicioActivity extends AppCompatActivity {
     private static final int REQ_NOTIFICACAO = 100;
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    // Cabeçalho / saldo
     private TextView tvAvatarInicio, tvNomeInicio, tvDataAtualInicio;
     private TextView tvSaldoDisponivelInicio, tvSalarioTotalInicio, tvGastosMesInicio;
     private TextView tvTotalDividasInicio, tvTotalPagoInicio;
     private ProgressBar progressOrcamento;
-    private ImageView btnToggleSaldo;
+    private ImageView btnToggleSaldo, btnHistorico; // ⭐ NOVO btnHistorico
     private boolean isSaldoOculto = false;
 
-    // Card "Atenção este mês"
     private TextView tvAlertaMes, tvBadgeContas, tvTotalAPagarMes, tvCompromete;
     private LinearLayout llContasMes, llTotalAPagar;
     private ProgressBar progressAtencao;
     private TextView btnVerTodosVencimentos;
-
-    // Navegação (aba ativa = LinearLayout, demais = ImageView)
-    private LinearLayout tabInicio;
-    private ImageView tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     private AppDatabase db;
     private SessionManager session;
@@ -73,6 +68,9 @@ public class InicioActivity extends AppCompatActivity {
 
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
+
+        // ⭐ CORREÇÃO: Configura a barra inferior
+        BottomNavHelper.configurar(this, BottomNavHelper.INICIO);
 
         NotificationHelper.criarCanal(this);
         solicitarPermissaoNotificacao();
@@ -103,11 +101,12 @@ public class InicioActivity extends AppCompatActivity {
             atualizarDashboardFinanceiro();
         });
 
-        tabInicio = findViewById(R.id.tabInicio);
-        tabLancar = findViewById(R.id.tabLancar);
-        tabDividas = findViewById(R.id.tabDividas);
-        tabRelatorios = findViewById(R.id.tabRelatorios);
-        tabConfig = findViewById(R.id.tabConfig);
+        // ⭐ NOVO: Ação do botão de histórico no card de saldo
+        btnHistorico = findViewById(R.id.btnHistorico);
+        btnHistorico.setOnClickListener(v -> {
+            startActivity(new Intent(this, HistoricoActivity.class));
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
 
         atualizarNomeEAvatar();
 
@@ -118,19 +117,10 @@ public class InicioActivity extends AppCompatActivity {
         carregarDados();
         atualizarDashboardFinanceiro();
 
-        btnVerTodosVencimentos.setOnClickListener(v ->
-                startActivity(new Intent(this, DividasActivity.class)));
-
-        tabInicio.setOnClickListener(v ->
-                Toast.makeText(this, "Você já está no Início", Toast.LENGTH_SHORT).show());
-        tabLancar.setOnClickListener(v ->
-                startActivity(new Intent(this, CadastroDividaActivity.class)));
-        tabDividas.setOnClickListener(v ->
-                startActivity(new Intent(this, DividasActivity.class)));
-        tabRelatorios.setOnClickListener(v ->
-                startActivity(new Intent(this, DashboardActivity.class)));
-        tabConfig.setOnClickListener(v ->
-                startActivity(new Intent(this, ConfiguracoesActivity.class)));
+        btnVerTodosVencimentos.setOnClickListener(v -> {
+            startActivity(new Intent(this, DividasActivity.class));
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
     }
 
     private void solicitarPermissaoNotificacao() {
@@ -172,9 +162,6 @@ public class InicioActivity extends AppCompatActivity {
         }
     }
 
-    // ------------------------------------------------------------------
-    // SALDO
-    // ------------------------------------------------------------------
     private void atualizarDashboardFinanceiro() {
         Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
         if (user != null) {
@@ -220,9 +207,6 @@ public class InicioActivity extends AppCompatActivity {
         renderizarCardAtencao();
     }
 
-    // ------------------------------------------------------------------
-    // DÍVIDAS / TOTAIS
-    // ------------------------------------------------------------------
     private void carregarDados() {
         dividas = db.dividaDao().listarPorUsuario(session.getUserId());
         atualizarTotais();
@@ -256,9 +240,6 @@ public class InicioActivity extends AppCompatActivity {
         tvTotalPagoInicio.setText(moeda(totalPago));
     }
 
-    // ------------------------------------------------------------------
-    // CARD "ATENÇÃO ESTE MÊS"
-    // ------------------------------------------------------------------
     private void renderizarCardAtencao() {
         llContasMes.removeAllViews();
         int n = contasDoMes.size();
@@ -351,9 +332,6 @@ public class InicioActivity extends AppCompatActivity {
         }
     }
 
-    // ------------------------------------------------------------------
-    // HELPERS
-    // ------------------------------------------------------------------
     private String moeda(double valor) {
         return NumberFormat.getCurrencyInstance(LOCALE_BR).format(valor);
     }

@@ -154,13 +154,16 @@
                         android:textColor="#94A3B8"
                         android:textSize="14sp" />
 
+                    <!-- ⭐ ChipGroup Parcelas -->
                     <com.google.android.material.chip.ChipGroup
                         android:id="@+id/chipGroupParcelas"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         app:chipSpacingHorizontal="8dp"
-                        app:chipSpacingVertical="8dp" />
+                        app:chipSpacingVertical="8dp"
+                        app:singleSelection="true"
+                        app:selectionRequired="true" />
                 </LinearLayout>
 
                 <TextView
@@ -182,13 +185,16 @@
                 android:textColor="#94A3B8"
                 android:textSize="14sp" />
 
+            <!-- ⭐ ChipGroup Tipo -->
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chipGroupTipo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 app:chipSpacingHorizontal="8dp"
-                app:chipSpacingVertical="8dp" />
+                app:chipSpacingVertical="8dp"
+                app:singleSelection="true"
+                app:selectionRequired="true" />
 
             <!-- CARTÃO / CHAVE PIX / BANCO -->
             <LinearLayout
@@ -360,13 +366,16 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- ⭐ ChipGroup Categoria -->
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chipGroupCategoria"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 app:chipSpacingHorizontal="8dp"
-                app:chipSpacingVertical="8dp" />
+                app:chipSpacingVertical="8dp"
+                app:singleSelection="true"
+                app:selectionRequired="true" />
 
             <TextView
                 android:id="@+id/tvSemCategoria"

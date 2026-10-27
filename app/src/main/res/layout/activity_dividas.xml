@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/fundo_escuro">
+    android:background="@drawable/bg_gradient_inicio">
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:clipToPadding="false"
         android:fillViewport="true"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
+        android:overScrollMode="never"
+        android:paddingBottom="112dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -19,29 +21,32 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="28dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Controle de Dívidas"
-                android:fontFamily="@font/abril_fatface"
-                android:textSize="22sp"
-                android:textColor="@color/text_white"
-                android:layout_marginBottom="4dp" />
+                android:textColor="#FFFFFF"
+                android:textSize="28sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="20dp"
                 android:text="Gerencie pendências, faturas e pagamentos"
-                android:textColor="@color/text_gray"
-                android:textSize="12sp"
-                android:layout_marginBottom="16dp" />
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
 
+            <!-- Filtros -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
+                android:overScrollMode="never"
                 android:scrollbars="none">
 
                 <LinearLayout
@@ -49,194 +54,275 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <Button
+                    <LinearLayout
                         android:id="@+id/btnTodosDevedores"
                         android:layout_width="wrap_content"
-                        android:layout_height="32dp"
-                        android:text="Todos Devedores"
-                        android:backgroundTint="@color/card_bg"
-                        android:textColor="@color/text_white"
-                        android:textSize="12sp"
-                        android:paddingHorizontal="16dp"
-                        android:stateListAnimator="@null"
-                        android:layout_marginEnd="8dp" />
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_pill_filtro"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="10dp">
 
-                    <Button
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Todos devedores"
+                            android:textColor="#E2E8F0"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginStart="6dp"
+                            android:src="@drawable/ic_chevron_down"
+                            app:tint="#94A3B8" />
+                    </LinearLayout>
+
+                    <LinearLayout
                         android:id="@+id/btnCategorias"
                         android:layout_width="wrap_content"
-                        android:layout_height="32dp"
-                        android:text="Categorias..."
-                        android:backgroundTint="@color/card_bg"
-                        android:textColor="@color/text_white"
-                        android:textSize="12sp"
-                        android:paddingHorizontal="16dp"
-                        android:stateListAnimator="@null" />
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_pill_filtro"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="10dp">
 
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Categorias"
+                            android:textColor="#E2E8F0"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginStart="6dp"
+                            android:src="@drawable/ic_chevron_down"
+                            app:tint="#94A3B8" />
+                    </LinearLayout>
                 </LinearLayout>
             </HorizontalScrollView>
 
+            <!-- Card de totais -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:background="@color/card_bg"
-                android:padding="12dp"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/bg_card_glass"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.08"
+                    android:text="TOTAL A PAGAR"
+                    android:textColor="#94A3B8"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvTotalAPagar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="R$ 1.500,00"
+                    android:textColor="#F87171"
+                    android:textSize="32sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:background="#1E2A44" />
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="Total a pagar:"
-                        android:textColor="@color/text_gray"
-                        android:textSize="11sp" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tvTotalAPagar"
-                        android:layout_width="wrap_content"
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total já pago"
+                            android:textColor="#94A3B8"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tvTotalPago"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="R$ 1.550,00"
+                            android:textColor="#34D399"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="R$ 3.424,80"
-                        android:textColor="#EF4444"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:orientation="vertical">
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total geral"
+                            android:textColor="#94A3B8"
+                            android:textSize="13sp" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Total já pago:"
-                        android:textColor="@color/text_gray"
-                        android:textSize="11sp" />
-
-                    <TextView
-                        android:id="@+id/tvTotalPago"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="R$ 1.950,00"
-                        android:textColor="#10B981"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Total Geral:"
-                        android:textColor="@color/text_gray"
-                        android:textSize="11sp" />
-
-                    <TextView
-                        android:id="@+id/tvTotalGeral"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="R$ 5.374,80"
-                        android:textColor="@color/text_white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvTotalGeral"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="R$ 3.050,00"
+                            android:textColor="#FFFFFF"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Lista -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvDividas"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_marginBottom="12dp" />
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
 
-            <Button
-                android:id="@+id/btnCadastrarDivida"
+            <TextView
+                android:id="@+id/tvEmptyDividas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingVertical="32dp"
+                android:text="Nenhuma dívida cadastrada ainda"
+                android:textColor="#94A3B8"
+                android:textSize="15sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/btnCadastrarDivida"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_botao_primario"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center"
                 android:text="Cadastrar nova dívida"
-                android:backgroundTint="@color/brand_green"
-                android:textColor="#000000"
+                android:textColor="#052E22"
                 android:textSize="16sp"
-                android:textStyle="bold"
-                android:padding="14dp"
-                android:stateListAnimator="@null" />
+                android:textStyle="bold" />
 
         </LinearLayout>
     </ScrollView>
 
+    <!-- BARRA DE NAVEGAÇÃO FLUTUANTE -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="72dp"
-        android:background="#0B1220"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_nav_pill"
+        android:elevation="8dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:paddingHorizontal="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <TextView
+        <ImageView
             android:id="@+id/tabInicio"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="⌂\nInício"
-            android:textColor="#64748B"
-            android:textSize="12sp" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Início"
+            android:scaleType="center"
+            android:src="@drawable/ic_nav_home"
+            app:tint="#94A3B8" />
 
-        <TextView
+        <ImageView
             android:id="@+id/tabLancar"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="+\nLançar"
-            android:textColor="#64748B"
-            android:textSize="12sp" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Lançar"
+            android:scaleType="center"
+            android:src="@drawable/ic_nav_add"
+            app:tint="#94A3B8" />
 
-        <TextView
+        <!-- Aba ativa -->
+        <LinearLayout
             android:id="@+id/tabDividas"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="46dp"
+            android:background="@drawable/bg_tab_ativo"
             android:gravity="center"
-            android:text="⊡\nDívidas"
-            android:textColor="#10B981"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:paddingHorizontal="18dp">
 
-        <TextView
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_card"
+                app:tint="#34D399" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Dívidas"
+                android:textColor="#34D399"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ImageView
             android:id="@+id/tabRelatorios"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="◷\nRelatórios"
-            android:textColor="#64748B"
-            android:textSize="12sp" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Relatórios"
+            android:scaleType="center"
+            android:src="@drawable/ic_nav_chart"
+            app:tint="#94A3B8" />
 
-        <TextView
+        <ImageView
             android:id="@+id/tabConfig"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="⚙\nConfig"
-            android:textColor="#64748B"
-            android:textSize="12sp" />
-
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Configurações"
+            android:scaleType="center"
+            android:src="@drawable/ic_nav_settings"
+            app:tint="#94A3B8" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

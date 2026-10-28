@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="12dp">
+
+    <View
+        android:id="@+id/vCorLegenda"
+        android:layout_width="10dp"
+        android:layout_height="10dp" />
+
+    <TextView
+        android:id="@+id/tvNomeLegendaCat"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Alimentação"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/tvPercentualLegenda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:text="100%"
+        android:textColor="#94A3B8"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tvValorLegenda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="R$ 50,00"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+</LinearLayout>

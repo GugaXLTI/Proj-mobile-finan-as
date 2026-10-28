@@ -11,16 +11,21 @@ import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaDashboardAdapter;
 import com.example.controle_gastos.database.AppDatabase;
@@ -29,6 +34,8 @@ import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.utils.CsvExportHelper;
 import com.example.controle_gastos.utils.PdfExportHelper;
 import com.example.controle_gastos.utils.SessionManager;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -39,12 +46,15 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import java.io.File;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,46 +66,53 @@ public class DashboardActivity extends AppCompatActivity {
     private static final int[] PERIODOS_DISPONIVEIS = {3, 6, 12};
     private static final int PERIODO_PADRAO = 6;
 
-    private com.github.mikephil.charting.charts.PieChart pieChart;
-    private com.github.mikephil.charting.charts.LineChart lineChart;
+    private static final String[] MESES = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
+
+    // Paleta das categorias (verde primeiro, alinhado ao resto do app)
+    private static final int[] CORES = {
+            Color.parseColor("#10B981"),
+            Color.parseColor("#3B82F6"),
+            Color.parseColor("#F59E0B"),
+            Color.parseColor("#EC4899"),
+            Color.parseColor("#06B6D4"),
+            Color.parseColor("#EF4444"),
+            Color.parseColor("#8B5CF6"),
+            Color.parseColor("#EAB308")
+    };
+
+    private PieChart pieChart;
+    private LineChart lineChart;
     private RecyclerView rvLancamentos;
-    private LinearLayout containerFiltros, containerPeriodos;
-    private Button btnExportar;
-    private TextView tvTituloLista, tvTotalLista, tvTotalEvolucao;
+    private LinearLayout containerFiltros, containerPeriodos, llLegenda;
+    private TextView btnExportar;
+    private TextView tvTituloLista, tvTotalLista, tvVazioLista;
+    private TextView tvTotalEvolucao, tvMediaEvolucao, tvTituloTotalEvolucao;
 
-    private TextView btnMesAnteriorDash, btnMesProximoDash, tvMesAtualDash, tvBadgeAtualDash;
+    private ImageView btnMesAnteriorDash, btnMesProximoDash;
+    private TextView tvMesAtualDash, tvBadgeAtualDash;
 
-    // ⭐ NOVO: Variáveis do Balanço do Mês
-    private TextView tvSalarioDash, tvGastosDash, tvSaldoDash;
+    private TextView tvSalarioDash, tvGastosDash, tvSaldoDash, tvBalancoCaption;
+    private ProgressBar progressBalanco;
 
-    private List<Divida> todasDividas;
-    private List<Divida> dividasFiltradas;
-    private DividaDashboardAdapter dividaAdapter;
+    // Navegação (aba ativa = LinearLayout, demais = ImageView)
+    private ImageView tabInicio, tabLancar, tabDividas, tabConfig;
+    private LinearLayout tabRelatorios;
 
-    private float totalParaPercentual = 0f;
+    private List<Divida> todasDividas = new ArrayList<>();
+    private final List<Divida> dividasFiltradas = new ArrayList<>();
+
+    private final Map<String, TextView> chipsFiltro = new LinkedHashMap<>();
+    private final Map<String, View> legendaRows = new HashMap<>();
+    private final Map<String, Integer> coresPorCategoria = new HashMap<>();
 
     private AppDatabase db;
     private SessionManager session;
 
     private int mesSelecionado;
     private int anoSelecionado;
-
     private int mesesVisiveis = PERIODO_PADRAO;
-
     private String categoriaAtual = "Todos";
-
-    private final int[] CORES_FIGMA = {
-            Color.parseColor("#A855F7"),
-            Color.parseColor("#10B981"),
-            Color.parseColor("#F59E0B"),
-            Color.parseColor("#EC4899"),
-            Color.parseColor("#EAB308"),
-            Color.parseColor("#3B82F6"),
-            Color.parseColor("#EF4444"),
-            Color.parseColor("#06B6D4")
-    };
-
-    private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,23 +124,28 @@ public class DashboardActivity extends AppCompatActivity {
 
         pieChart = findViewById(R.id.pieChart);
         lineChart = findViewById(R.id.lineChart);
-        tvTotalEvolucao = findViewById(R.id.tvTotalEvolucao);
         rvLancamentos = findViewById(R.id.rvLancamentos);
         containerFiltros = findViewById(R.id.containerFiltros);
         containerPeriodos = findViewById(R.id.containerPeriodos);
+        llLegenda = findViewById(R.id.llLegenda);
         btnExportar = findViewById(R.id.btnExportar);
         tvTituloLista = findViewById(R.id.tvTituloLista);
         tvTotalLista = findViewById(R.id.tvTotalLista);
+        tvVazioLista = findViewById(R.id.tvVazioLista);
+        tvTotalEvolucao = findViewById(R.id.tvTotalEvolucao);
+        tvMediaEvolucao = findViewById(R.id.tvMediaEvolucao);
+        tvTituloTotalEvolucao = findViewById(R.id.tvTituloTotalEvolucao);
 
         btnMesAnteriorDash = findViewById(R.id.btnMesAnteriorDash);
         btnMesProximoDash = findViewById(R.id.btnMesProximoDash);
         tvMesAtualDash = findViewById(R.id.tvMesAtualDash);
         tvBadgeAtualDash = findViewById(R.id.tvBadgeAtualDash);
 
-        // ⭐ NOVO: Bind do Balanço do Mês
         tvSalarioDash = findViewById(R.id.tvSalarioDash);
         tvGastosDash = findViewById(R.id.tvGastosDash);
         tvSaldoDash = findViewById(R.id.tvSaldoDash);
+        tvBalancoCaption = findViewById(R.id.tvBalancoCaption);
+        progressBalanco = findViewById(R.id.progressBalanco);
 
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
@@ -140,7 +162,6 @@ public class DashboardActivity extends AppCompatActivity {
         configurarPieChart();
         configurarGraficoLinha();
         criarChipsPeriodo();
-        carregarDados();
         configurarExportar();
         configurarNavegacao();
 
@@ -169,6 +190,9 @@ public class DashboardActivity extends AppCompatActivity {
         carregarDados();
     }
 
+    // ------------------------------------------------------------------
+    // CARGA DE DADOS
+    // ------------------------------------------------------------------
     private void carregarDados() {
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
         todasDividas = new ArrayList<>();
@@ -178,59 +202,246 @@ public class DashboardActivity extends AppCompatActivity {
                 todasDividas.add(d);
             }
         }
+        todasDividas.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
 
-        dividasFiltradas = new ArrayList<>(todasDividas);
+        categoriaAtual = "Todos";
+
         atualizarTituloMes();
-        atualizarDashboard("Todos");
-        atualizarGraficoLinha();
+        montarGraficoCategorias();
         configurarFiltros();
+        atualizarLista();
+        atualizarBalancoMensal();
+        atualizarGraficoLinha();
     }
 
     private void atualizarTituloMes() {
-        String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
-        tvMesAtualDash.setText(meses[mesSelecionado - 1] + " " + anoSelecionado);
+        tvMesAtualDash.setText(MESES[mesSelecionado - 1] + " " + anoSelecionado);
 
         Calendar c = Calendar.getInstance();
-        int mesAtual = c.get(Calendar.MONTH) + 1;
-        int anoAtual = c.get(Calendar.YEAR);
+        boolean ehMesAtual = mesSelecionado == c.get(Calendar.MONTH) + 1
+                && anoSelecionado == c.get(Calendar.YEAR);
+        tvBadgeAtualDash.setVisibility(ehMesAtual ? View.VISIBLE : View.INVISIBLE);
+    }
 
-        if (mesSelecionado == mesAtual && anoSelecionado == anoAtual) {
-            tvBadgeAtualDash.setVisibility(View.VISIBLE);
+    // ------------------------------------------------------------------
+    // BALANÇO DO MÊS
+    // ------------------------------------------------------------------
+    private void atualizarBalancoMensal() {
+        // Gastos vêm das dívidas do mês, mesmo que o usuário não seja encontrado
+        double gastos = 0;
+        for (Divida d : todasDividas) {
+            gastos += d.getValorTotal();
+        }
+
+        double salario = 0;
+        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
+        if (user != null) {
+            salario = user.getSalarioMensal();
+        }
+
+        tvSalarioDash.setText(moeda(salario));
+        tvGastosDash.setText(moeda(gastos));
+
+        if (salario > 0) {
+            double saldo = salario - gastos;
+            tvSaldoDash.setText(moeda(saldo));
+            tvSaldoDash.setTextColor(Color.parseColor(saldo < 0 ? "#F87171" : "#34D399"));
+
+            int pct = (int) Math.round((gastos / salario) * 100);
+            progressBalanco.setProgress(Math.min(pct, 100));
+            tvBalancoCaption.setText(pct + "% do salário comprometido");
         } else {
-            tvBadgeAtualDash.setVisibility(View.GONE);
+            tvSaldoDash.setText(moeda(0));
+            tvSaldoDash.setTextColor(Color.parseColor("#64748B"));
+            progressBalanco.setProgress(0);
+            tvBalancoCaption.setText("Salário não encontrado. Confira em Configurações.");
         }
     }
 
-    private boolean pertenceAoMes(Divida d, int mes, int ano) {
-        String venc = d.getVencimento();
-        if (venc == null || venc.isEmpty()) return false;
-        try {
-            String[] partes = venc.split("/");
-            if (partes.length != 3) return false;
-            int m = Integer.parseInt(partes[1]);
-            int a = Integer.parseInt(partes[2]);
-            return m == mes && a == ano;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
+    // ------------------------------------------------------------------
+    // ROSCA + LEGENDA
+    // ------------------------------------------------------------------
     private void configurarPieChart() {
         pieChart.setUsePercentValues(false);
         pieChart.getDescription().setEnabled(false);
-        pieChart.setExtraOffsets(12, 12, 12, 12);
+        pieChart.setExtraOffsets(4, 4, 4, 4);
         pieChart.setDrawHoleEnabled(true);
-        pieChart.setHoleColor(Color.parseColor("#131C2E"));
-        pieChart.setHoleRadius(50f);
-        pieChart.setTransparentCircleRadius(55f);
-        pieChart.setTransparentCircleColor(Color.parseColor("#131C2E"));
+        pieChart.setHoleColor(Color.parseColor("#111A2E"));
+        pieChart.setHoleRadius(72f);
+        pieChart.setTransparentCircleRadius(0f);
         pieChart.getLegend().setEnabled(false);
         pieChart.setRotationEnabled(false);
-        pieChart.setHighlightPerTapEnabled(true);
+        pieChart.setHighlightPerTapEnabled(false);
         pieChart.setDrawEntryLabels(false);
+        pieChart.setNoDataText("");
     }
 
+    private void montarGraficoCategorias() {
+        Map<String, Double> gastos = new HashMap<>();
+        double total = 0;
+        for (Divida d : todasDividas) {
+            String cat = categoriaDe(d);
+            gastos.put(cat, gastos.getOrDefault(cat, 0.0) + d.getValorTotal());
+            total += d.getValorTotal();
+        }
+
+        List<Map.Entry<String, Double>> ordenado = new ArrayList<>(gastos.entrySet());
+        ordenado.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+
+        coresPorCategoria.clear();
+        legendaRows.clear();
+        llLegenda.removeAllViews();
+
+        List<PieEntry> entries = new ArrayList<>();
+        List<Integer> cores = new ArrayList<>();
+        LayoutInflater inflater = LayoutInflater.from(this);
+
+        for (int i = 0; i < ordenado.size(); i++) {
+            final String cat = ordenado.get(i).getKey();
+            double valor = ordenado.get(i).getValue();
+            int cor = CORES[i % CORES.length];
+
+            coresPorCategoria.put(cat, cor);
+            entries.add(new PieEntry((float) valor));
+            cores.add(cor);
+
+            View row = inflater.inflate(R.layout.item_legenda_categoria, llLegenda, false);
+            View dot = row.findViewById(R.id.vCorLegenda);
+            TextView tvNome = row.findViewById(R.id.tvNomeLegendaCat);
+            TextView tvPerc = row.findViewById(R.id.tvPercentualLegenda);
+            TextView tvValor = row.findViewById(R.id.tvValorLegenda);
+
+            GradientDrawable bolinha = new GradientDrawable();
+            bolinha.setShape(GradientDrawable.OVAL);
+            bolinha.setColor(cor);
+            dot.setBackground(bolinha);
+
+            double pct = total > 0 ? (valor / total) * 100.0 : 0;
+            tvNome.setText(cat);
+            tvPerc.setText(String.format(LOCALE_BR, "%.0f%%", pct));
+            tvValor.setText(moeda(valor));
+
+            row.setOnClickListener(v ->
+                    selecionarCategoria(cat.equals(categoriaAtual) ? "Todos" : cat));
+
+            legendaRows.put(cat, row);
+            llLegenda.addView(row);
+        }
+
+        if (entries.isEmpty()) {
+            entries.add(new PieEntry(1f));
+            cores.add(Color.parseColor("#1E2A44"));
+
+            TextView vazio = new TextView(this);
+            vazio.setText("Sem lançamentos neste mês");
+            vazio.setTextColor(Color.parseColor("#94A3B8"));
+            vazio.setTextSize(14f);
+            vazio.setGravity(Gravity.CENTER);
+            vazio.setPadding(0, dp(8), 0, dp(8));
+            llLegenda.addView(vazio);
+        }
+
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        dataSet.setColors(cores);
+        dataSet.setSliceSpace(3f);
+        dataSet.setDrawValues(false);
+        pieChart.setData(new PieData(dataSet));
+
+        String labelTotal = "TOTAL\n";
+        SpannableStringBuilder centro = new SpannableStringBuilder();
+        centro.append(labelTotal).append(moeda(total));
+        centro.setSpan(new ForegroundColorSpan(Color.parseColor("#94A3B8")),
+                0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centro.setSpan(new RelativeSizeSpan(0.75f),
+                0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centro.setSpan(new ForegroundColorSpan(Color.WHITE),
+                labelTotal.length(), centro.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centro.setSpan(new StyleSpan(Typeface.BOLD),
+                labelTotal.length(), centro.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        pieChart.setCenterText(centro);
+        pieChart.setCenterTextSize(18f);
+        pieChart.animateY(600);
+        pieChart.invalidate();
+    }
+
+    // ------------------------------------------------------------------
+    // FILTROS (chips) E LISTA
+    // ------------------------------------------------------------------
+    private void configurarFiltros() {
+        containerFiltros.removeAllViews();
+        chipsFiltro.clear();
+
+        Map<String, Integer> contagem = new HashMap<>();
+        for (Divida d : todasDividas) {
+            String cat = categoriaDe(d);
+            contagem.put(cat, contagem.getOrDefault(cat, 0) + 1);
+        }
+
+        adicionarChipFiltro("Todos", "Todos (" + todasDividas.size() + ")");
+
+        List<String> categorias = new ArrayList<>(contagem.keySet());
+        categorias.sort(String::compareToIgnoreCase);
+        for (String cat : categorias) {
+            adicionarChipFiltro(cat, cat + " (" + contagem.get(cat) + ")");
+        }
+
+        atualizarEstiloFiltros();
+    }
+
+    private void adicionarChipFiltro(String categoria, String texto) {
+        TextView chip = criarChip(texto);
+        chip.setOnClickListener(v -> selecionarCategoria(categoria));
+        chipsFiltro.put(categoria, chip);
+        containerFiltros.addView(chip);
+    }
+
+    private void selecionarCategoria(String categoria) {
+        categoriaAtual = categoria;
+        atualizarEstiloFiltros();
+        atualizarSelecaoLegenda();
+        atualizarLista();
+    }
+
+    private void atualizarEstiloFiltros() {
+        for (Map.Entry<String, TextView> e : chipsFiltro.entrySet()) {
+            estilizarChip(e.getValue(), e.getKey().equals(categoriaAtual));
+        }
+    }
+
+    private void atualizarSelecaoLegenda() {
+        for (Map.Entry<String, View> e : legendaRows.entrySet()) {
+            boolean sel = e.getKey().equals(categoriaAtual);
+            e.getValue().setBackgroundResource(sel ? R.drawable.bg_legenda_ativa : 0);
+        }
+    }
+
+    private void atualizarLista() {
+        dividasFiltradas.clear();
+        double total = 0;
+        for (Divida d : todasDividas) {
+            if (categoriaAtual.equals("Todos") || categoriaDe(d).equals(categoriaAtual)) {
+                dividasFiltradas.add(d);
+                total += d.getValorTotal();
+            }
+        }
+
+        rvLancamentos.setAdapter(new DividaDashboardAdapter(dividasFiltradas));
+
+        boolean vazio = dividasFiltradas.isEmpty();
+        tvVazioLista.setVisibility(vazio ? View.VISIBLE : View.GONE);
+        rvLancamentos.setVisibility(vazio ? View.GONE : View.VISIBLE);
+
+        String nomeMes = MESES[mesSelecionado - 1].toUpperCase(LOCALE_BR);
+        tvTituloLista.setText(categoriaAtual.equals("Todos")
+                ? "DÍVIDAS DE " + nomeMes
+                : "DÍVIDAS DE " + nomeMes + " · " + categoriaAtual.toUpperCase(LOCALE_BR));
+        tvTotalLista.setText(moeda(total));
+    }
+
+    // ------------------------------------------------------------------
+    // EVOLUÇÃO MENSAL (linha)
+    // ------------------------------------------------------------------
     private void configurarGraficoLinha() {
         lineChart.getDescription().setEnabled(false);
         lineChart.setTouchEnabled(true);
@@ -242,7 +453,7 @@ public class DashboardActivity extends AppCompatActivity {
         lineChart.getLegend().setEnabled(false);
         lineChart.setNoDataText("Sem dados para exibir");
         lineChart.setNoDataTextColor(Color.parseColor("#64748B"));
-        lineChart.setExtraOffsets(8f, 16f, 8f, 8f);
+        lineChart.setExtraOffsets(12f, 20f, 16f, 8f);
 
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -254,19 +465,17 @@ public class DashboardActivity extends AppCompatActivity {
 
         YAxis yAxisLeft = lineChart.getAxisLeft();
         yAxisLeft.setDrawGridLines(true);
-        yAxisLeft.setGridColor(Color.parseColor("#1E293B"));
+        yAxisLeft.setGridColor(Color.parseColor("#1E2A44"));
         yAxisLeft.setGridLineWidth(1f);
         yAxisLeft.setDrawAxisLine(false);
         yAxisLeft.setTextColor(Color.parseColor("#94A3B8"));
         yAxisLeft.setTextSize(10f);
-        yAxisLeft.setDrawLabels(true);
+        yAxisLeft.setAxisMinimum(0f);
         yAxisLeft.setSpaceTop(30f);
         yAxisLeft.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                if (value <= 0.01f) return "R$ 0";
-                if (value >= 1000) return String.format(LOCALE_BR, "R$ %.1fk", value / 1000f);
-                return String.format(LOCALE_BR, "R$ %.0f", value);
+                return formatarCurto(value, true);
             }
         });
 
@@ -277,31 +486,16 @@ public class DashboardActivity extends AppCompatActivity {
         containerPeriodos.removeAllViews();
 
         for (int periodo : PERIODOS_DISPONIVEIS) {
-            TextView chip = new TextView(this);
-            chip.setText(periodo + "M");
-            chip.setTextSize(13f);
-            chip.setPadding(40, 16, 40, 16);
-
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            params.setMargins(0, 0, 12, 0);
-            chip.setLayoutParams(params);
-
-            boolean selecionado = (periodo == mesesVisiveis);
-            aplicarEstiloChipPeriodo(chip, selecionado);
+            TextView chip = criarChip(periodo + "M");
+            chip.setTag(periodo);
+            estilizarChip(chip, periodo == mesesVisiveis);
 
             chip.setOnClickListener(v -> {
                 mesesVisiveis = periodo;
                 for (int i = 0; i < containerPeriodos.getChildCount(); i++) {
                     View child = containerPeriodos.getChildAt(i);
-                    if (child instanceof TextView) {
-                        TextView c = (TextView) child;
-                        String txt = c.getText().toString().replace("M", "");
-                        try {
-                            int p = Integer.parseInt(txt);
-                            aplicarEstiloChipPeriodo(c, p == mesesVisiveis);
-                        } catch (NumberFormatException ignored) { }
+                    if (child instanceof TextView && child.getTag() instanceof Integer) {
+                        estilizarChip((TextView) child, ((Integer) child.getTag()) == mesesVisiveis);
                     }
                 }
                 atualizarGraficoLinha();
@@ -309,22 +503,6 @@ public class DashboardActivity extends AppCompatActivity {
 
             containerPeriodos.addView(chip);
         }
-    }
-
-    private void aplicarEstiloChipPeriodo(TextView chip, boolean selecionado) {
-        GradientDrawable d = new GradientDrawable();
-        d.setCornerRadius(50f);
-
-        if (selecionado) {
-            d.setColor(Color.parseColor("#4C1D95"));
-            d.setStroke(1, Color.parseColor("#A855F7"));
-            chip.setTextColor(Color.WHITE);
-        } else {
-            d.setColor(Color.parseColor("#0B1220"));
-            d.setStroke(1, Color.parseColor("#334155"));
-            chip.setTextColor(Color.parseColor("#CBD5E1"));
-        }
-        chip.setBackground(d);
     }
 
     private void atualizarGraficoLinha() {
@@ -349,7 +527,7 @@ public class DashboardActivity extends AppCompatActivity {
 
             double totalMes = 0;
             for (Divida d : todas) {
-                if (pertenceMesmoMes(d, mesRef, anoRef)) {
+                if (pertenceAoMes(d, mesRef, anoRef)) {
                     totalMes += d.getValorTotal();
                 }
             }
@@ -374,20 +552,17 @@ public class DashboardActivity extends AppCompatActivity {
         LineDataSet dataSet = new LineDataSet(entries, "Gastos");
         dataSet.setColor(Color.parseColor("#10B981"));
         dataSet.setLineWidth(3f);
-        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        dataSet.setMode(LineDataSet.Mode.HORIZONTAL_BEZIER); // curva suave sem "afundar" abaixo de zero
         dataSet.setDrawCircles(true);
         dataSet.setDrawCircleHole(true);
-        dataSet.setCircleHoleColor(Color.parseColor("#131C2E"));
+        dataSet.setCircleHoleColor(Color.parseColor("#111A2E"));
         dataSet.setCircleHoleRadius(3f);
         dataSet.setCircleRadius(5f);
 
         List<Integer> coresCirculos = new ArrayList<>();
         for (int i = 0; i < entries.size(); i++) {
-            if (i == indexMaior && maiorValor > 0) {
-                coresCirculos.add(Color.parseColor("#A855F7"));
-            } else {
-                coresCirculos.add(Color.parseColor("#10B981"));
-            }
+            boolean destaque = (i == indexMaior && maiorValor > 0);
+            coresCirculos.add(Color.parseColor(destaque ? "#F59E0B" : "#10B981"));
         }
         dataSet.setCircleColors(coresCirculos);
 
@@ -400,43 +575,35 @@ public class DashboardActivity extends AppCompatActivity {
         }
         dataSet.setDrawFilled(true);
 
-        dataSet.setDrawValues(true);
+        dataSet.setDrawValues(mesesVisiveis <= 6);
         dataSet.setValueTextSize(10f);
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTypeface(Typeface.DEFAULT_BOLD);
         dataSet.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                if (value <= 0.01f) return "";
-                if (value >= 1000) return String.format(LOCALE_BR, "R$ %.1fk", value / 1000f);
-                return String.format(LOCALE_BR, "R$ %.0f", value);
+                return formatarCurto(value, false);
             }
         });
 
-        LineData lineData = new LineData(dataSet);
-        lineChart.setData(lineData);
+        lineChart.setData(new LineData(dataSet));
 
+        final int visiveis = mesesVisiveis;
         lineChart.getXAxis().setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                int idx = (int) value;
-                if (idx >= 0 && idx < labelsMeses.size()) {
-                    return labelsMeses.get(idx);
-                }
-                return "";
+                int idx = Math.round(value);
+                if (idx < 0 || idx >= labelsMeses.size()) return "";
+                if (visiveis > 6 && idx % 2 != 0) return "";
+                return labelsMeses.get(idx);
             }
         });
-
-        if (mesesVisiveis <= 6) {
-            lineChart.getXAxis().setLabelCount(mesesVisiveis, true);
-        } else {
-            lineChart.getXAxis().setLabelCount(6, true);
-        }
+        lineChart.getXAxis().setLabelCount(mesesVisiveis, true);
 
         lineChart.getAxisLeft().removeAllLimitLines();
         if (media > 0.01) {
             LimitLine linhaMedia = new LimitLine((float) media,
-                    String.format(LOCALE_BR, "Média: R$ %.0f", media));
+                    String.format(LOCALE_BR, "Média R$ %.0f", media));
             linhaMedia.setLineColor(Color.parseColor("#F59E0B"));
             linhaMedia.setLineWidth(1.5f);
             linhaMedia.enableDashedLine(12, 8, 0);
@@ -447,220 +614,22 @@ public class DashboardActivity extends AppCompatActivity {
         }
 
         lineChart.animateX(700);
+        lineChart.invalidate();
 
-        tvTotalEvolucao.setText(String.format(LOCALE_BR,
-                "Total: R$ %.2f em %d meses  •  Média: R$ %.2f",
-                totalPeriodo, mesesVisiveis, media));
+        tvTituloTotalEvolucao.setText("Total em " + mesesVisiveis + " meses");
+        tvTotalEvolucao.setText(moeda(totalPeriodo));
+        tvMediaEvolucao.setText(moeda(media));
     }
 
-    private boolean pertenceMesmoMes(Divida d, int mes, int ano) {
-        return pertenceAoMes(d, mes, ano);
-    }
-
-    private void atualizarDashboard(String categoriaFiltro) {
-        categoriaAtual = categoriaFiltro;
-
-        dividasFiltradas.clear();
-        for (Divida d : todasDividas) {
-            if (categoriaFiltro.equals("Todos") || d.getCategoria().equals(categoriaFiltro)) {
-                dividasFiltradas.add(d);
-            }
-        }
-
-        Map<String, Double> gastosPorCategoria = new HashMap<>();
-        for (Divida d : dividasFiltradas) {
-            double valor = gastosPorCategoria.getOrDefault(d.getCategoria(), 0.0);
-            gastosPorCategoria.put(d.getCategoria(), valor + d.getValorTotal());
-        }
-
-        totalParaPercentual = 0f;
-        for (Double v : gastosPorCategoria.values()) {
-            totalParaPercentual += v.floatValue();
-        }
-
-        final Map<Float, String> labelsPorValor = new HashMap<>();
-        List<PieEntry> entries = new ArrayList<>();
-        for (Map.Entry<String, Double> entry : gastosPorCategoria.entrySet()) {
-            float valor = entry.getValue().floatValue();
-            labelsPorValor.put(valor, entry.getKey());
-            entries.add(new PieEntry(valor, entry.getKey()));
-        }
-
-        if (entries.isEmpty()) {
-            entries.add(new PieEntry(100f, "Sem dados"));
-            labelsPorValor.put(100f, "Sem dados");
-            totalParaPercentual = 100f;
-        }
-
-        PieDataSet dataSet = new PieDataSet(entries, "");
-        dataSet.setColors(CORES_FIGMA);
-        dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(13f);
-        dataSet.setValueTypeface(Typeface.DEFAULT_BOLD);
-        dataSet.setXValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
-        dataSet.setYValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
-
-        dataSet.setValueFormatter(new ValueFormatter() {
-
-            private String montarTexto(float value, String label) {
-                if (label == null) label = "";
-                float percentual = totalParaPercentual > 0 ? (value / totalParaPercentual) * 100f : 0f;
-                return label + "\n" + String.format(LOCALE_BR, "%.0f%%", percentual);
-            }
-
-            @Override
-            public String getFormattedValue(float value) {
-                return montarTexto(value, labelsPorValor.get(value));
-            }
-
-            @Override
-            public String getFormattedValue(float value, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
-                String label = null;
-                if (entry instanceof PieEntry) {
-                    PieEntry pe = (PieEntry) entry;
-                    if (pe.getLabel() != null) label = pe.getLabel();
-                }
-                if (label == null) label = labelsPorValor.get(value);
-                return montarTexto(value, label);
-            }
-        });
-
-        PieData data = new PieData(dataSet);
-        pieChart.setData(data);
-
-        double totalMes = 0;
-        for (Divida d : dividasFiltradas) {
-            totalMes += d.getValorTotal();
-        }
-
-        SpannableStringBuilder centerText = new SpannableStringBuilder();
-        String labelTotal = "TOTAL\n";
-        String valorTotal = "R$ " + String.format(LOCALE_BR, "%.2f", totalMes);
-        centerText.append(labelTotal);
-        centerText.append(valorTotal);
-
-        centerText.setSpan(new ForegroundColorSpan(Color.parseColor("#94A3B8")),
-                0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        centerText.setSpan(new RelativeSizeSpan(0.7f),
-                0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        centerText.setSpan(new ForegroundColorSpan(Color.WHITE),
-                labelTotal.length(), centerText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        centerText.setSpan(new StyleSpan(Typeface.BOLD),
-                labelTotal.length(), centerText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        pieChart.setCenterText(centerText);
-        pieChart.setCenterTextSize(15f);
-        pieChart.invalidate();
-
-        dividaAdapter = new DividaDashboardAdapter(dividasFiltradas);
-        rvLancamentos.setAdapter(dividaAdapter);
-
-        String[] meses = {"JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
-                "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"};
-        String nomeMes = meses[mesSelecionado - 1];
-
-        tvTituloLista.setText(categoriaFiltro.equals("Todos")
-                ? "DÍVIDAS DE " + nomeMes
-                : "DÍVIDAS DE " + nomeMes + " • " + categoriaFiltro.toUpperCase());
-        tvTotalLista.setText("Total: R$ " + String.format(LOCALE_BR, "%.2f", totalMes));
-
-        // ⭐ ATUALIZA O BALANÇO DO MÊS
-        atualizarBalancoMensal();
-    }
-
-    // ⭐ NOVO: Calcula e atualiza o Balanço de Salário x Gastos
-    private void atualizarBalancoMensal() {
-        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
-        if (user != null) {
-            double salario = user.getSalarioMensal();
-
-            // Soma os gastos TOTAIS do mês (independente do filtro de categoria)
-            double gastosTotaisMes = 0;
-            for (Divida d : todasDividas) {
-                gastosTotaisMes += d.getValorTotal();
-            }
-
-            double saldo = salario - gastosTotaisMes;
-
-            tvSalarioDash.setText(String.format(LOCALE_BR, "R$ %.2f", salario));
-            tvGastosDash.setText(String.format(LOCALE_BR, "R$ %.2f", gastosTotaisMes));
-            tvSaldoDash.setText(String.format(LOCALE_BR, "R$ %.2f", saldo));
-
-            // Cor do saldo
-            if (saldo < 0) {
-                tvSaldoDash.setTextColor(Color.parseColor("#EF4444")); // Vermelho
-            } else {
-                tvSaldoDash.setTextColor(Color.parseColor("#10B981")); // Verde
-            }
-        }
-    }
-
-    private void configurarFiltros() {
-        containerFiltros.removeAllViews();
-
-        Map<String, Integer> categoriasCount = new HashMap<>();
-        for (Divida d : todasDividas) {
-            int count = categoriasCount.getOrDefault(d.getCategoria(), 0);
-            categoriasCount.put(d.getCategoria(), count + 1);
-        }
-
-        criarBotaoFiltro("Todos", todasDividas.size(), true);
-        for (Map.Entry<String, Integer> entry : categoriasCount.entrySet()) {
-            criarBotaoFiltro(entry.getKey(), entry.getValue(), false);
-        }
-    }
-
-    private void criarBotaoFiltro(String categoria, int count, boolean selecionado) {
-        Button btn = new Button(this);
-        String texto = categoria.equals("Todos")
-                ? "Todos"
-                : categoria + (count > 1 ? " (" + count + ")" : "");
-        btn.setText(texto);
-        btn.setAllCaps(false);
-        btn.setPadding(40, 12, 40, 12);
-        btn.setTextSize(13f);
-
-        aplicarEstiloBotao(btn, selecionado);
-
-        btn.setOnClickListener(v -> {
-            for (int i = 0; i < containerFiltros.getChildCount(); i++) {
-                View child = containerFiltros.getChildAt(i);
-                if (child instanceof Button) {
-                    aplicarEstiloBotao((Button) child, false);
-                }
-            }
-            aplicarEstiloBotao(btn, true);
-            atualizarDashboard(categoria);
-        });
-
-        containerFiltros.addView(btn);
-        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) btn.getLayoutParams();
-        params.setMargins(0, 0, 12, 0);
-        btn.setLayoutParams(params);
-    }
-
-    private void aplicarEstiloBotao(Button btn, boolean selecionado) {
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setCornerRadius(50f);
-
-        if (selecionado) {
-            drawable.setColor(Color.parseColor("#4C1D95"));
-            drawable.setStroke(1, Color.parseColor("#A855F7"));
-            btn.setTextColor(Color.WHITE);
-        } else {
-            drawable.setColor(Color.parseColor("#131C2E"));
-            drawable.setStroke(1, Color.parseColor("#334155"));
-            btn.setTextColor(Color.parseColor("#CBD5E1"));
-        }
-        btn.setBackground(drawable);
-    }
-
+    // ------------------------------------------------------------------
+    // EXPORTAÇÃO
+    // ------------------------------------------------------------------
     private void configurarExportar() {
         btnExportar.setOnClickListener(v -> mostrarDialogoExportacao());
     }
 
     private void mostrarDialogoExportacao() {
-        String[] opcoes = {"📄  Exportar como CSV (Excel)", "📋  Exportar como PDF (Relatório)"};
+        String[] opcoes = {"Exportar como CSV (Excel)", "Exportar como PDF (Relatório)"};
 
         new AlertDialog.Builder(this)
                 .setTitle("Escolha o formato")
@@ -690,8 +659,7 @@ public class DashboardActivity extends AppCompatActivity {
         File arquivo = CsvExportHelper.gerarCsv(this, dividasFiltradas, mesAno + sufixo);
 
         if (arquivo == null) {
-            Toast.makeText(this, "Erro ao gerar o arquivo CSV.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Erro ao gerar o arquivo CSV.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -710,8 +678,7 @@ public class DashboardActivity extends AppCompatActivity {
         File arquivo = PdfExportHelper.gerarPdf(this, dividasFiltradas, mesAno, categoriaAtual);
 
         if (arquivo == null) {
-            Toast.makeText(this, "Erro ao gerar o PDF.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Erro ao gerar o PDF.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -720,34 +687,110 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private String getMesAnoString() {
-        String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
-        return meses[mesSelecionado - 1] + " " + anoSelecionado;
+        return MESES[mesSelecionado - 1] + " " + anoSelecionado;
     }
 
+    // ------------------------------------------------------------------
+    // NAVEGAÇÃO
+    // ------------------------------------------------------------------
     private void configurarNavegacao() {
         tabInicio.setOnClickListener(v -> {
-            Intent intent = new Intent(DashboardActivity.this, InicioActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(DashboardActivity.this, InicioActivity.class));
             finish();
         });
 
-        tabLancar.setOnClickListener(v -> {
-            Intent intent = new Intent(DashboardActivity.this, CadastroDividaActivity.class);
-            startActivity(intent);
-        });
+        tabLancar.setOnClickListener(v ->
+                startActivity(new Intent(DashboardActivity.this, CadastroDividaActivity.class)));
 
-        tabDividas.setOnClickListener(v -> {
-            Intent intent = new Intent(DashboardActivity.this, DividasActivity.class);
-            startActivity(intent);
-        });
+        tabDividas.setOnClickListener(v ->
+                startActivity(new Intent(DashboardActivity.this, DividasActivity.class)));
 
         tabRelatorios.setOnClickListener(v ->
                 Toast.makeText(this, "Você já está em Relatórios", Toast.LENGTH_SHORT).show());
 
-        tabConfig.setOnClickListener(v -> {
-            Intent intent = new Intent(DashboardActivity.this, ConfiguracoesActivity.class);
-            startActivity(intent);
-        });
+        tabConfig.setOnClickListener(v ->
+                startActivity(new Intent(DashboardActivity.this, ConfiguracoesActivity.class)));
+    }
+
+    // ------------------------------------------------------------------
+    // HELPERS
+    // ------------------------------------------------------------------
+    private TextView criarChip(String texto) {
+        TextView chip = new TextView(this);
+        chip.setText(texto);
+        chip.setTextSize(14f);
+        chip.setGravity(Gravity.CENTER);
+        chip.setPadding(dp(16), 0, dp(16), 0);
+        chip.setClickable(true);
+        chip.setFocusable(true);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, dp(44));
+        params.setMargins(0, 0, dp(8), 0);
+        chip.setLayoutParams(params);
+
+        estilizarChip(chip, false);
+        return chip;
+    }
+
+    private void estilizarChip(TextView chip, boolean selecionado) {
+        GradientDrawable d = new GradientDrawable();
+        d.setCornerRadius(dp(22));
+
+        if (selecionado) {
+            d.setColor(Color.parseColor("#123D33"));
+            d.setStroke(dp(1), Color.parseColor("#10B981"));
+            chip.setTextColor(Color.parseColor("#34D399"));
+            chip.setTypeface(null, Typeface.BOLD);
+        } else {
+            d.setColor(Color.parseColor("#0E1424"));
+            d.setStroke(dp(1), Color.parseColor("#1E2A44"));
+            chip.setTextColor(Color.parseColor("#C7CEDB"));
+            chip.setTypeface(null, Typeface.NORMAL);
+        }
+        chip.setBackground(d);
+    }
+
+    private int dp(int valor) {
+        return Math.round(valor * getResources().getDisplayMetrics().density);
+    }
+
+    private String moeda(double valor) {
+        return NumberFormat.getCurrencyInstance(LOCALE_BR).format(valor);
+    }
+
+    private String formatarCurto(float value, boolean mostrarZero) {
+        if (value <= 0.01f) return mostrarZero ? "R$ 0" : "";
+        if (value >= 1000) return String.format(LOCALE_BR, "R$ %.1fk", value / 1000f);
+        return String.format(LOCALE_BR, "R$ %.0f", value);
+    }
+
+    private String categoriaDe(Divida d) {
+        String cat = d.getCategoria();
+        return (cat == null || cat.trim().isEmpty()) ? "Sem categoria" : cat.trim();
+    }
+
+    private boolean pertenceAoMes(Divida d, int mes, int ano) {
+        String venc = d.getVencimento();
+        if (venc == null || venc.isEmpty()) return false;
+        try {
+            String[] partes = venc.split("/");
+            if (partes.length != 3) return false;
+            return Integer.parseInt(partes[1]) == mes && Integer.parseInt(partes[2]) == ano;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private int compararDatas(String d1, String d2) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR);
+            Date data1 = sdf.parse(d1);
+            Date data2 = sdf.parse(d2);
+            if (data1 == null || data2 == null) return 0;
+            return data1.compareTo(data2);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

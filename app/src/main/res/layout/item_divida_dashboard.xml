@@ -1,80 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="6dp"
-    app:cardBackgroundColor="@color/card_bg"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="0dp">
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_item_lancamento"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_width="48dp"
+        android:layout_height="54dp"
+        android:background="@drawable/bg_data_card"
+        android:gravity="center"
+        android:orientation="vertical">
 
-        <!-- Título e Valor -->
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvMesDash"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:letterSpacing="0.08"
+            android:text="OUT"
+            android:textColor="#94A3B8"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDiaDash"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:text="23"
+            android:textColor="#FFFFFF"
+            android:textSize="19sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTituloDivida"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Fatura Nubank"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvTituloDivida"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Fatura Nubank Roxinho"
-                android:textColor="@color/text_white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvValorRestante"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Falta: R$ 2.450,00"
-                android:textColor="#EF4444"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Detalhes: Banco • Categoria -->
         <TextView
             android:id="@+id/tvDetalheDivida"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Nubank Principal • Cartão de Crédito"
-            android:textColor="@color/text_gray"
-            android:textSize="12sp"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Nubank · Alimentação"
+            android:textColor="#94A3B8"
+            android:textSize="12sp" />
 
-        <!-- Parcela e Vencimento -->
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvParcela"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="4dp">
-
-            <TextView
-                android:id="@+id/tvParcela"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Parcela 1/1"
-                android:textColor="@color/text_gray"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/tvVencimento"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Vencimento: 15/10/2026"
-                android:textColor="@color/text_gray"
-                android:textSize="12sp" />
-        </LinearLayout>
-
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Parcela 1/1"
+            android:textColor="#7C8BA3"
+            android:textSize="12sp" />
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:gravity="end"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvValorRestante"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="R$ 50,00"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvVencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Pago ✓"
+            android:textColor="#34D399"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

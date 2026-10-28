@@ -18,6 +18,7 @@ import com.example.controle_gastos.adapter.DividaAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.utils.AlarmeHelper;
+import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.SessionManager;
 
 import java.text.NumberFormat;
@@ -48,6 +49,8 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dividas);
+
+        NavScrollHelper.attach(this);
 
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);

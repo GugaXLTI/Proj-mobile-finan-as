@@ -32,6 +32,7 @@ import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.utils.CsvExportHelper;
+import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.PdfExportHelper;
 import com.example.controle_gastos.utils.SessionManager;
 import com.github.mikephil.charting.charts.LineChart;
@@ -118,6 +119,8 @@ public class DashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
+
+        NavScrollHelper.attach(this);
 
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);

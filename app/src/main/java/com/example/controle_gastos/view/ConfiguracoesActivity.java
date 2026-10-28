@@ -28,6 +28,7 @@ import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.BackupHelper;
 import com.example.controle_gastos.utils.BiometricHelper;
+import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.switchmaterial.SwitchMaterial;
@@ -60,6 +61,8 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_configuracoes);
+
+        NavScrollHelper.attach(this);
 
         session = new SessionManager(this);
         db = AppDatabase.getInstance(this);

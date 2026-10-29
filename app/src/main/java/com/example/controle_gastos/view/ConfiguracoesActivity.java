@@ -11,13 +11,16 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.BackupData;
@@ -30,19 +33,24 @@ import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
+import java.text.NumberFormat;
 import java.util.Locale;
 
 public class ConfiguracoesActivity extends AppCompatActivity {
 
-    private LinearLayout itemCartoes, itemCategorias, itemBackup, itemDesconectar, itemSalario;
-    private SwitchMaterial switchLembretes, switchBiometria;
-    private TextView tvEditar, tvNomeUsuario, tvAvatar;
+    private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
+    private LinearLayout itemCartoes, itemCategorias, itemBackup, itemDesconectar, itemSalario;
+    private LinearLayout itemLembretes, itemBiometria;
+    private SwitchMaterial switchLembretes, switchBiometria;
+    private TextView tvEditar, tvNomeUsuario, tvAvatar, tvSalarioAtual, tvBiometriaSub;
+
+    // Navegação (aba ativa = LinearLayout, demais = ImageView)
+    private ImageView tabInicio, tabLancar, tabDividas, tabRelatorios;
+    private LinearLayout tabConfig;
 
     private SessionManager session;
     private AppDatabase db;
-    private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
     private boolean biometriaEstadoAtual = false;
 
@@ -60,17 +68,19 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         itemCartoes = findViewById(R.id.itemCartoes);
         itemCategorias = findViewById(R.id.itemCategorias);
+        itemSalario = findViewById(R.id.itemSalario);
+        itemLembretes = findViewById(R.id.itemLembretes);
+        itemBiometria = findViewById(R.id.itemBiometria);
         itemBackup = findViewById(R.id.itemBackup);
         itemDesconectar = findViewById(R.id.itemDesconectar);
-
-        // ⭐ NOVO (T144): Encontrando o item de salário
-        itemSalario = findViewById(R.id.itemSalario);
 
         switchLembretes = findViewById(R.id.switchLembretes);
         switchBiometria = findViewById(R.id.switchBiometria);
         tvEditar = findViewById(R.id.tvEditar);
         tvNomeUsuario = findViewById(R.id.tvNomeUsuario);
         tvAvatar = findViewById(R.id.tvAvatar);
+        tvSalarioAtual = findViewById(R.id.tvSalarioAtual);
+        tvBiometriaSub = findViewById(R.id.tvBiometriaSub);
 
         tabInicio = findViewById(R.id.tabInicio);
         tabLancar = findViewById(R.id.tabLancar);
@@ -87,11 +97,8 @@ public class ConfiguracoesActivity extends AppCompatActivity {
                 }
         );
 
-        String nome = session.getNome();
-        if (nome != null && !nome.isEmpty()) {
-            tvNomeUsuario.setText(nome);
-            tvAvatar.setText(String.valueOf(nome.charAt(0)).toUpperCase());
-        }
+        atualizarPerfil();
+        atualizarSalarioSubtitulo();
 
         switchLembretes.setChecked(AlarmeHelper.isLembretesAtivos(this));
 
@@ -102,31 +109,31 @@ public class ConfiguracoesActivity extends AppCompatActivity {
             switchBiometria.setEnabled(false);
             switchBiometria.setAlpha(0.5f);
             switchBiometria.setChecked(false);
+            tvBiometriaSub.setText("Indisponível neste aparelho");
         } else {
             switchBiometria.setChecked(biometriaEstadoAtual);
         }
 
         // ======== AÇÕES DOS ITENS ========
 
-        tvEditar.setOnClickListener(v -> {
-            Intent intent = new Intent(ConfiguracoesActivity.this, EditarPerfilActivity.class);
-            startActivity(intent);
-        });
+        tvEditar.setOnClickListener(v ->
+                startActivity(new Intent(ConfiguracoesActivity.this, EditarPerfilActivity.class)));
 
-        itemCartoes.setOnClickListener(v -> {
-            Intent intent = new Intent(ConfiguracoesActivity.this, CartoesActivity.class);
-            startActivity(intent);
-        });
+        itemCartoes.setOnClickListener(v ->
+                startActivity(new Intent(ConfiguracoesActivity.this, CartoesActivity.class)));
 
-        itemCategorias.setOnClickListener(v -> {
-            Intent intent = new Intent(ConfiguracoesActivity.this, CategoriasActivity.class);
-            startActivity(intent);
-        });
+        itemCategorias.setOnClickListener(v ->
+                startActivity(new Intent(ConfiguracoesActivity.this, CategoriasActivity.class)));
 
-        // ⭐ NOVO (T144): Ação do botão editar salário
         itemSalario.setOnClickListener(v -> mostrarDialogoEditarSalario());
 
         itemBackup.setOnClickListener(v -> mostrarDialogoBackup());
+
+        // Tocar na linha inteira também alterna a chave
+        itemLembretes.setOnClickListener(v -> switchLembretes.toggle());
+        itemBiometria.setOnClickListener(v -> {
+            if (switchBiometria.isEnabled()) switchBiometria.toggle();
+        });
 
         switchLembretes.setOnCheckedChangeListener((buttonView, isChecked) -> {
             AlarmeHelper.setLembretesAtivos(ConfiguracoesActivity.this, isChecked);
@@ -160,25 +167,20 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         // ======== NAVEGAÇÃO ========
 
         tabInicio.setOnClickListener(v -> {
-            Intent intent = new Intent(ConfiguracoesActivity.this, InicioActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(ConfiguracoesActivity.this, InicioActivity.class));
             finish();
         });
 
-        tabLancar.setOnClickListener(v -> {
-            Intent intent = new Intent(ConfiguracoesActivity.this, CadastroDividaActivity.class);
-            startActivity(intent);
-        });
+        tabLancar.setOnClickListener(v ->
+                startActivity(new Intent(ConfiguracoesActivity.this, CadastroDividaActivity.class)));
 
         tabDividas.setOnClickListener(v -> {
-            Intent intent = new Intent(ConfiguracoesActivity.this, DividasActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(ConfiguracoesActivity.this, DividasActivity.class));
             finish();
         });
 
         tabRelatorios.setOnClickListener(v -> {
-            Intent intent = new Intent(ConfiguracoesActivity.this, DashboardActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(ConfiguracoesActivity.this, DashboardActivity.class));
             finish();
         });
 
@@ -186,7 +188,33 @@ public class ConfiguracoesActivity extends AppCompatActivity {
                 Toast.makeText(this, "Você já está em Configurações", Toast.LENGTH_SHORT).show());
     }
 
-    // ⭐ NOVO (T144): Diálogo para editar o salário com máscara
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Atualiza nome/avatar/salário ao voltar da tela de editar perfil
+        atualizarPerfil();
+        atualizarSalarioSubtitulo();
+    }
+
+    private void atualizarPerfil() {
+        String nome = session.getNome();
+        if (nome != null && !nome.isEmpty()) {
+            tvNomeUsuario.setText(nome);
+            tvAvatar.setText(String.valueOf(nome.charAt(0)).toUpperCase(LOCALE_BR));
+        }
+    }
+
+    private void atualizarSalarioSubtitulo() {
+        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
+        if (user != null && user.getSalarioMensal() > 0) {
+            tvSalarioAtual.setText("Atual: "
+                    + NumberFormat.getCurrencyInstance(LOCALE_BR).format(user.getSalarioMensal()));
+        } else {
+            tvSalarioAtual.setText("Defina seu orçamento base");
+        }
+    }
+
+    // Diálogo para editar o salário com máscara
     private void mostrarDialogoEditarSalario() {
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -239,7 +267,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         container.addView(input);
 
         new AlertDialog.Builder(this)
-                .setTitle("Editar Salário Mensal")
+                .setTitle("Editar salário mensal")
                 .setMessage("Informe o novo valor do seu salário para recalcularmos seu orçamento:")
                 .setView(container)
                 .setPositiveButton("Salvar", (dialog, which) -> {
@@ -253,7 +281,10 @@ public class ConfiguracoesActivity extends AppCompatActivity {
                     if (user != null) {
                         user.setSalarioMensal(novoSalario);
                         db.usuarioDao().atualizar(user);
+                        atualizarSalarioSubtitulo();
                         Toast.makeText(ConfiguracoesActivity.this, "Salário atualizado com sucesso!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(ConfiguracoesActivity.this, "Usuário não encontrado. Faça login novamente.", Toast.LENGTH_LONG).show();
                     }
                 })
                 .setNegativeButton("Cancelar", null)
@@ -266,13 +297,13 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
     private void mostrarDialogoBackup() {
         String[] opcoes = {
-                "📤  Exportar Backup (JSON)",
-                "📥  Restaurar Backup",
-                "🗑️  Limpar Tudo (Testes)"
+                "Exportar backup (JSON)",
+                "Restaurar backup",
+                "Limpar tudo (testes)"
         };
 
         new AlertDialog.Builder(this)
-                .setTitle("Backup dos Dados")
+                .setTitle("Backup dos dados")
                 .setItems(opcoes, (dialog, which) -> {
                     if (which == 0) {
                         exportarBackup();
@@ -322,16 +353,16 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         String mensagem = "Backup de " + data.dataBackup + "\n" +
                 "Usuário: " + data.nomeUsuario + "\n\n" +
-                "📋 Contém:\n" +
+                "Contém:\n" +
                 "• " + totalDividas + " dívidas\n" +
                 "• " + totalCartoes + " cartões\n" +
                 "• " + totalPix + " chaves Pix\n" +
                 "• " + totalCategorias + " categorias\n\n" +
-                "⚠️ Isso vai SUBSTITUIR todos os seus dados atuais.\n" +
+                "Atenção: isso vai SUBSTITUIR todos os seus dados atuais.\n" +
                 "Deseja continuar?";
 
         new AlertDialog.Builder(this)
-                .setTitle("Restaurar Backup")
+                .setTitle("Restaurar backup")
                 .setMessage(mensagem)
                 .setPositiveButton("Sim, restaurar", (d, w) -> aplicarBackup(data))
                 .setNegativeButton("Cancelar", null)
@@ -404,7 +435,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
     private void mostrarDialogoLimparTudo() {
         new AlertDialog.Builder(this)
-                .setTitle("Limpar Tudo (Testes)")
+                .setTitle("Limpar tudo (testes)")
                 .setMessage("Esta opção apaga TODAS as dívidas, transações e usuários cadastrados. Use apenas para testes. Tem certeza?")
                 .setPositiveButton("Sim, limpar tudo", (dialog, which) -> {
                     db.clearAllTables();

@@ -10,6 +10,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.dao.UsuarioDao;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Usuario;
+import com.example.controle_gastos.utils.NavScrollHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -26,6 +27,8 @@ public class CadastroActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro);
+
+        NavScrollHelper.attach(this);
 
         db = AppDatabase.getInstance(this);
 

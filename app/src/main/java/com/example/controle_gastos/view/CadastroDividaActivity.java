@@ -34,6 +34,7 @@ import com.example.controle_gastos.model.ParsedReceipt;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.BottomNavHelper; // ⭐ IMPORT ADICIONADO
 import com.example.controle_gastos.utils.CategoriaSeeder;
+import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.ReceiptAiParser;
 import com.example.controle_gastos.utils.ReceiptCacheHelper;
 import com.example.controle_gastos.utils.ReceiptImageLoader;
@@ -90,6 +91,8 @@ public class CadastroDividaActivity extends AppCompatActivity {
         // ⭐ CORREÇÃO: Ativa o botão voltar e a barra inferior
         findViewById(R.id.btnVoltar).setOnClickListener(v -> finish());
         BottomNavHelper.configurar(this, BottomNavHelper.LANCAR);
+
+        NavScrollHelper.attach(this);
 
         CategoriaSeeder.popularSeVazio(this, session.getUserId());
 

@@ -6,6 +6,80 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
+## [Não lançado] – Redesign Visual (Dívidas, Relatórios e Configurações)
+
+### Adicionado
+- **Redesign da tela Dívidas** (`activity_dividas.xml`, `item_divida.xml`, `DividasActivity.java`, `DividaAdapter.java`)
+  - Título "Controle de Dívidas" e filtros "Todos devedores" / "Categorias" em pílulas com seta (visuais, ainda sem ação)
+  - Card de totais: Total a pagar em destaque, Total já pago e Total geral (com ponto de milhar)
+  - Cards de dívida com bloco de data (mês/dia), "Banco · Categoria", valor da parcela e situação do vencimento ("Vence em N dias", "Vence hoje", "Vence amanhã", "Venceu há N dias")
+  - Barra de progresso "Pagas: X de N" nas compras parceladas (conta as pagas do mesmo `grupoId` presentes na lista)
+  - **Pagar** como botão principal; **Editar** e **Excluir** como ícones discretos
+  - Dívidas pagas esmaecidas com "Pago ✓"
+  - Estado vazio ("Nenhuma dívida cadastrada ainda") e botão "Cadastrar nova dívida"
+  - Barra inferior flutuante com "Dívidas" como aba ativa
+- **Redesign do Dashboard / Relatórios** (`activity_dashboard.xml`, `item_divida_dashboard.xml`, `DashboardActivity.java`, `DividaDashboardAdapter.java`)
+  - Seletor de mês em card com setas em ícone de linha e badge "Atual"
+  - Card **Balanço do mês** com barra de progresso e "X% do salário comprometido"
+  - Rosca fina com o total no centro e **legenda em lista** (cor, categoria, percentual e valor); tocar numa linha filtra a lista de lançamentos
+  - Evolução mensal com ícone de linha (no lugar do emoji), total e média mensal em destaque
+  - Chips de filtro por categoria (44dp) e lista de lançamentos com bloco de data e situação (Pago ✓ / Pendente / Atrasada)
+  - Estado vazio da lista ("Nenhum lançamento neste mês")
+  - Botão de exportação como botão secundário ("Exportar detalhamento em PDF / CSV →")
+  - Barra inferior flutuante com "Relatórios" como aba ativa
+- **Redesign da tela Configurações** (`activity_configuracoes.xml`, `ConfiguracoesActivity.java`)
+  - Organização em seções: **Conta** (cartões, categorias, salário), **Preferências** (lembretes, biometria) e **Dados** (backup)
+  - Ícones de linha dentro de quadrados coloridos (verde, azul, âmbar, roxo, cinza)
+  - Card de perfil com bolinha "Conta pessoal ativa" e botão "Editar" em pílula
+  - Subtítulo do salário com o valor atual ("Atual: R$ X")
+  - Botão "Desconectar da conta" separado no final
+  - Barra inferior flutuante com "Config" como aba ativa
+- **Chaves (switches) com cor por estado**
+  - `res/color/switch_track.xml` e `res/color/switch_thumb.xml` (verde ligada, cinza escuro desligada, apagada quando desativada)
+- **Novos drawables**
+  - Dívidas: `bg_botao_pagar.xml`, `bg_botao_pago.xml`, `bg_botao_primario.xml`, `bg_icone_acao.xml`, `bg_pill_filtro.xml`
+  - Dashboard: `bg_badge_atual.xml`, `bg_botao_secundario.xml`, `bg_legenda_ativa.xml`, `bg_item_lancamento.xml`
+  - Configurações: `bg_icone_conf_verde.xml`, `bg_icone_conf_azul.xml`, `bg_icone_conf_ambar.xml`, `bg_icone_conf_roxo.xml`, `bg_icone_conf_cinza.xml`, `bg_botao_editar.xml`, `bg_botao_sair.xml`
+- **Novos ícones vetoriais**
+  - `ic_edit.xml`, `ic_trash.xml`, `ic_chevron_down.xml`, `ic_chevron_left.xml`, `ic_chevron_right.xml`
+  - `ic_conf_tag.xml`, `ic_conf_money.xml`, `ic_conf_bell.xml`, `ic_conf_shield.xml`, `ic_conf_database.xml`, `ic_conf_logout.xml`
+- **Novo item de lista**
+  - `res/layout/item_legenda_categoria.xml` — linha da legenda da rosca no Dashboard
+
+### Modificado
+- `activity_dividas.xml`, `item_divida.xml`, `activity_dashboard.xml`, `item_divida_dashboard.xml` e `activity_configuracoes.xml` — reescritos com o novo visual
+  - Dívidas: `btnEditar` e `btnExcluir` passaram de `Button` para `ImageView`; `btnPagar` e `btnCadastrarDivida` de `Button` para `TextView`; `btnTodosDevedores` e `btnCategorias` de `Button` para `LinearLayout`
+  - Dívidas: novos IDs `tvMesDivida`, `tvDiaDivida`, `llParcelas`, `tvProgressoParcelas`, `progressParcelas`, `tvEmptyDividas`; `tvVencimento` agora mostra a situação do vencimento e `tvValorRestante` mostra o valor da parcela
+  - Dashboard: `btnMesAnteriorDash` e `btnMesProximoDash` passaram de `TextView` para `ImageView`; `btnExportar` de `Button` para `TextView`
+  - Dashboard: novos IDs `progressBalanco`, `tvBalancoCaption`, `llLegenda`, `tvMediaEvolucao`, `tvTituloTotalEvolucao`, `tvVazioLista`, `tvMesDash`, `tvDiaDash`; `tvVencimento` do item agora mostra a situação (Pago ✓ / Pendente / Atrasada)
+  - Configurações: novos IDs `tvSalarioAtual`, `itemLembretes`, `itemBiometria`, `tvBiometriaSub`
+  - Nas três telas, as abas da barra inferior seguem o padrão: aba ativa = `LinearLayout`; demais abas = `ImageView`
+- `DividasActivity.java` — reescrita com a mesma lógica de excluir (soft delete), editar e pagar; lista ordenada com não pagas primeiro (por vencimento) e pagas por último; totais com `NumberFormat` pt-BR
+- `DividaAdapter.java` — reescrito (bloco de data, situação do vencimento, progresso de parcelas, botão Pagar/Pago); a interface `OnDividaActionListener` não mudou
+- `DashboardActivity.java` — reescrita mantendo o cálculo por mês, a evolução centrada no mês selecionado e a exportação CSV/PDF
+  - A rosca passou a mostrar sempre o mês inteiro; o filtro de categoria afeta só a lista, o título e o total da lista
+  - Ao trocar de mês, o filtro volta para "Todos"
+  - Os gastos do Balanço do mês passaram a ser calculados a partir das dívidas do mês, mesmo se o usuário não for encontrado
+  - Paleta das categorias passou a seguir o Design System (verde, azul, âmbar, rosa, ciano, vermelho, roxo, amarelo)
+  - Gráfico de linha: curva `HORIZONTAL_BEZIER`, eixo Y começando em 0, valores nos pontos só até 6M, rótulos alternados no 12M, maior gasto e linha da média em âmbar
+- `DividaDashboardAdapter.java` — reescrito (bloco de data e situação Pago ✓ / Pendente / Atrasada)
+- `ConfiguracoesActivity.java` — reescrita mantendo biometria, lembretes, backup, limpar tudo, edição de salário e logout; nome, avatar e salário atualizam em `onResume`; tocar na linha inteira alterna Lembretes e Biometria
+- Textos: "Face ID" trocado por "Entrar com digital ou rosto"; emojis removidos dos diálogos de backup e de restauração
+
+### Corrigido
+- Texto "Alimentação100%" colado dentro da rosca (agora a legenda fica fora do gráfico)
+- Texto cortado na base dos botões "Pagar" / "Pago" na tela Dívidas
+- Chaves da tela Configurações mostravam a trilha verde mesmo desligadas (`trackTint` fixa); agora a cor acompanha o estado
+- Curva do gráfico de linha afundando abaixo de zero
+- Valores monetários sem ponto de milhar nas telas redesenhadas (ex.: `R$ 1500,00` agora é `R$ 1.500,00`)
+
+### Observações
+- Os filtros "Todos devedores" e "Categorias" da tela Dívidas continuam **sem ação** (já eram assim antes do redesign)
+- As telas Início, Dívidas, Dashboard e Configurações ainda usam barra inferior própria (não usam o `<include>` do `layout_bottom_nav`)
+- O salário pode aparecer zerado se o usuário não for encontrado pelo `UsuarioDao`; a tela Configurações passou a mostrar o salário atual para ajudar a diagnosticar (ponto a verificar)
+
+---
+
 ## [Não lançado] – Redesign Visual (Início e Lançar)
 
 ### Adicionado

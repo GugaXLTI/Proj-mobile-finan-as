@@ -117,41 +117,40 @@ public class LoginActivity extends AppCompatActivity {
                         String email = session.getBiometriaEmail();
 
                         if (userId == -1) {
-                            Toast.makeText(LoginActivity.this,
-                                    "Nenhum usuário salvo para biometria.",
-                                    Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, "Nenhum usuário salvo para biometria.", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
                         session.salvarSessao(userId, nome, email);
-
-                        Toast.makeText(LoginActivity.this,
-                                "Bem-vindo de volta, " + nome + "!",
-                                Toast.LENGTH_SHORT).show();
-
+                        Toast.makeText(LoginActivity.this, "Bem-vindo de volta, " + nome + "!", Toast.LENGTH_SHORT).show();
                         redirecionarParaInicio();
                     }
 
                     @Override
                     public void onFalha(String motivo) {
-                        Toast.makeText(LoginActivity.this,
-                                "Biometria não reconhecida. Tente novamente.",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, "Biometria não reconhecida. Tente novamente.", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
     }
 
-    // ⭐ NOVO (T130): Lógica para verificar se o Onboarding já foi feito
+    // ⭐ CORREÇÃO ARQUITETURAL: A decisão agora é baseada no Banco de Dados
     private void redirecionarParaInicio() {
-        if (!session.isOnboardingConcluido()) {
-            // Usuário novo ou que ainda não definiu o salário
-            Intent intent = new Intent(LoginActivity.this, OnboardingActivity.class);
-            startActivity(intent);
-        } else {
+        int userId = session.getUserId();
+
+        // Verifica se o usuário tem rendas cadastradas (se tiver, já fez o onboarding)
+        boolean temRendaCadastrada = !db.rendaDao().listarPorUsuario(userId).isEmpty();
+
+        // Fallback de segurança: se for um usuário antigo (antes da v12), ele tem salarioMensal > 0
+        Usuario user = db.usuarioDao().buscarPorId(userId);
+        boolean temSalarioAntigo = user != null && user.getSalarioMensal() > 0;
+
+        if (temRendaCadastrada || temSalarioAntigo) {
             // Usuário já configurado
-            Intent intent = new Intent(LoginActivity.this, InicioActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(LoginActivity.this, InicioActivity.class));
+        } else {
+            // Conta nova ou usuário que nunca configurou a renda
+            startActivity(new Intent(LoginActivity.this, OnboardingActivity.class));
         }
         finish();
     }

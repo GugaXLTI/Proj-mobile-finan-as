@@ -1,16 +1,8 @@
 package com.example.controle_gastos.view;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.InputType;
-import android.text.TextWatcher;
-import android.view.Gravity;
-import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -24,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.BackupData;
+import com.example.controle_gastos.model.Renda;
 import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.BackupHelper;
@@ -35,6 +28,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
 
 public class ConfiguracoesActivity extends AppCompatActivity {
@@ -46,7 +40,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     private SwitchMaterial switchLembretes, switchBiometria;
     private TextView tvEditar, tvNomeUsuario, tvAvatar, tvSalarioAtual, tvBiometriaSub;
 
-    // Navegação (aba ativa = LinearLayout, demais = ImageView)
     private ImageView tabInicio, tabLancar, tabDividas, tabRelatorios;
     private LinearLayout tabConfig;
 
@@ -128,11 +121,15 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         itemCategorias.setOnClickListener(v ->
                 startActivity(new Intent(ConfiguracoesActivity.this, CategoriasActivity.class)));
 
-        itemSalario.setOnClickListener(v -> mostrarDialogoEditarSalario());
+        // ⭐ Abre a OnboardingActivity em modo de edição
+        itemSalario.setOnClickListener(v -> {
+            Intent i = new Intent(ConfiguracoesActivity.this, OnboardingActivity.class);
+            i.putExtra(OnboardingActivity.EXTRA_EDITANDO, true);
+            startActivity(i);
+        });
 
         itemBackup.setOnClickListener(v -> mostrarDialogoBackup());
 
-        // Tocar na linha inteira também alterna a chave
         itemLembretes.setOnClickListener(v -> switchLembretes.toggle());
         itemBiometria.setOnClickListener(v -> {
             if (switchBiometria.isEnabled()) switchBiometria.toggle();
@@ -194,7 +191,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Atualiza nome/avatar/salário ao voltar da tela de editar perfil
         atualizarPerfil();
         atualizarSalarioSubtitulo();
     }
@@ -207,95 +203,34 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         }
     }
 
+    // ⭐ NOVO: Lê a tabela Renda para montar o subtítulo
     private void atualizarSalarioSubtitulo() {
-        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
-        if (user != null && user.getSalarioMensal() > 0) {
-            tvSalarioAtual.setText("Atual: "
-                    + NumberFormat.getCurrencyInstance(LOCALE_BR).format(user.getSalarioMensal()));
-        } else {
-            tvSalarioAtual.setText("Defina seu orçamento base");
-        }
-    }
+        List<Renda> rendas = db.rendaDao().listarPorUsuario(session.getUserId());
+        NumberFormat nf = NumberFormat.getCurrencyInstance(LOCALE_BR);
 
-    // Diálogo para editar o salário com máscara
-    private void mostrarDialogoEditarSalario() {
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        input.setTextColor(Color.parseColor("#FFFFFF"));
-        input.setHintTextColor(Color.parseColor("#475569"));
-        input.setHint("R$ 0,00");
-        input.setGravity(Gravity.CENTER);
-        input.setTextSize(24f);
-
-        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
-        if (user != null && user.getSalarioMensal() > 0) {
-            String salarioFormatado = String.format(LOCALE_BR, "R$ %.2f", user.getSalarioMensal());
-            input.setText(salarioFormatado);
-            input.setSelection(salarioFormatado.length());
-        }
-
-        // Máscara de Moeda
-        input.addTextChangedListener(new TextWatcher() {
-            private boolean isUpdating = false;
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (isUpdating) return;
-                isUpdating = true;
-                String text = s.toString().replaceAll("[^0-9]", "");
-                if (text.isEmpty()) {
-                    input.setText("");
-                    isUpdating = false;
-                    return;
-                }
-                if (text.length() > 11) text = text.substring(0, 11);
-                double valor = Double.parseDouble(text) / 100.0;
-                String formatted = String.format(LOCALE_BR, "R$ %.2f", valor);
-                input.setText(formatted);
-                input.setSelection(formatted.length());
-                isUpdating = false;
+        if (!rendas.isEmpty()) {
+            double total = 0;
+            boolean variavel = false;
+            for (Renda r : rendas) {
+                total += r.valor;
+                if ("VARIAVEL".equals(r.tipo)) variavel = true;
             }
-        });
+            String texto = (variavel ? "Média de " : "") + nf.format(total) + " por mês";
+            if (rendas.size() > 1) texto += " · " + rendas.size() + " recebimentos";
+            tvSalarioAtual.setText(texto);
+            return;
+        }
 
-        // Padding no EditText
-        FrameLayout container = new FrameLayout(this);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        int padding = (int) (24 * getResources().getDisplayMetrics().density);
-        params.setMargins(padding, padding, padding, padding);
-        input.setLayoutParams(params);
-        container.addView(input);
-
-        new AlertDialog.Builder(this)
-                .setTitle("Editar salário mensal")
-                .setMessage("Informe o novo valor do seu salário para recalcularmos seu orçamento:")
-                .setView(container)
-                .setPositiveButton("Salvar", (dialog, which) -> {
-                    String salarioStr = input.getText().toString().replace("R$", "").replace(".", "").replace(",", ".").trim();
-                    if (salarioStr.isEmpty() || Double.parseDouble(salarioStr) <= 0) {
-                        Toast.makeText(ConfiguracoesActivity.this, "Informe um valor válido.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    double novoSalario = Double.parseDouble(salarioStr);
-
-                    if (user != null) {
-                        user.setSalarioMensal(novoSalario);
-                        db.usuarioDao().atualizar(user);
-                        atualizarSalarioSubtitulo();
-                        Toast.makeText(ConfiguracoesActivity.this, "Salário atualizado com sucesso!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(ConfiguracoesActivity.this, "Usuário não encontrado. Faça login novamente.", Toast.LENGTH_LONG).show();
-                    }
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
+        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
+        if (user != null && user.getSalarioMensal() > 0) {
+            tvSalarioAtual.setText("Atual: " + nf.format(user.getSalarioMensal()));
+        } else {
+            tvSalarioAtual.setText("Defina sua renda e quando ela cai");
+        }
     }
 
     // ==========================================
-    // BACKUP — DIÁLOGO E AÇÕES
+    // BACKUP
     // ==========================================
 
     private void mostrarDialogoBackup() {

@@ -9,10 +9,7 @@ public class SessionManager {
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USER_NOME = "user_nome";
     private static final String KEY_USER_EMAIL = "user_email";
-
-    // ⭐ NOVO (T127): Chave para controle do Onboarding
     private static final String KEY_ONBOARDING_CONCLUIDO = "onboarding_concluido";
-
     private static final String KEY_BIOMETRIA_ATIVA = "biometria_ativa";
     private static final String KEY_BIOMETRIA_USER_ID = "biometria_user_id";
     private static final String KEY_BIOMETRIA_NOME = "biometria_user_nome";
@@ -25,8 +22,6 @@ public class SessionManager {
         prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         editor = prefs.edit();
     }
-
-    // ============ SESSÃO ============
 
     public void salvarSessao(int userId, String nome) {
         editor.putInt(KEY_USER_ID, userId);
@@ -67,16 +62,14 @@ public class SessionManager {
         return prefs.getString(KEY_USER_EMAIL, "");
     }
 
+    // ⭐ CORREÇÃO: Limpar a flag de onboarding ao deslogar
     public void logout() {
         editor.remove(KEY_USER_ID);
         editor.remove(KEY_USER_NOME);
         editor.remove(KEY_USER_EMAIL);
-        // ⭐ Nota: Nós NÃO limpamos o onboarding no logout,
-        // para que se ele logar de novo, não precise preencher o salário de novo.
+        editor.remove(KEY_ONBOARDING_CONCLUIDO); // Limpa a flag global
         editor.apply();
     }
-
-    // ============ ONBOARDING (T127) ============
 
     public boolean isOnboardingConcluido() {
         return prefs.getBoolean(KEY_ONBOARDING_CONCLUIDO, false);
@@ -87,9 +80,6 @@ public class SessionManager {
         editor.apply();
     }
 
-    // ============ BIOMETRIA ============
-
-    // ... (Mantenha os mesmos métodos de biometria que você já tinha)
     public boolean isBiometriaAtiva() {
         return prefs.getBoolean(KEY_BIOMETRIA_ATIVA, false);
     }

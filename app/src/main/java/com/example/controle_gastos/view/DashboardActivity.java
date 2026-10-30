@@ -30,6 +30,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaDashboardAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.Renda;
 import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.utils.CsvExportHelper;
 import com.example.controle_gastos.utils.NavScrollHelper;
@@ -70,7 +71,6 @@ public class DashboardActivity extends AppCompatActivity {
     private static final String[] MESES = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
 
-    // Paleta das categorias (verde primeiro, alinhado ao resto do app)
     private static final int[] CORES = {
             Color.parseColor("#10B981"),
             Color.parseColor("#3B82F6"),
@@ -96,7 +96,6 @@ public class DashboardActivity extends AppCompatActivity {
     private TextView tvSalarioDash, tvGastosDash, tvSaldoDash, tvBalancoCaption;
     private ProgressBar progressBalanco;
 
-    // Navegação (aba ativa = LinearLayout, demais = ImageView)
     private ImageView tabInicio, tabLancar, tabDividas, tabConfig;
     private LinearLayout tabRelatorios;
 
@@ -170,19 +169,13 @@ public class DashboardActivity extends AppCompatActivity {
 
         btnMesAnteriorDash.setOnClickListener(v -> {
             mesSelecionado--;
-            if (mesSelecionado < 1) {
-                mesSelecionado = 12;
-                anoSelecionado--;
-            }
+            if (mesSelecionado < 1) { mesSelecionado = 12; anoSelecionado--; }
             carregarDados();
         });
 
         btnMesProximoDash.setOnClickListener(v -> {
             mesSelecionado++;
-            if (mesSelecionado > 12) {
-                mesSelecionado = 1;
-                anoSelecionado++;
-            }
+            if (mesSelecionado > 12) { mesSelecionado = 1; anoSelecionado++; }
             carregarDados();
         });
     }
@@ -193,9 +186,6 @@ public class DashboardActivity extends AppCompatActivity {
         carregarDados();
     }
 
-    // ------------------------------------------------------------------
-    // CARGA DE DADOS
-    // ------------------------------------------------------------------
     private void carregarDados() {
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
         todasDividas = new ArrayList<>();
@@ -226,44 +216,44 @@ public class DashboardActivity extends AppCompatActivity {
         tvBadgeAtualDash.setVisibility(ehMesAtual ? View.VISIBLE : View.INVISIBLE);
     }
 
-    // ------------------------------------------------------------------
-    // BALANÇO DO MÊS
-    // ------------------------------------------------------------------
     private void atualizarBalancoMensal() {
-        // Gastos vêm das dívidas do mês, mesmo que o usuário não seja encontrado
         double gastos = 0;
         for (Divida d : todasDividas) {
             gastos += d.getValorTotal();
         }
 
-        double salario = 0;
-        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
-        if (user != null) {
-            salario = user.getSalarioMensal();
+        // ⭐ NOVO: Calcula o salário esperado do mês baseado na tabela Renda
+        double salarioTotalMes = 0;
+        List<Renda> rendas = db.rendaDao().listarPorUsuario(session.getUserId());
+        for (Renda r : rendas) {
+            salarioTotalMes += r.valor;
         }
 
-        tvSalarioDash.setText(moeda(salario));
+        // Fallback: se não tem renda na tabela nova, usa o salarioMensal antigo
+        if (rendas.isEmpty()) {
+            Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
+            if (user != null) salarioTotalMes = user.getSalarioMensal();
+        }
+
+        tvSalarioDash.setText(moeda(salarioTotalMes));
         tvGastosDash.setText(moeda(gastos));
 
-        if (salario > 0) {
-            double saldo = salario - gastos;
+        if (salarioTotalMes > 0) {
+            double saldo = salarioTotalMes - gastos;
             tvSaldoDash.setText(moeda(saldo));
             tvSaldoDash.setTextColor(Color.parseColor(saldo < 0 ? "#F87171" : "#34D399"));
 
-            int pct = (int) Math.round((gastos / salario) * 100);
+            int pct = (int) Math.round((gastos / salarioTotalMes) * 100);
             progressBalanco.setProgress(Math.min(pct, 100));
-            tvBalancoCaption.setText(pct + "% do salário comprometido");
+            tvBalancoCaption.setText(pct + "% da renda mensal comprometida");
         } else {
             tvSaldoDash.setText(moeda(0));
             tvSaldoDash.setTextColor(Color.parseColor("#64748B"));
             progressBalanco.setProgress(0);
-            tvBalancoCaption.setText("Salário não encontrado. Confira em Configurações.");
+            tvBalancoCaption.setText("Renda não encontrada. Confira em Configurações.");
         }
     }
 
-    // ------------------------------------------------------------------
-    // ROSCA + LEGENDA
-    // ------------------------------------------------------------------
     private void configurarPieChart() {
         pieChart.setUsePercentValues(false);
         pieChart.getDescription().setEnabled(false);
@@ -353,14 +343,10 @@ public class DashboardActivity extends AppCompatActivity {
         String labelTotal = "TOTAL\n";
         SpannableStringBuilder centro = new SpannableStringBuilder();
         centro.append(labelTotal).append(moeda(total));
-        centro.setSpan(new ForegroundColorSpan(Color.parseColor("#94A3B8")),
-                0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        centro.setSpan(new RelativeSizeSpan(0.75f),
-                0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        centro.setSpan(new ForegroundColorSpan(Color.WHITE),
-                labelTotal.length(), centro.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        centro.setSpan(new StyleSpan(Typeface.BOLD),
-                labelTotal.length(), centro.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centro.setSpan(new ForegroundColorSpan(Color.parseColor("#94A3B8")), 0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centro.setSpan(new RelativeSizeSpan(0.75f), 0, labelTotal.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centro.setSpan(new ForegroundColorSpan(Color.WHITE), labelTotal.length(), centro.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        centro.setSpan(new StyleSpan(Typeface.BOLD), labelTotal.length(), centro.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         pieChart.setCenterText(centro);
         pieChart.setCenterTextSize(18f);
@@ -368,9 +354,6 @@ public class DashboardActivity extends AppCompatActivity {
         pieChart.invalidate();
     }
 
-    // ------------------------------------------------------------------
-    // FILTROS (chips) E LISTA
-    // ------------------------------------------------------------------
     private void configurarFiltros() {
         containerFiltros.removeAllViews();
         chipsFiltro.clear();
@@ -442,9 +425,6 @@ public class DashboardActivity extends AppCompatActivity {
         tvTotalLista.setText(moeda(total));
     }
 
-    // ------------------------------------------------------------------
-    // EVOLUÇÃO MENSAL (linha)
-    // ------------------------------------------------------------------
     private void configurarGraficoLinha() {
         lineChart.getDescription().setEnabled(false);
         lineChart.setTouchEnabled(true);
@@ -555,7 +535,7 @@ public class DashboardActivity extends AppCompatActivity {
         LineDataSet dataSet = new LineDataSet(entries, "Gastos");
         dataSet.setColor(Color.parseColor("#10B981"));
         dataSet.setLineWidth(3f);
-        dataSet.setMode(LineDataSet.Mode.HORIZONTAL_BEZIER); // curva suave sem "afundar" abaixo de zero
+        dataSet.setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
         dataSet.setDrawCircles(true);
         dataSet.setDrawCircleHole(true);
         dataSet.setCircleHoleColor(Color.parseColor("#111A2E"));
@@ -624,9 +604,6 @@ public class DashboardActivity extends AppCompatActivity {
         tvMediaEvolucao.setText(moeda(media));
     }
 
-    // ------------------------------------------------------------------
-    // EXPORTAÇÃO
-    // ------------------------------------------------------------------
     private void configurarExportar() {
         btnExportar.setOnClickListener(v -> mostrarDialogoExportacao());
     }
@@ -649,15 +626,12 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void exportarCsv() {
         if (dividasFiltradas.isEmpty()) {
-            Toast.makeText(this, "Nenhum lançamento para exportar neste mês.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Nenhum lançamento para exportar neste mês.", Toast.LENGTH_SHORT).show();
             return;
         }
 
         String mesAno = getMesAnoString();
-        String sufixo = categoriaAtual.equals("Todos")
-                ? ""
-                : "_" + categoriaAtual.toLowerCase().replace(" ", "_");
+        String sufixo = categoriaAtual.equals("Todos") ? "" : "_" + categoriaAtual.toLowerCase().replace(" ", "_");
 
         File arquivo = CsvExportHelper.gerarCsv(this, dividasFiltradas, mesAno + sufixo);
 
@@ -672,8 +646,7 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void exportarPdf() {
         if (dividasFiltradas.isEmpty()) {
-            Toast.makeText(this, "Nenhum lançamento para exportar neste mês.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Nenhum lançamento para exportar neste mês.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -693,9 +666,6 @@ public class DashboardActivity extends AppCompatActivity {
         return MESES[mesSelecionado - 1] + " " + anoSelecionado;
     }
 
-    // ------------------------------------------------------------------
-    // NAVEGAÇÃO
-    // ------------------------------------------------------------------
     private void configurarNavegacao() {
         tabInicio.setOnClickListener(v -> {
             startActivity(new Intent(DashboardActivity.this, InicioActivity.class));
@@ -715,9 +685,6 @@ public class DashboardActivity extends AppCompatActivity {
                 startActivity(new Intent(DashboardActivity.this, ConfiguracoesActivity.class)));
     }
 
-    // ------------------------------------------------------------------
-    // HELPERS
-    // ------------------------------------------------------------------
     private TextView criarChip(String texto) {
         TextView chip = new TextView(this);
         chip.setText(texto);

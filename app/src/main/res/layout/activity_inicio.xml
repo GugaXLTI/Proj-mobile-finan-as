@@ -113,16 +113,16 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tvTituloSaldo"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:letterSpacing="0.08"
-                        android:text="SALDO DISPONÍVEL"
+                        android:text="SALDO EM CONTA"
                         android:textColor="#94A3B8"
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
-                    <!-- ⭐ BOTÃO DE HISTÓRICO AQUI -->
                     <ImageView
                         android:id="@+id/btnHistorico"
                         android:layout_width="24dp"
@@ -148,7 +148,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="R$ 1.800,00"
+                    android:text="R$ 0,00"
                     android:textColor="#34D399"
                     android:textSize="40sp"
                     android:textStyle="bold" />
@@ -175,9 +175,10 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvLabelRecebido"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Salário mensal"
+                            android:text="Recebido no mês"
                             android:textColor="#94A3B8"
                             android:textSize="13sp" />
 
@@ -185,7 +186,7 @@
                             android:id="@+id/tvSalarioTotalInicio"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="R$ 1.800,00"
+                            android:text="R$ 0,00"
                             android:textColor="#FFFFFF"
                             android:textSize="17sp"
                             android:textStyle="bold" />
@@ -215,6 +216,78 @@
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
+            </LinearLayout>
+
+            <!-- ⭐ NOVO CARD: PRÓXIMO RECEBIMENTO -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:background="@drawable/bg_card_glass"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="18dp">
+
+                <ImageView
+                    android:id="@+id/ivProximoIcone"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_icone_conf_verde"
+                    android:importantForAccessibility="no"
+                    android:padding="11dp"
+                    android:src="@drawable/ic_conf_money"
+                    app:tint="#34D399" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvProximoCaption"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.08"
+                        android:text="PRÓXIMO RECEBIMENTO"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvProximoRecebimentoValor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="R$ 0,00"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvProximoRecebimentoData"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="—"
+                        android:textColor="#94A3B8"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvProximoTag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_badge_atual"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="5dp"
+                    android:text="em 3 dias"
+                    android:textColor="#34D399"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <!-- CARDS LADO A LADO -->
@@ -395,7 +468,7 @@
                             android:id="@+id/tvTotalAPagarMes"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="R$ 1.170,00"
+                            android:text="R$ 0,00"
                             android:textColor="#FFFFFF"
                             android:textSize="24sp"
                             android:textStyle="bold" />
@@ -415,7 +488,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="Compromete 65% do salário"
+                        android:text="Compromete 0% da renda mensal"
                         android:textColor="#94A3B8"
                         android:textSize="12sp" />
                 </LinearLayout>
@@ -437,7 +510,6 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- BARRA DE NAVEGAÇÃO FLUTUANTE (SUBSTITUÍDO PELO INCLUDE) -->
     <include
         android:id="@+id/bottomNavigation"
         layout="@layout/layout_bottom_nav"

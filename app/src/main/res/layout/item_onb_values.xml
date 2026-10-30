@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="24dp">
+
+        <TextView
+            android:id="@+id/tvTituloValores"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quanto você recebe?"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Assim o saldo reflete o seu dinheiro de verdade."
+            android:textColor="#94A3B8"
+            android:textSize="15sp" />
+
+        <!-- Aviso do valor líquido -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_onb_info"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="14dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_onb_info"
+                app:tint="#FBBF24" />
+
+            <TextView
+                android:id="@+id/tvInfoValor"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:text="Informe o valor líquido, já descontados INSS, VT e demais descontos."
+                android:textColor="#FCD34D"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Modo (só para quem não é CLT) -->
+        <LinearLayout
+            android:id="@+id/groupModo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:text="Como essa renda cai?"
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_onb_segment"
+                android:orientation="horizontal"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/segFixo"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_onb_segment_item"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="Dia fixo"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/segVaria"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_onb_segment_item"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="Varia"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Adiantamento (CLT com adiantamento) -->
+        <LinearLayout
+            android:id="@+id/groupAdiantamento"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:text="Valor do adiantamento"
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/editValorAdiantamento"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_onb_field"
+                android:hint="R$ 0,00"
+                android:importantForAutofill="no"
+                android:inputType="number"
+                android:paddingHorizontal="18dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#7C8BA3"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="10dp"
+                android:text="Dia do adiantamento"
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipsDiaAdiantamento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp" />
+
+            <EditText
+                android:id="@+id/editDiaAdiantamento"
+                android:layout_width="160dp"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_onb_field"
+                android:hint="Dia (1 a 31)"
+                android:importantForAutofill="no"
+                android:inputType="number"
+                android:maxLength="2"
+                android:paddingHorizontal="18dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#7C8BA3"
+                android:textSize="16sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Valor principal -->
+        <TextView
+            android:id="@+id/labelSalario"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:layout_marginBottom="10dp"
+            android:text="Salário líquido"
+            android:textColor="#94A3B8"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/editValorSalario"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:background="@drawable/bg_onb_field"
+            android:hint="R$ 0,00"
+            android:importantForAutofill="no"
+            android:inputType="number"
+            android:paddingHorizontal="18dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#7C8BA3"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <!-- Dia do recebimento -->
+        <LinearLayout
+            android:id="@+id/groupDiaSalario"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="10dp"
+                android:text="Dia do recebimento"
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipsDiaSalario"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp" />
+
+            <EditText
+                android:id="@+id/editDiaSalario"
+                android:layout_width="160dp"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_onb_field"
+                android:hint="Dia (1 a 31)"
+                android:importantForAutofill="no"
+                android:inputType="number"
+                android:maxLength="2"
+                android:paddingHorizontal="18dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#7C8BA3"
+                android:textSize="16sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Período (renda variável) -->
+        <LinearLayout
+            android:id="@+id/groupPeriodo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="10dp"
+                android:text="Quando costuma entrar?"
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipsPeriodo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp" />
+        </LinearLayout>
+
+        <!-- Resumo ao vivo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:background="@drawable/bg_card_glass"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/tvResumoTitulo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.08"
+                android:text="VOCÊ RECEBE"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvResumoValor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="R$ 0,00"
+                android:textColor="#34D399"
+                android:textSize="32sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvResumoDetalhe"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="por mês"
+                android:textColor="#94A3B8"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

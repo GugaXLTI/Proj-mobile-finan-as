@@ -13,28 +13,39 @@ import com.example.controle_gastos.R;
 
 /**
  * Esconde a barra inferior flutuante ao rolar para baixo e mostra ao rolar para cima.
- * Também desenha um degradê atrás da barra para o conteúdo não aparecer cortado.
+ * Também desenha um degradê curto atrás da barra, só quando a tela realmente rola.
  *
  * Uso: NavScrollHelper.attach(this); logo depois do setContentView(...).
- * Requisitos: a tela precisa ter um ScrollView (ou NestedScrollView) e a barra com id bottomNavigation.
  */
 public final class NavScrollHelper {
 
     private static final int LIMIAR_PX = 6;
     private static final int DURACAO_MS = 220;
+    // Altura da barra (64dp) + margem de baixo (16dp) + folga. Menor que o paddingBottom (112dp)
+    // das telas, então o degradê nunca encosta no último item da lista.
+    private static final int ALTURA_SCRIM_DP = 84;
 
     private NavScrollHelper() {
     }
 
-    public static void attach(Activity activity) {
+    public static void attach(final Activity activity) {
         final View nav = activity.findViewById(R.id.bottomNavigation);
         View raiz = activity.findViewById(android.R.id.content);
         if (nav == null || raiz == null) return;
 
-        View scroll = encontrarScroll(raiz);
+        final View scroll = encontrarScroll(raiz);
         if (scroll == null) return;
 
         final View scrim = criarScrim(activity, nav);
+
+        if (scrim != null) {
+            scroll.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+                boolean rola = scroll.canScrollVertically(1) || scroll.canScrollVertically(-1);
+                int alvo = rola ? View.VISIBLE : View.GONE;
+                if (scrim.getVisibility() != alvo) scrim.setVisibility(alvo);
+            });
+        }
+
         final boolean[] visivel = {true};
 
         scroll.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
@@ -84,15 +95,16 @@ public final class NavScrollHelper {
         View scrim = new View(activity);
         scrim.setBackground(new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{0x000A101C, 0xE60A101C, 0xFF0A101C}));
+                new int[]{0x000A101C, 0xFF0A101C}));
+        scrim.setVisibility(View.GONE);
 
         ConstraintLayout.LayoutParams lp =
-                new ConstraintLayout.LayoutParams(0, dp(activity, 120));
+                new ConstraintLayout.LayoutParams(0, dp(activity, ALTURA_SCRIM_DP));
         lp.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID;
         lp.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
         lp.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
 
-        // Entra logo abaixo da barra na ordem de desenho: fica atrás dela e na frente do scroll
+        // Fica atrás da barra e na frente do scroll
         raiz.addView(scrim, raiz.indexOfChild(nav), lp);
         return scrim;
     }

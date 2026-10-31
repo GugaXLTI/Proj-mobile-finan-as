@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -41,6 +42,7 @@ public class InicioActivity extends AppCompatActivity {
 
     private static final int REQ_NOTIFICACAO = 100;
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
+    private static final String TAG = "InicioActivity";
 
     private TextView tvAvatarInicio, tvNomeInicio, tvDataAtualInicio;
     private TextView tvSaldoDisponivelInicio, tvSalarioTotalInicio, tvGastosMesInicio;
@@ -71,16 +73,19 @@ public class InicioActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inicio);
 
-        NavScrollHelper.attach(this);
-
-        db = AppDatabase.getInstance(this);
-        session = new SessionManager(this);
-
-        BottomNavHelper.configurar(this, BottomNavHelper.INICIO);
+        try {
+            NavScrollHelper.attach(this);
+            db = AppDatabase.getInstance(this);
+            session = new SessionManager(this);
+            BottomNavHelper.configurar(this, BottomNavHelper.INICIO);
+        } catch (Exception e) {
+            Log.e(TAG, "Erro na inicialização de helpers: " + e.getMessage());
+        }
 
         NotificationHelper.criarCanal(this);
         solicitarPermissaoNotificacao();
 
+        // Bind das views com proteção
         tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
         tvDataAtualInicio = findViewById(R.id.tvDataAtualInicio);
@@ -106,31 +111,41 @@ public class InicioActivity extends AppCompatActivity {
         progressAtencao = findViewById(R.id.progressAtencao);
         btnVerTodosVencimentos = findViewById(R.id.btnVerTodosVencimentos);
 
-        btnToggleSaldo = findViewById(R.id.btnToggleSaldo);
-        btnToggleSaldo.setOnClickListener(v -> {
-            isSaldoOculto = !isSaldoOculto;
-            atualizarDashboardFinanceiro();
-        });
+        if (btnToggleSaldo != null) {
+            btnToggleSaldo.setOnClickListener(v -> {
+                isSaldoOculto = !isSaldoOculto;
+                atualizarDashboardFinanceiro();
+            });
+        }
 
-        btnHistorico = findViewById(R.id.btnHistorico);
-        btnHistorico.setOnClickListener(v -> {
-            startActivity(new Intent(this, HistoricoActivity.class));
-            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
-        });
+        if (btnHistorico != null) {
+            btnHistorico.setOnClickListener(v -> {
+                startActivity(new Intent(this, HistoricoActivity.class));
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+            });
+        }
 
         atualizarNomeEAvatar();
 
-        SimpleDateFormat sdf = new SimpleDateFormat("MMMM 'de' yyyy", LOCALE_BR);
-        String mesAno = sdf.format(new Date());
-        tvDataAtualInicio.setText(mesAno.substring(0, 1).toUpperCase(LOCALE_BR) + mesAno.substring(1));
+        if (tvDataAtualInicio != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMMM 'de' yyyy", LOCALE_BR);
+            String mesAno = sdf.format(new Date());
+            tvDataAtualInicio.setText(mesAno.substring(0, 1).toUpperCase(LOCALE_BR) + mesAno.substring(1));
+        }
 
-        carregarDados();
-        atualizarDashboardFinanceiro();
+        try {
+            carregarDados();
+            atualizarDashboardFinanceiro();
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao carregar dados iniciais: " + e.getMessage());
+        }
 
-        btnVerTodosVencimentos.setOnClickListener(v -> {
-            startActivity(new Intent(this, DividasActivity.class));
-            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
-        });
+        if (btnVerTodosVencimentos != null) {
+            btnVerTodosVencimentos.setOnClickListener(v -> {
+                startActivity(new Intent(this, DividasActivity.class));
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+            });
+        }
     }
 
     private void solicitarPermissaoNotificacao() {
@@ -160,11 +175,16 @@ public class InicioActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         atualizarNomeEAvatar();
-        carregarDados();
-        atualizarDashboardFinanceiro();
+        try {
+            carregarDados();
+            atualizarDashboardFinanceiro();
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao retomar a tela: " + e.getMessage());
+        }
     }
 
     private void atualizarNomeEAvatar() {
+        if (session == null || tvNomeInicio == null || tvAvatarInicio == null) return;
         String nome = session.getNome();
         if (nome != null && !nome.isEmpty()) {
             tvNomeInicio.setText(nome);
@@ -173,47 +193,39 @@ public class InicioActivity extends AppCompatActivity {
     }
 
     private void atualizarDashboardFinanceiro() {
+        if (db == null || session == null) return;
+
         Calendar cal = Calendar.getInstance();
         String mesAnoAtual = String.format(LOCALE_BR, "%02d/%04d", cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR));
 
-        // 1. SALDO REAL (Fluxo de Caixa)
         Conta conta = db.contaDao().buscarPorUsuario(session.getUserId());
         double saldoInicial = (conta != null) ? conta.saldoInicial : 0.0;
 
         double entradas = db.transacaoDao().somarEntradas(session.getUserId());
         double saidasAuto = db.transacaoDao().somarSaidas(session.getUserId());
-
-        // ⭐ CORREÇÃO: Busca o total de gastos manuais (dívidas) do mês para descontar
         double gastosManuais = db.dividaDao().somarGastosDoMes(session.getUserId(), mesAnoAtual);
 
-        // Saldo em conta = Saldo Inicial + O que entrou - O que saiu (auto) - Dívidas Manuais
         double saldoEmConta = saldoInicial + entradas - saidasAuto - gastosManuais;
-
         saldoAtual = saldoEmConta;
 
-        tvTituloSaldo.setText("SALDO EM CONTA");
-        tvLabelRecebido.setText("Entradas automáticas");
+        if (tvTituloSaldo != null) tvTituloSaldo.setText("SALDO EM CONTA");
+        if (tvLabelRecebido != null) tvLabelRecebido.setText("Entradas automáticas");
 
         if (isSaldoOculto) {
-            btnToggleSaldo.setImageResource(R.drawable.ic_eye_closed);
-            tvSalarioTotalInicio.setText("R$ ••••");
-            tvGastosMesInicio.setText("R$ ••••");
-            tvSaldoDisponivelInicio.setText("R$ ••••");
+            if (btnToggleSaldo != null) btnToggleSaldo.setImageResource(R.drawable.ic_eye_closed);
+            if (tvSalarioTotalInicio != null) tvSalarioTotalInicio.setText("R$ ••••");
+            if (tvGastosMesInicio != null) tvGastosMesInicio.setText("R$ ••••");
+            if (tvSaldoDisponivelInicio != null) tvSaldoDisponivelInicio.setText("R$ ••••");
         } else {
-            btnToggleSaldo.setImageResource(R.drawable.ic_eye_open);
-            tvSalarioTotalInicio.setText(moeda(entradas));
-            // ⭐ Mostra a soma de gastos manuais + saídas automáticas
-            tvGastosMesInicio.setText(moeda(gastosManuais + saidasAuto));
-            tvSaldoDisponivelInicio.setText(moeda(saldoEmConta));
-
-            if (saldoEmConta < 0) {
-                tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#F87171"));
-            } else {
-                tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#34D399"));
+            if (btnToggleSaldo != null) btnToggleSaldo.setImageResource(R.drawable.ic_eye_open);
+            if (tvSalarioTotalInicio != null) tvSalarioTotalInicio.setText(moeda(entradas));
+            if (tvGastosMesInicio != null) tvGastosMesInicio.setText(moeda(gastosManuais + saidasAuto));
+            if (tvSaldoDisponivelInicio != null) {
+                tvSaldoDisponivelInicio.setText(moeda(saldoEmConta));
+                tvSaldoDisponivelInicio.setTextColor(Color.parseColor(saldoEmConta < 0 ? "#F87171" : "#34D399"));
             }
         }
 
-        // 2. PREVISÃO FUTURA (Card de Renda)
         List<Renda> rendas = db.rendaDao().listarPorUsuario(session.getUserId());
         Renda proximaFixa = null;
         long menorDias = Long.MAX_VALUE;
@@ -230,17 +242,21 @@ public class InicioActivity extends AppCompatActivity {
 
         atualizarCardProximoRecebimento(proximaFixa, menorDias);
 
-        if (rendaEsperadaMes > 0) {
-            int pct = (int) ((gastosManuais / rendaEsperadaMes) * 100);
-            progressOrcamento.setProgress(Math.min(pct, 100));
-        } else {
-            progressOrcamento.setProgress(0);
+        if (progressOrcamento != null) {
+            if (rendaEsperadaMes > 0) {
+                int pct = (int) ((gastosManuais / rendaEsperadaMes) * 100);
+                progressOrcamento.setProgress(Math.min(pct, 100));
+            } else {
+                progressOrcamento.setProgress(0);
+            }
         }
 
         renderizarCardAtencao();
     }
 
     private void atualizarCardProximoRecebimento(Renda proximaFixa, long dias) {
+        if (tvProximoCaption == null || ivProximoIcone == null || tvProximoRecebimentoValor == null || tvProximoRecebimentoData == null || tvProximoTag == null) return;
+
         if (proximaFixa != null) {
             tvProximoCaption.setText("PREVISÃO DE ENTRADA");
             ivProximoIcone.setImageResource(R.drawable.ic_conf_money);
@@ -280,6 +296,7 @@ public class InicioActivity extends AppCompatActivity {
     }
 
     private void carregarDados() {
+        if (db == null || session == null) return;
         dividas = db.dividaDao().listarPorUsuario(session.getUserId());
         atualizarTotais();
     }
@@ -308,11 +325,13 @@ public class InicioActivity extends AppCompatActivity {
 
         contasDoMes.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
 
-        tvTotalDividasInicio.setText(moeda(totalAPagar));
-        tvTotalPagoInicio.setText(moeda(totalPago));
+        if (tvTotalDividasInicio != null) tvTotalDividasInicio.setText(moeda(totalAPagar));
+        if (tvTotalPagoInicio != null) tvTotalPagoInicio.setText(moeda(totalPago));
     }
 
     private void renderizarCardAtencao() {
+        if (llContasMes == null || tvAlertaMes == null || llTotalAPagar == null || tvBadgeContas == null || tvTotalAPagarMes == null || progressAtencao == null || tvCompromete == null) return;
+
         llContasMes.removeAllViews();
         int n = contasDoMes.size();
 
@@ -344,43 +363,47 @@ public class InicioActivity extends AppCompatActivity {
             TextView tvValor = item.findViewById(R.id.tvValorConta);
             View divisor = item.findViewById(R.id.divisorConta);
 
-            String titulo = d.getTitulo();
-            int total = extrairTotalParcelas(d.getParcela());
-            if (total > 1) {
-                titulo += " · parcela " + extrairNumeroParcela(d.getParcela()) + " de " + total;
+            if (tvTitulo != null) {
+                String titulo = d.getTitulo();
+                int total = extrairTotalParcelas(d.getParcela());
+                if (total > 1) titulo += " · parcela " + extrairNumeroParcela(d.getParcela()) + " de " + total;
+                tvTitulo.setText(titulo);
             }
-            tvTitulo.setText(titulo);
-            tvValor.setText(moeda(d.getValorRestante()));
+            if (tvValor != null) tvValor.setText(moeda(d.getValorRestante()));
 
             try {
                 Date data = sdfData.parse(d.getVencimento());
                 if (data != null) {
-                    tvMes.setText(sdfMes.format(data).replace(".", "").toUpperCase(LOCALE_BR));
-                    tvDia.setText(sdfDia.format(data));
+                    if (tvMes != null) tvMes.setText(sdfMes.format(data).replace(".", "").toUpperCase(LOCALE_BR));
+                    if (tvDia != null) tvDia.setText(sdfDia.format(data));
 
                     long dias = diasAte(data);
-                    if (dias < 0) {
-                        tvVence.setText(dias == -1 ? "Venceu ontem" : "Venceu há " + (-dias) + " dias");
-                        tvVence.setTextColor(Color.parseColor("#F87171"));
-                    } else if (dias == 0) {
-                        tvVence.setText("Vence hoje");
-                        tvVence.setTextColor(Color.parseColor("#F59E0B"));
-                    } else if (dias == 1) {
-                        tvVence.setText("Vence amanhã");
-                        tvVence.setTextColor(Color.parseColor("#F59E0B"));
-                    } else {
-                        tvVence.setText("Vence em " + dias + " dias");
-                        tvVence.setTextColor(Color.parseColor(dias <= 5 ? "#F59E0B" : "#94A3B8"));
+                    if (tvVence != null) {
+                        if (dias < 0) {
+                            tvVence.setText(dias == -1 ? "Venceu ontem" : "Venceu há " + (-dias) + " dias");
+                            tvVence.setTextColor(Color.parseColor("#F87171"));
+                        } else if (dias == 0) {
+                            tvVence.setText("Vence hoje");
+                            tvVence.setTextColor(Color.parseColor("#F59E0B"));
+                        } else if (dias == 1) {
+                            tvVence.setText("Vence amanhã");
+                            tvVence.setTextColor(Color.parseColor("#F59E0B"));
+                        } else {
+                            tvVence.setText("Vence em " + dias + " dias");
+                            tvVence.setTextColor(Color.parseColor(dias <= 5 ? "#F59E0B" : "#94A3B8"));
+                        }
                     }
                 }
             } catch (Exception e) {
-                tvMes.setText("--");
-                tvDia.setText("--");
-                tvVence.setText(d.getVencimento());
-                tvVence.setTextColor(Color.parseColor("#94A3B8"));
+                if (tvMes != null) tvMes.setText("--");
+                if (tvDia != null) tvDia.setText("--");
+                if (tvVence != null) {
+                    tvVence.setText(d.getVencimento());
+                    tvVence.setTextColor(Color.parseColor("#94A3B8"));
+                }
             }
 
-            if (i == n - 1) divisor.setVisibility(View.GONE);
+            if (i == n - 1 && divisor != null) divisor.setVisibility(View.GONE);
             llContasMes.addView(item);
         }
 
@@ -393,9 +416,7 @@ public class InicioActivity extends AppCompatActivity {
             String texto = "Compromete " + pct + "% da renda mensal";
             if (!isSaldoOculto) {
                 double sobra = saldoAtual - totalVencendoMes;
-                texto += sobra >= 0
-                        ? " · Sobra " + moeda(sobra)
-                        : " · Faltam " + moeda(-sobra);
+                texto += sobra >= 0 ? " · Sobra " + moeda(sobra) : " · Faltam " + moeda(-sobra);
             }
             tvCompromete.setText(texto);
         } else {

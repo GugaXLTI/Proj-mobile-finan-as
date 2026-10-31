@@ -81,7 +81,6 @@ public class InicioActivity extends AppCompatActivity {
         NotificationHelper.criarCanal(this);
         solicitarPermissaoNotificacao();
 
-        // Binds da UI
         tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
         tvDataAtualInicio = findViewById(R.id.tvDataAtualInicio);
@@ -182,16 +181,14 @@ public class InicioActivity extends AppCompatActivity {
         double saldoInicial = (conta != null) ? conta.saldoInicial : 0.0;
 
         double entradas = db.transacaoDao().somarEntradas(session.getUserId());
-        double saidas = db.transacaoDao().somarSaidas(session.getUserId());
+        double saidasAuto = db.transacaoDao().somarSaidas(session.getUserId());
 
-        // Saldo em conta = Saldo Inicial + O que entrou - O que saiu via notificação/OCR
-        double saldoEmConta = saldoInicial + entradas - saidas;
+        // ⭐ CORREÇÃO: Busca o total de gastos manuais (dívidas) do mês para descontar
+        double gastosManuais = db.dividaDao().somarGastosDoMes(session.getUserId(), mesAnoAtual);
 
-        // 2. GASTOS DO MÊS (Tela de dívidas manuais)
-        double gastosMes = db.dividaDao().somarGastosDoMes(session.getUserId(), mesAnoAtual);
+        // Saldo em conta = Saldo Inicial + O que entrou - O que saiu (auto) - Dívidas Manuais
+        double saldoEmConta = saldoInicial + entradas - saidasAuto - gastosManuais;
 
-        // O Saldo Disponível é o Saldo em Conta menos as contas que ainda vão vencer (opcional, mas deixa mais preciso)
-        // Por enquanto, vamos mostrar o Saldo em Conta real.
         saldoAtual = saldoEmConta;
 
         tvTituloSaldo.setText("SALDO EM CONTA");
@@ -205,7 +202,8 @@ public class InicioActivity extends AppCompatActivity {
         } else {
             btnToggleSaldo.setImageResource(R.drawable.ic_eye_open);
             tvSalarioTotalInicio.setText(moeda(entradas));
-            tvGastosMesInicio.setText(moeda(gastosMes));
+            // ⭐ Mostra a soma de gastos manuais + saídas automáticas
+            tvGastosMesInicio.setText(moeda(gastosManuais + saidasAuto));
             tvSaldoDisponivelInicio.setText(moeda(saldoEmConta));
 
             if (saldoEmConta < 0) {
@@ -215,7 +213,7 @@ public class InicioActivity extends AppCompatActivity {
             }
         }
 
-        // 3. PREVISÃO FUTURA (Card de Renda)
+        // 2. PREVISÃO FUTURA (Card de Renda)
         List<Renda> rendas = db.rendaDao().listarPorUsuario(session.getUserId());
         Renda proximaFixa = null;
         long menorDias = Long.MAX_VALUE;
@@ -233,7 +231,7 @@ public class InicioActivity extends AppCompatActivity {
         atualizarCardProximoRecebimento(proximaFixa, menorDias);
 
         if (rendaEsperadaMes > 0) {
-            int pct = (int) ((gastosMes / rendaEsperadaMes) * 100);
+            int pct = (int) ((gastosManuais / rendaEsperadaMes) * 100);
             progressOrcamento.setProgress(Math.min(pct, 100));
         } else {
             progressOrcamento.setProgress(0);
@@ -464,6 +462,7 @@ public class InicioActivity extends AppCompatActivity {
                 return 1;
             }
         }
+
         try {
             String numeros = parcela.replaceAll("[^0-9]", "");
             if (numeros.isEmpty()) return 1;

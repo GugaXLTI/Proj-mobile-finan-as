@@ -32,7 +32,7 @@ import com.example.controle_gastos.model.ChavePix;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.ParsedReceipt;
 import com.example.controle_gastos.utils.AlarmeHelper;
-import com.example.controle_gastos.utils.BottomNavHelper; // ⭐ IMPORT ADICIONADO
+import com.example.controle_gastos.utils.BottomNavHelper;
 import com.example.controle_gastos.utils.CategoriaSeeder;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.ReceiptAiParser;
@@ -88,10 +88,8 @@ public class CadastroDividaActivity extends AppCompatActivity {
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
 
-        // ⭐ CORREÇÃO: Ativa o botão voltar e a barra inferior
         findViewById(R.id.btnVoltar).setOnClickListener(v -> finish());
         BottomNavHelper.configurar(this, BottomNavHelper.LANCAR);
-
         NavScrollHelper.attach(this);
 
         CategoriaSeeder.popularSeVazio(this, session.getUserId());
@@ -153,9 +151,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         btnSalvar.setOnClickListener(v -> salvarDivida());
     }
-
-    // ... (O restante dos métodos processarComprovanteEscolhido, salvarDivida, etc., permanecem exatamente iguais aos da mensagem anterior)
-    // Vou colocar os métodos essenciais aqui para você não precisar copiar duas vezes se não quiser, mas o ideal é substituir o arquivo inteiro.
 
     private void processarComprovanteEscolhido(Uri uri) {
         btnImportarComprovante.setEnabled(false);
@@ -440,7 +435,10 @@ public class CadastroDividaActivity extends AppCompatActivity {
         if (numParcelas == 1) {
             Divida nova = new Divida(session.getUserId(), descricao, valor, valor, 0.0, bancoSelecionado, categoria, "1x", vencimento, false);
             long id = db.dividaDao().inserir(nova);
-            if (id > 0) { nova.id = (int) id; AlarmeHelper.agendar(this, nova); }
+            if (id > 0) {
+                nova.id = (int) id;
+                AlarmeHelper.agendar(this, nova);
+            }
             Toast.makeText(this, "Dívida cadastrada!", Toast.LENGTH_SHORT).show();
             finish();
             return;
@@ -458,7 +456,10 @@ public class CadastroDividaActivity extends AppCompatActivity {
             String numeroParcela = (i + 1) + "/" + numParcelas;
             Divida parcela = new Divida(session.getUserId(), grupoId, descricao, valorParcela, valorParcela, 0.0, bancoSelecionado, categoria, numeroParcela, vencParcela, false, false);
             long idGerado = db.dividaDao().inserir(parcela);
-            if (idGerado > 0) { parcela.id = (int) idGerado; AlarmeHelper.agendar(this, parcela); }
+            if (idGerado > 0) {
+                parcela.id = (int) idGerado;
+                AlarmeHelper.agendar(this, parcela);
+            }
         }
         Toast.makeText(this, "Dívida parcelada em " + numParcelas + "x cadastrada!", Toast.LENGTH_LONG).show();
         finish();

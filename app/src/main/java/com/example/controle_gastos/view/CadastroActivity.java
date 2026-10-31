@@ -10,6 +10,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.dao.UsuarioDao;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Usuario;
+import com.example.controle_gastos.utils.OnboardingStore;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -88,13 +89,16 @@ public class CadastroActivity extends AppCompatActivity {
             return;
         }
 
-        // ⭐ Ao criar conta nova, garante que a flag global está limpa
+        // Ao criar conta nova, garante que a flag global está limpa
         session.setOnboardingConcluido(false);
 
         Usuario novoUsuario = new Usuario(nome, "", senha);
         long idGerado = usuarioDao.inserir(novoUsuario);
 
         if (idGerado > 0) {
+            // Usuário novo nunca herda saldo/flag de onboarding guardados para um id antigo
+            OnboardingStore.limparUsuario(this, (int) idGerado);
+
             Toast.makeText(this, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(CadastroActivity.this, LoginActivity.class);
             startActivity(intent);

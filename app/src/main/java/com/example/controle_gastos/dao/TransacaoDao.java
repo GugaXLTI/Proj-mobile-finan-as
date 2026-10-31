@@ -1,10 +1,8 @@
 package com.example.controle_gastos.dao;
 
 import androidx.room.Dao;
-import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
-import androidx.room.Update;
 import com.example.controle_gastos.model.Transacao;
 
 import java.util.List;
@@ -13,19 +11,21 @@ import java.util.List;
 public interface TransacaoDao {
 
     @Insert
-    long inserir(Transacao transacao);
+    void inserir(Transacao transacao);
 
-    @Update
-    void atualizar(Transacao transacao);
-
-    @Delete
-    void deletar(Transacao transacao);
-
-    // ======== CONSULTAS POR USUÁRIO (novas) ========
-
-    @Query("SELECT * FROM transacoes WHERE usuarioId = :usuarioId")
+    @Query("SELECT * FROM transacoes WHERE usuarioId = :usuarioId ORDER BY data DESC")
     List<Transacao> listarPorUsuario(int usuarioId);
 
-    @Query("SELECT * FROM transacoes WHERE usuarioId = :usuarioId AND tipo = :tipo")
-    List<Transacao> listarPorTipoDoUsuario(int usuarioId, String tipo);
+    // ⭐ NOVO: Busca transações de um mês específico (formato MM/yyyy)
+    @Query("SELECT * FROM transacoes WHERE usuarioId = :usuarioId AND substr(data, 4, 7) = :mesAno ORDER BY data DESC")
+    List<Transacao> listarPorMes(int usuarioId, String mesAno);
+
+    @Query("SELECT COALESCE(SUM(valor), 0.0) FROM transacoes WHERE usuarioId = :usuarioId AND tipo = 'ENTRADA'")
+    double somarEntradas(int usuarioId);
+
+    @Query("SELECT COALESCE(SUM(valor), 0.0) FROM transacoes WHERE usuarioId = :usuarioId AND tipo = 'SAIDA'")
+    double somarSaidas(int usuarioId);
+
+    @Query("DELETE FROM transacoes WHERE usuarioId = :usuarioId")
+    void deletarTodosDoUsuario(int usuarioId);
 }

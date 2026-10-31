@@ -10,14 +10,18 @@ public class Transacao {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
-    public int usuarioId; // ⭐ NOVO: vínculo com o usuário
-
+    public int usuarioId;
     public String descricao;
     public double valor;
     public String data;
     public String tipo;
     public String categoria;
 
+    public Transacao() {
+    }
+
+    // ⭐ FIX: Adicionado @Ignore para o Room não reclamar de múltiplos construtores
+    @Ignore
     public Transacao(int id, int usuarioId, String descricao, double valor, String data, String tipo, String categoria) {
         this.id = id;
         this.usuarioId = usuarioId;

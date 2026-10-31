@@ -3,7 +3,6 @@ package com.example.controle_gastos.utils;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.widget.Toast;
 import androidx.core.content.FileProvider;
 
 import com.example.controle_gastos.database.AppDatabase;
@@ -11,7 +10,9 @@ import com.example.controle_gastos.model.BackupData;
 import com.example.controle_gastos.model.Cartao;
 import com.example.controle_gastos.model.Categoria;
 import com.example.controle_gastos.model.ChavePix;
+import com.example.controle_gastos.model.Conta;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.Transacao;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -22,27 +23,24 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
 
 public class BackupHelper {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
-    private static final int VERSAO_BACKUP = 1;
+    private static final int VERSAO_BACKUP = 2; // ⭐ Subimos a versão por causa das novas tabelas
 
     // ==========================================
     // EXPORTAR
     // ==========================================
 
-    /**
-     * Gera o arquivo de backup em JSON com todos os dados do usuário.
-     */
     public static File exportar(Context context, int userId) {
         try {
             AppDatabase db = AppDatabase.getInstance(context);
             SessionManager session = new SessionManager(context);
 
-            // 1. Agrupa os dados
             BackupData data = new BackupData();
             data.versao = VERSAO_BACKUP;
             data.dataBackup = new SimpleDateFormat("dd/MM/yyyy HH:mm", LOCALE_BR)
@@ -52,13 +50,19 @@ public class BackupHelper {
             data.cartoes = db.cartaoDao().listarPorUsuario(userId);
             data.chavesPix = db.chavePixDao().listarPorUsuario(userId);
             data.categorias = db.categoriaDao().listarPorUsuario(userId);
+
+            // ⭐ Exportando as novas tabelas
+            data.contas = new ArrayList<>();
+            Conta conta = db.contaDao().buscarPorUsuario(userId);
+            if (conta != null) data.contas.add(conta);
+
+            data.transacoes = db.transacaoDao().listarPorUsuario(userId);
+
             data.totalItens = data.contarItens();
 
-            // 2. Serializa para JSON
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(data);
 
-            // 3. Salva em cache/exports/
             File pasta = new File(context.getCacheDir(), "exports");
             if (!pasta.exists()) pasta.mkdirs();
 
@@ -78,9 +82,6 @@ public class BackupHelper {
         }
     }
 
-    /**
-     * Compartilha o arquivo de backup via Intent.
-     */
     public static void compartilharBackup(Context context, File arquivo) {
         if (arquivo == null || !arquivo.exists()) return;
 
@@ -103,10 +104,6 @@ public class BackupHelper {
     // IMPORTAR
     // ==========================================
 
-    /**
-     * Lê o arquivo do Uri e retorna o BackupData parseado.
-     * Retorna null se o arquivo for inválido.
-     */
     public static BackupData lerArquivo(Context context, Uri uri) {
         try {
             InputStream is = context.getContentResolver().openInputStream(uri);
@@ -124,8 +121,8 @@ public class BackupHelper {
             Gson gson = new Gson();
             BackupData data = gson.fromJson(sb.toString(), BackupData.class);
 
-            // Valida estrutura básica
             if (data == null) return null;
+            // Agora aceita versões antigas (1) e a nova (2)
             if (data.versao <= 0 || data.versao > VERSAO_BACKUP) return null;
 
             return data;
@@ -136,19 +133,19 @@ public class BackupHelper {
         }
     }
 
-    /**
-     * Aplica o backup no banco de dados do usuário.
-     * Substitui todos os dados atuais pelos dados do backup.
-     */
     public static boolean aplicarBackup(Context context, int userId, BackupData data) {
         try {
             AppDatabase db = AppDatabase.getInstance(context);
 
-            // 1. Apaga dados atuais do usuário
+            // 1. Apaga dados atuais do usuário (incluindo as novas tabelas)
             db.dividaDao().deletarTodosDoUsuario(userId);
             db.cartaoDao().deletarTodosDoUsuario(userId);
             db.chavePixDao().deletarTodosDoUsuario(userId);
             db.categoriaDao().deletarTodosDoUsuario(userId);
+
+            // ⭐ Limpando Contas e Transações
+            db.contaDao().deletarPorUsuario(userId);
+            db.transacaoDao().deletarTodosDoUsuario(userId);
 
             // 2. Reinsere categorias
             if (data.categorias != null) {
@@ -184,11 +181,30 @@ public class BackupHelper {
                     d.usuarioId = userId;
                     long novoId = db.dividaDao().inserir(d);
 
-                    // Reagenda alarme se não pago e não excluída
                     if (novoId > 0 && !d.isPago() && !d.isExcluida()) {
                         d.id = (int) novoId;
                         AlarmeHelper.agendar(context, d);
                     }
+                }
+            }
+
+            // ⭐ 6. Reinsere Contas (Saldo Inicial)
+            if (data.contas != null && !data.contas.isEmpty()) {
+                for (Conta c : data.contas) {
+                    c.id = 0;
+                    c.usuarioId = userId;
+                    db.contaDao().inserir(c);
+                }
+                // Atualiza também o SharedPreferences para a tela de Configurações refletir na hora
+                OnboardingStore.salvarSaldoInicial(context, userId, data.contas.get(0).saldoInicial);
+            }
+
+            // ⭐ 7. Reinsere Transações (Espião de Notificações)
+            if (data.transacoes != null) {
+                for (Transacao t : data.transacoes) {
+                    t.id = 0;
+                    t.usuarioId = userId;
+                    db.transacaoDao().inserir(t);
                 }
             }
 

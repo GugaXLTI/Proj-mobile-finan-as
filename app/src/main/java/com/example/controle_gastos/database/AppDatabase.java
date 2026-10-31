@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase;
 
 import com.example.controle_gastos.dao.CategoriaDao;
 import com.example.controle_gastos.dao.ComprovanteProcessadoDao;
+import com.example.controle_gastos.dao.ContaDao;
 import com.example.controle_gastos.dao.DividaDao;
 import com.example.controle_gastos.dao.RendaDao;
 import com.example.controle_gastos.dao.TransacaoDao;
@@ -16,6 +17,7 @@ import com.example.controle_gastos.dao.ChavePixDao;
 
 import com.example.controle_gastos.model.Categoria;
 import com.example.controle_gastos.model.ComprovanteProcessado;
+import com.example.controle_gastos.model.Conta;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.Renda;
 import com.example.controle_gastos.model.Transacao;
@@ -26,9 +28,10 @@ import com.example.controle_gastos.model.ChavePix;
 @Database(
         entities = {
                 Usuario.class, Divida.class, Transacao.class, Categoria.class,
-                Cartao.class, ChavePix.class, ComprovanteProcessado.class, Renda.class
+                Cartao.class, ChavePix.class, ComprovanteProcessado.class, Renda.class,
+                Conta.class // ⭐ NOVO
         },
-        version = 12,
+        version = 13, // ⭐ ALTERADO
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -41,6 +44,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract ChavePixDao chavePixDao();
     public abstract ComprovanteProcessadoDao comprovanteProcessadoDao();
     public abstract RendaDao rendaDao();
+    public abstract ContaDao contaDao(); // ⭐ NOVO
 
     private static AppDatabase INSTANCE;
 
@@ -55,7 +59,8 @@ public abstract class AppDatabase extends RoomDatabase {
                             Migrations.MIGRATION_8_9,
                             Migrations.MIGRATION_9_10,
                             Migrations.MIGRATION_10_11,
-                            Migrations.MIGRATION_11_12
+                            Migrations.MIGRATION_11_12,
+                            Migrations.MIGRATION_12_13 // ⭐ NOVO
                     )
                     .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()

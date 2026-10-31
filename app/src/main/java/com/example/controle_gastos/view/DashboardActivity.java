@@ -29,9 +29,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaDashboardAdapter;
 import com.example.controle_gastos.database.AppDatabase;
+import com.example.controle_gastos.model.Conta;
 import com.example.controle_gastos.model.Divida;
-import com.example.controle_gastos.model.Renda;
-import com.example.controle_gastos.model.Usuario;
+import com.example.controle_gastos.model.Transacao;
+import com.example.controle_gastos.utils.BottomNavHelper;
 import com.example.controle_gastos.utils.CsvExportHelper;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.PdfExportHelper;
@@ -96,11 +97,11 @@ public class DashboardActivity extends AppCompatActivity {
     private TextView tvSalarioDash, tvGastosDash, tvSaldoDash, tvBalancoCaption;
     private ProgressBar progressBalanco;
 
-    private ImageView tabInicio, tabLancar, tabDividas, tabConfig;
-    private LinearLayout tabRelatorios;
-
     private List<Divida> todasDividas = new ArrayList<>();
     private final List<Divida> dividasFiltradas = new ArrayList<>();
+
+    // ⭐ NOVO: Lista para guardar as transações do mês
+    private final List<Transacao> transacoesFiltradas = new ArrayList<>();
 
     private final Map<String, TextView> chipsFiltro = new LinkedHashMap<>();
     private final Map<String, View> legendaRows = new HashMap<>();
@@ -120,6 +121,8 @@ public class DashboardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_dashboard);
 
         NavScrollHelper.attach(this);
+
+        BottomNavHelper.configurar(this, BottomNavHelper.RELATORIOS);
 
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
@@ -149,12 +152,6 @@ public class DashboardActivity extends AppCompatActivity {
         tvBalancoCaption = findViewById(R.id.tvBalancoCaption);
         progressBalanco = findViewById(R.id.progressBalanco);
 
-        tabInicio = findViewById(R.id.tabInicio);
-        tabLancar = findViewById(R.id.tabLancar);
-        tabDividas = findViewById(R.id.tabDividas);
-        tabRelatorios = findViewById(R.id.tabRelatorios);
-        tabConfig = findViewById(R.id.tabConfig);
-
         rvLancamentos.setLayoutManager(new LinearLayoutManager(this));
 
         Calendar c = Calendar.getInstance();
@@ -165,7 +162,6 @@ public class DashboardActivity extends AppCompatActivity {
         configurarGraficoLinha();
         criarChipsPeriodo();
         configurarExportar();
-        configurarNavegacao();
 
         btnMesAnteriorDash.setOnClickListener(v -> {
             mesSelecionado--;
@@ -197,6 +193,11 @@ public class DashboardActivity extends AppCompatActivity {
         }
         todasDividas.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
 
+        // ⭐ NOVO: Busca as transações do mês selecionado
+        String mesAnoAtual = String.format(LOCALE_BR, "%02d/%04d", mesSelecionado, anoSelecionado);
+        transacoesFiltradas.clear();
+        transacoesFiltradas.addAll(db.transacaoDao().listarPorMes(session.getUserId(), mesAnoAtual));
+
         categoriaAtual = "Todos";
 
         atualizarTituloMes();
@@ -222,35 +223,28 @@ public class DashboardActivity extends AppCompatActivity {
             gastos += d.getValorTotal();
         }
 
-        // ⭐ NOVO: Calcula o salário esperado do mês baseado na tabela Renda
-        double salarioTotalMes = 0;
-        List<Renda> rendas = db.rendaDao().listarPorUsuario(session.getUserId());
-        for (Renda r : rendas) {
-            salarioTotalMes += r.valor;
-        }
+        Conta conta = db.contaDao().buscarPorUsuario(session.getUserId());
+        double saldoInicial = (conta != null) ? conta.saldoInicial : 0.0;
 
-        // Fallback: se não tem renda na tabela nova, usa o salarioMensal antigo
-        if (rendas.isEmpty()) {
-            Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
-            if (user != null) salarioTotalMes = user.getSalarioMensal();
-        }
+        double entradas = db.transacaoDao().somarEntradas(session.getUserId());
+        double baseCalculo = saldoInicial + entradas;
 
-        tvSalarioDash.setText(moeda(salarioTotalMes));
+        tvSalarioDash.setText(moeda(baseCalculo));
         tvGastosDash.setText(moeda(gastos));
 
-        if (salarioTotalMes > 0) {
-            double saldo = salarioTotalMes - gastos;
+        if (baseCalculo > 0) {
+            double saldo = baseCalculo - gastos;
             tvSaldoDash.setText(moeda(saldo));
             tvSaldoDash.setTextColor(Color.parseColor(saldo < 0 ? "#F87171" : "#34D399"));
 
-            int pct = (int) Math.round((gastos / salarioTotalMes) * 100);
+            int pct = (int) Math.round((gastos / baseCalculo) * 100);
             progressBalanco.setProgress(Math.min(pct, 100));
-            tvBalancoCaption.setText(pct + "% da renda mensal comprometida");
+            tvBalancoCaption.setText(pct + "% do orçamento comprometido");
         } else {
             tvSaldoDash.setText(moeda(0));
             tvSaldoDash.setTextColor(Color.parseColor("#64748B"));
             progressBalanco.setProgress(0);
-            tvBalancoCaption.setText("Renda não encontrada. Confira em Configurações.");
+            tvBalancoCaption.setText("Saldo base não encontrado.");
         }
     }
 
@@ -625,7 +619,7 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void exportarCsv() {
-        if (dividasFiltradas.isEmpty()) {
+        if (dividasFiltradas.isEmpty() && transacoesFiltradas.isEmpty()) {
             Toast.makeText(this, "Nenhum lançamento para exportar neste mês.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -633,7 +627,7 @@ public class DashboardActivity extends AppCompatActivity {
         String mesAno = getMesAnoString();
         String sufixo = categoriaAtual.equals("Todos") ? "" : "_" + categoriaAtual.toLowerCase().replace(" ", "_");
 
-        File arquivo = CsvExportHelper.gerarCsv(this, dividasFiltradas, mesAno + sufixo);
+        File arquivo = CsvExportHelper.gerarCsv(this, dividasFiltradas, transacoesFiltradas, mesAno + sufixo);
 
         if (arquivo == null) {
             Toast.makeText(this, "Erro ao gerar o arquivo CSV.", Toast.LENGTH_SHORT).show();
@@ -645,13 +639,13 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void exportarPdf() {
-        if (dividasFiltradas.isEmpty()) {
+        if (dividasFiltradas.isEmpty() && transacoesFiltradas.isEmpty()) {
             Toast.makeText(this, "Nenhum lançamento para exportar neste mês.", Toast.LENGTH_SHORT).show();
             return;
         }
 
         String mesAno = getMesAnoString();
-        File arquivo = PdfExportHelper.gerarPdf(this, dividasFiltradas, mesAno, categoriaAtual);
+        File arquivo = PdfExportHelper.gerarPdf(this, dividasFiltradas, transacoesFiltradas, mesAno, categoriaAtual);
 
         if (arquivo == null) {
             Toast.makeText(this, "Erro ao gerar o PDF.", Toast.LENGTH_SHORT).show();
@@ -664,25 +658,6 @@ public class DashboardActivity extends AppCompatActivity {
 
     private String getMesAnoString() {
         return MESES[mesSelecionado - 1] + " " + anoSelecionado;
-    }
-
-    private void configurarNavegacao() {
-        tabInicio.setOnClickListener(v -> {
-            startActivity(new Intent(DashboardActivity.this, InicioActivity.class));
-            finish();
-        });
-
-        tabLancar.setOnClickListener(v ->
-                startActivity(new Intent(DashboardActivity.this, CadastroDividaActivity.class)));
-
-        tabDividas.setOnClickListener(v ->
-                startActivity(new Intent(DashboardActivity.this, DividasActivity.class)));
-
-        tabRelatorios.setOnClickListener(v ->
-                Toast.makeText(this, "Você já está em Relatórios", Toast.LENGTH_SHORT).show());
-
-        tabConfig.setOnClickListener(v ->
-                startActivity(new Intent(DashboardActivity.this, ConfiguracoesActivity.class)));
     }
 
     private TextView criarChip(String texto) {

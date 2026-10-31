@@ -21,9 +21,9 @@ import androidx.core.content.ContextCompat;
 
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
+import com.example.controle_gastos.model.Conta;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.Renda;
-import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.utils.BottomNavHelper;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.NotificationHelper;
@@ -41,7 +41,6 @@ public class InicioActivity extends AppCompatActivity {
 
     private static final int REQ_NOTIFICACAO = 100;
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
-    private static final String TIPO_VARIAVEL = "VARIAVEL";
 
     private TextView tvAvatarInicio, tvNomeInicio, tvDataAtualInicio;
     private TextView tvSaldoDisponivelInicio, tvSalarioTotalInicio, tvGastosMesInicio;
@@ -64,7 +63,7 @@ public class InicioActivity extends AppCompatActivity {
     private List<Divida> dividas = new ArrayList<>();
     private final List<Divida> contasDoMes = new ArrayList<>();
     private double totalVencendoMes = 0;
-    private double salarioAtual = 0;
+    private double rendaEsperadaMes = 0;
     private double saldoAtual = 0;
 
     @Override
@@ -82,26 +81,23 @@ public class InicioActivity extends AppCompatActivity {
         NotificationHelper.criarCanal(this);
         solicitarPermissaoNotificacao();
 
+        // Binds da UI
         tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
         tvDataAtualInicio = findViewById(R.id.tvDataAtualInicio);
-
         tvTituloSaldo = findViewById(R.id.tvTituloSaldo);
         tvLabelRecebido = findViewById(R.id.tvLabelRecebido);
         tvSaldoDisponivelInicio = findViewById(R.id.tvSaldoDisponivelInicio);
         tvSalarioTotalInicio = findViewById(R.id.tvSalarioTotalInicio);
         tvGastosMesInicio = findViewById(R.id.tvGastosMesInicio);
         progressOrcamento = findViewById(R.id.progressOrcamento);
-
         ivProximoIcone = findViewById(R.id.ivProximoIcone);
         tvProximoCaption = findViewById(R.id.tvProximoCaption);
         tvProximoRecebimentoData = findViewById(R.id.tvProximoRecebimentoData);
         tvProximoRecebimentoValor = findViewById(R.id.tvProximoRecebimentoValor);
         tvProximoTag = findViewById(R.id.tvProximoTag);
-
         tvTotalDividasInicio = findViewById(R.id.tvTotalDividasInicio);
         tvTotalPagoInicio = findViewById(R.id.tvTotalPagoInicio);
-
         tvAlertaMes = findViewById(R.id.tvAlertaMes);
         tvBadgeContas = findViewById(R.id.tvBadgeContas);
         llContasMes = findViewById(R.id.llContasMes);
@@ -178,119 +174,97 @@ public class InicioActivity extends AppCompatActivity {
     }
 
     private void atualizarDashboardFinanceiro() {
-        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
-        if (user != null) {
-            Calendar cal = Calendar.getInstance();
-            int diaAtual = cal.get(Calendar.DAY_OF_MONTH);
-            int ultimoDia = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-            String mesAnoAtual = String.format(LOCALE_BR, "%02d/%04d",
-                    cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR));
+        Calendar cal = Calendar.getInstance();
+        String mesAnoAtual = String.format(LOCALE_BR, "%02d/%04d", cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR));
 
-            List<Renda> rendas = db.rendaDao().listarPorUsuario(session.getUserId());
+        // 1. SALDO REAL (Fluxo de Caixa)
+        Conta conta = db.contaDao().buscarPorUsuario(session.getUserId());
+        double saldoInicial = (conta != null) ? conta.saldoInicial : 0.0;
 
-            double totalEsperadoMes = 0;
-            double totalRecebidoAteHoje = 0;
-            boolean temVariavel = false;
-            Renda proximaFixa = null;
-            Renda rendaVariavel = null;
-            long menorDias = Long.MAX_VALUE;
+        double entradas = db.transacaoDao().somarEntradas(session.getUserId());
+        double saidas = db.transacaoDao().somarSaidas(session.getUserId());
 
-            if (!rendas.isEmpty()) {
-                for (Renda r : rendas) {
-                    totalEsperadoMes += r.valor;
+        // Saldo em conta = Saldo Inicial + O que entrou - O que saiu via notificação/OCR
+        double saldoEmConta = saldoInicial + entradas - saidas;
 
-                    if (TIPO_VARIAVEL.equals(r.tipo)) {
-                        temVariavel = true;
-                        rendaVariavel = r;
-                        totalRecebidoAteHoje += r.valor;
-                    } else {
-                        int diaEfetivo = Math.min(Math.max(r.diaRecebimento, 1), ultimoDia);
-                        if (diaEfetivo <= diaAtual) totalRecebidoAteHoje += r.valor;
+        // 2. GASTOS DO MÊS (Tela de dívidas manuais)
+        double gastosMes = db.dividaDao().somarGastosDoMes(session.getUserId(), mesAnoAtual);
 
-                        long dias = diasAteProximoRecebimento(r.diaRecebimento);
-                        if (dias < menorDias) {
-                            menorDias = dias;
-                            proximaFixa = r;
-                        }
-                    }
-                }
+        // O Saldo Disponível é o Saldo em Conta menos as contas que ainda vão vencer (opcional, mas deixa mais preciso)
+        // Por enquanto, vamos mostrar o Saldo em Conta real.
+        saldoAtual = saldoEmConta;
+
+        tvTituloSaldo.setText("SALDO EM CONTA");
+        tvLabelRecebido.setText("Entradas automáticas");
+
+        if (isSaldoOculto) {
+            btnToggleSaldo.setImageResource(R.drawable.ic_eye_closed);
+            tvSalarioTotalInicio.setText("R$ ••••");
+            tvGastosMesInicio.setText("R$ ••••");
+            tvSaldoDisponivelInicio.setText("R$ ••••");
+        } else {
+            btnToggleSaldo.setImageResource(R.drawable.ic_eye_open);
+            tvSalarioTotalInicio.setText(moeda(entradas));
+            tvGastosMesInicio.setText(moeda(gastosMes));
+            tvSaldoDisponivelInicio.setText(moeda(saldoEmConta));
+
+            if (saldoEmConta < 0) {
+                tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#F87171"));
             } else {
-                totalEsperadoMes = user.getSalarioMensal();
-                totalRecebidoAteHoje = totalEsperadoMes;
-            }
-
-            double gastosMes = db.dividaDao().somarGastosDoMes(session.getUserId(), mesAnoAtual);
-            double saldoDisponivel = totalRecebidoAteHoje - gastosMes;
-
-            salarioAtual = totalEsperadoMes;
-            saldoAtual = saldoDisponivel;
-
-            if (tvTituloSaldo != null) {
-                tvTituloSaldo.setText(temVariavel ? "SALDO ESTIMADO" : "SALDO EM CONTA");
-            }
-            if (tvLabelRecebido != null) {
-                tvLabelRecebido.setText(temVariavel ? "Renda estimada" : "Recebido no mês");
-            }
-
-            if (isSaldoOculto) {
-                btnToggleSaldo.setImageResource(R.drawable.ic_eye_closed);
-                tvSalarioTotalInicio.setText("R$ ••••");
-                tvGastosMesInicio.setText("R$ ••••");
-                tvSaldoDisponivelInicio.setText("R$ ••••");
-            } else {
-                btnToggleSaldo.setImageResource(R.drawable.ic_eye_open);
-                tvSalarioTotalInicio.setText(moeda(totalRecebidoAteHoje));
-                tvGastosMesInicio.setText(moeda(gastosMes));
-                tvSaldoDisponivelInicio.setText(moeda(saldoDisponivel));
-
-                if (totalRecebidoAteHoje <= 0) {
-                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#64748B"));
-                } else if (saldoDisponivel < 0) {
-                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#F87171"));
-                } else {
-                    tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#34D399"));
-                }
-            }
-
-            atualizarCardProximoRecebimento(proximaFixa, menorDias, rendaVariavel);
-
-            if (totalEsperadoMes > 0) {
-                int pct = (int) ((gastosMes / totalEsperadoMes) * 100);
-                progressOrcamento.setProgress(Math.min(pct, 100));
-            } else {
-                progressOrcamento.setProgress(0);
+                tvSaldoDisponivelInicio.setTextColor(Color.parseColor("#34D399"));
             }
         }
+
+        // 3. PREVISÃO FUTURA (Card de Renda)
+        List<Renda> rendas = db.rendaDao().listarPorUsuario(session.getUserId());
+        Renda proximaFixa = null;
+        long menorDias = Long.MAX_VALUE;
+        rendaEsperadaMes = 0;
+
+        for (Renda r : rendas) {
+            rendaEsperadaMes += r.valor;
+            long dias = diasAteProximoRecebimento(r.diaRecebimento);
+            if (dias < menorDias) {
+                menorDias = dias;
+                proximaFixa = r;
+            }
+        }
+
+        atualizarCardProximoRecebimento(proximaFixa, menorDias);
+
+        if (rendaEsperadaMes > 0) {
+            int pct = (int) ((gastosMes / rendaEsperadaMes) * 100);
+            progressOrcamento.setProgress(Math.min(pct, 100));
+        } else {
+            progressOrcamento.setProgress(0);
+        }
+
         renderizarCardAtencao();
     }
 
-    private void atualizarCardProximoRecebimento(Renda proximaFixa, long dias, Renda rendaVariavel) {
+    private void atualizarCardProximoRecebimento(Renda proximaFixa, long dias) {
         if (proximaFixa != null) {
-            tvProximoCaption.setText("PRÓXIMO RECEBIMENTO");
+            tvProximoCaption.setText("PREVISÃO DE ENTRADA");
             ivProximoIcone.setImageResource(R.drawable.ic_conf_money);
             tvProximoRecebimentoValor.setText(isSaldoOculto ? "R$ ••••" : moeda(proximaFixa.valor));
             tvProximoRecebimentoData.setText(proximaFixa.descricao + " · dia " + proximaFixa.diaRecebimento);
             tvProximoTag.setText(dias == 1 ? "amanhã" : "em " + dias + " dias");
             tvProximoTag.setVisibility(View.VISIBLE);
-        } else if (rendaVariavel != null) {
-            tvProximoCaption.setText("RENDA VARIÁVEL (MÉDIA)");
-            ivProximoIcone.setImageResource(R.drawable.ic_onb_trending);
-            tvProximoRecebimentoValor.setText(isSaldoOculto ? "R$ ••••" : moeda(rendaVariavel.valor));
-            tvProximoRecebimentoData.setText(rendaVariavel.descricao);
-            tvProximoTag.setText("Estimada");
-            tvProximoTag.setVisibility(View.VISIBLE);
         } else {
-            tvProximoCaption.setText("PRÓXIMO RECEBIMENTO");
+            tvProximoCaption.setText("PREVISÃO DE ENTRADA");
             ivProximoIcone.setImageResource(R.drawable.ic_conf_money);
             tvProximoRecebimentoValor.setText(moeda(0));
-            tvProximoRecebimentoData.setText("Nenhum recebimento cadastrado");
+            tvProximoRecebimentoData.setText("Nenhuma renda cadastrada");
             tvProximoTag.setVisibility(View.GONE);
         }
     }
 
     private long diasAteProximoRecebimento(int diaRecebimento) {
         Calendar hoje = Calendar.getInstance();
-        zerarHora(hoje);
+        hoje.set(Calendar.HOUR_OF_DAY, 0);
+        hoje.set(Calendar.MINUTE, 0);
+        hoje.set(Calendar.SECOND, 0);
+        hoje.set(Calendar.MILLISECOND, 0);
 
         int dia = Math.max(diaRecebimento, 1);
         int diaHoje = hoje.get(Calendar.DAY_OF_MONTH);
@@ -414,8 +388,8 @@ public class InicioActivity extends AppCompatActivity {
 
         tvTotalAPagarMes.setText(moeda(totalVencendoMes));
 
-        if (salarioAtual > 0) {
-            int pct = (int) Math.round((totalVencendoMes / salarioAtual) * 100);
+        if (rendaEsperadaMes > 0) {
+            int pct = (int) Math.round((totalVencendoMes / rendaEsperadaMes) * 100);
             progressAtencao.setProgress(Math.min(pct, 100));
 
             String texto = "Compromete " + pct + "% da renda mensal";
@@ -438,18 +412,19 @@ public class InicioActivity extends AppCompatActivity {
 
     private long diasAte(Date data) {
         Calendar hoje = Calendar.getInstance();
-        zerarHora(hoje);
+        hoje.set(Calendar.HOUR_OF_DAY, 0);
+        hoje.set(Calendar.MINUTE, 0);
+        hoje.set(Calendar.SECOND, 0);
+        hoje.set(Calendar.MILLISECOND, 0);
+
         Calendar alvo = Calendar.getInstance();
         alvo.setTime(data);
-        zerarHora(alvo);
-        return Math.round((alvo.getTimeInMillis() - hoje.getTimeInMillis()) / 86400000.0);
-    }
+        alvo.set(Calendar.HOUR_OF_DAY, 0);
+        alvo.set(Calendar.MINUTE, 0);
+        alvo.set(Calendar.SECOND, 0);
+        alvo.set(Calendar.MILLISECOND, 0);
 
-    private void zerarHora(Calendar c) {
-        c.set(Calendar.HOUR_OF_DAY, 0);
-        c.set(Calendar.MINUTE, 0);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
+        return Math.round((alvo.getTimeInMillis() - hoje.getTimeInMillis()) / 86400000.0);
     }
 
     private boolean venceNoMes(String vencimento, int mes, int ano) {

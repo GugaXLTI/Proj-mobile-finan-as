@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Usuario;
+import com.example.controle_gastos.utils.OnboardingStore;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
 
@@ -204,6 +205,20 @@ public class EditarPerfilActivity extends AppCompatActivity {
                 .setTitle("Eliminar conta")
                 .setMessage("Tem certeza que deseja eliminar sua conta?\n\nTodos os seus dados (dívidas, transações e conta) serão apagados permanentemente. Essa ação não pode ser desfeita.")
                 .setPositiveButton("Eliminar", (dialog, which) -> {
+                    int idExcluido = usuarioLogado.getId();
+
+                    // Dados do usuário (não depende de cascade no banco)
+                    db.dividaDao().deletarTodosDoUsuario(idExcluido);
+                    db.rendaDao().deletarTodosDoUsuario(idExcluido);
+
+                    // Saldo inicial e flag de onboarding guardados por usuário
+                    OnboardingStore.limparUsuario(this, idExcluido);
+
+                    // Se esse usuário era o da biometria, remove para a digital não reabrir uma conta apagada
+                    if (session.getBiometriaUserId() == idExcluido) {
+                        session.limparBiometria();
+                    }
+
                     db.usuarioDao().deletar(usuarioLogado);
                     session.logout();
 

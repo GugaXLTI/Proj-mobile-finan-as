@@ -39,14 +39,10 @@ public class Migrations {
         }
     };
 
-    // ⭐ CORREÇÃO (T148): Removido o NOT NULL DEFAULT para bater com o Java
     public static final Migration MIGRATION_11_12 = new Migration(11, 12) {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
-            // O Room espera que a String no Java seja nullable, então não usamos NOT NULL aqui
             database.execSQL("ALTER TABLE usuarios ADD COLUMN perfilFinanceiro TEXT");
-
-            // Cria a tabela de rendas
             database.execSQL(
                     "CREATE TABLE IF NOT EXISTS `rendas` (" +
                             "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
@@ -55,6 +51,33 @@ public class Migrations {
                             "`valor` REAL NOT NULL, " +
                             "`diaRecebimento` INTEGER NOT NULL, " +
                             "`tipo` TEXT)"
+            );
+        }
+    };
+
+    // ⭐ NOVO: Migration para a tabela Contas
+    public static final Migration MIGRATION_12_13 = new Migration(12, 13) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            // Cria a tabela de contas (Saldo Inicial)
+            database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `contas` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`usuarioId` INTEGER NOT NULL, " +
+                            "`nomeBanco` TEXT, " +
+                            "`saldoInicial` REAL NOT NULL)"
+            );
+
+            // Garante que a tabela de transações existe (caso não tenha sido criada em migration anterior)
+            database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `transacoes` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`usuarioId` INTEGER NOT NULL, " +
+                            "`descricao` TEXT, " +
+                            "`valor` REAL NOT NULL, " +
+                            "`data` TEXT, " +
+                            "`tipo` TEXT, " +
+                            "`categoria` TEXT)"
             );
         }
     };

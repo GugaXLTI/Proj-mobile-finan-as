@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import androidx.core.content.FileProvider;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.Transacao;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,21 +18,11 @@ public class CsvExportHelper {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    /**
-     * Gera um arquivo CSV com o resumo do mês + lista de lançamentos.
-     *
-     * @param context Contexto da Activity
-     * @param dividas Lista de dívidas do mês (inclui excluídas)
-     * @param mesAno  Nome do mês/ano (ex: "Setembro 2026")
-     * @return File gerado (ou null em caso de erro)
-     */
-    public static File gerarCsv(Context context, List<Divida> dividas, String mesAno) {
+    public static File gerarCsv(Context context, List<Divida> dividas, List<Transacao> transacoes, String mesAno) {
         try {
-            // Nome do arquivo
             String nomeArquivo = "extrato_" + mesAno.toLowerCase()
                     .replace(" ", "_") + ".csv";
 
-            // Pasta de cache (temporária, mas compartilhável via FileProvider)
             File pasta = new File(context.getCacheDir(), "exports");
             if (!pasta.exists()) pasta.mkdirs();
 
@@ -39,14 +30,12 @@ public class CsvExportHelper {
             FileOutputStream fos = new FileOutputStream(arquivo);
             OutputStreamWriter writer = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
 
-            // ⭐ BOM UTF-8 (para Excel abrir com acentos corretos)
-            writer.write("\uFEFF");
+            writer.write("\uFEFF"); // BOM UTF-8
 
-            // ⭐ Cabeçalho do arquivo
             writer.write("Extrato de " + mesAno + "\n");
             writer.write("Gerado pelo ORG Gestão Financeira\n\n");
 
-            // ⭐ Resumo do mês
+            // ============ RESUMO ============
             double total = 0, pago = 0;
             for (Divida d : dividas) {
                 if (d.isExcluida()) continue;
@@ -55,26 +44,23 @@ public class CsvExportHelper {
             }
             double faltaPagar = total - pago;
 
-            writer.write("RESUMO DO MÊS\n");
-            writer.write("Total;Já Pago;Falta Pagar\n");
-            writer.write(String.format(LOCALE_BR, "%.2f;%.2f;%.2f\n\n", total, pago, faltaPagar));
+            double totalEntradas = 0, totalSaidas = 0;
+            for (Transacao t : transacoes) {
+                if ("ENTRADA".equals(t.tipo)) totalEntradas += t.valor;
+                else totalSaidas += t.valor;
+            }
 
-            // ⭐ Tabela de lançamentos
-            writer.write("LANÇAMENTOS\n");
+            writer.write("RESUMO DO MÊS\n");
+            writer.write("Dívidas Totais;Dívidas Pagas;Dívidas Pendentes;Entradas Auto;Saídas Auto\n");
+            writer.write(String.format(LOCALE_BR, "%.2f;%.2f;%.2f;%.2f;%.2f\n\n",
+                    total, pago, faltaPagar, totalEntradas, totalSaidas));
+
+            // ============ DÍVIDAS MANUAIS ============
+            writer.write("DÍVIDAS E CONTAS MANUAIS\n");
             writer.write("Título;Categoria;Banco;Parcela;Vencimento;Valor Total;Valor Pago;Falta;Status\n");
 
             for (Divida d : dividas) {
-                String status;
-                if (d.isExcluida()) {
-                    status = "Excluída";
-                } else if (d.isPago()) {
-                    status = "Liquidado";
-                } else if (d.getValorPago() > 0) {
-                    status = "Parcial";
-                } else {
-                    status = "Pendente";
-                }
-
+                String status = d.isExcluida() ? "Excluída" : d.isPago() ? "Liquidado" : d.getValorPago() > 0 ? "Parcial" : "Pendente";
                 writer.write(
                         escapeCsv(d.getTitulo()) + ";" +
                                 escapeCsv(d.getCategoria()) + ";" +
@@ -85,6 +71,25 @@ public class CsvExportHelper {
                                 String.format(LOCALE_BR, "%.2f;", d.getValorPago()) +
                                 String.format(LOCALE_BR, "%.2f;", d.getValorRestante()) +
                                 status + "\n"
+                );
+            }
+
+            // ⭐ ============ TRANSAÇÕES AUTOMÁTICAS ============
+            writer.write("\nTRANSAÇÕES AUTOMÁTICAS (NOTIFICAÇÕES)\n");
+            writer.write("Data;Descrição;Tipo;Categoria;Valor\n");
+
+            for (Transacao t : transacoes) {
+                String valorFormatado = String.format(LOCALE_BR, "%.2f", t.valor);
+                if ("SAIDA".equals(t.tipo)) {
+                    valorFormatado = "- " + valorFormatado; // Sinaliza saída visualmente
+                }
+
+                writer.write(
+                        escapeCsv(t.data) + ";" +
+                                escapeCsv(t.descricao) + ";" +
+                                escapeCsv(t.tipo) + ";" +
+                                escapeCsv(t.categoria) + ";" +
+                                valorFormatado + "\n"
                 );
             }
 
@@ -100,18 +105,10 @@ public class CsvExportHelper {
         }
     }
 
-    /**
-     * Compartilha o arquivo CSV via Intent (WhatsApp, Email, Drive, etc).
-     */
     public static void compartilharCsv(Context context, File arquivo) {
         if (arquivo == null || !arquivo.exists()) return;
 
-        Uri uri = FileProvider.getUriForFile(
-                context,
-                context.getPackageName() + ".fileprovider",
-                arquivo
-        );
-
+        Uri uri = FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", arquivo);
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/csv");
         intent.putExtra(Intent.EXTRA_STREAM, uri);
@@ -121,9 +118,6 @@ public class CsvExportHelper {
         context.startActivity(Intent.createChooser(intent, "Compartilhar CSV via..."));
     }
 
-    /**
-     * Escapa campos CSV (envolve em aspas se contiver ; ou aspas).
-     */
     private static String escapeCsv(String valor) {
         if (valor == null) return "";
         if (valor.contains(";") || valor.contains("\"") || valor.contains("\n")) {

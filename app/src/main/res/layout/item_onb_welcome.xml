@@ -80,7 +80,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Configure sua renda em menos de 1 minuto e veja um saldo que reflete a sua realidade."
+            android:text="Informe seu saldo e conecte as notificações do banco: os gastos entram sozinhos."
             android:textColor="#94A3B8"
             android:textSize="15sp" />
 
@@ -119,7 +119,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Considera o dia em que cada renda cai."
+                    android:text="Começa do que você tem hoje e desconta cada gasto."
                     android:textColor="#94A3B8"
                     android:textSize="13sp" />
             </LinearLayout>

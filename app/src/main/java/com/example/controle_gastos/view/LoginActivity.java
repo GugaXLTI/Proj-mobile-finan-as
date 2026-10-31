@@ -16,6 +16,7 @@ import com.example.controle_gastos.dao.UsuarioDao;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.utils.BiometricHelper;
+import com.example.controle_gastos.utils.OnboardingStore;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
 
@@ -134,22 +135,25 @@ public class LoginActivity extends AppCompatActivity {
         );
     }
 
-    // ⭐ CORREÇÃO ARQUITETURAL: A decisão agora é baseada no Banco de Dados
+    /**
+     * Decide para onde ir depois do login.
+     * O onboarding agora é por USUÁRIO (OnboardingStore), não por aparelho:
+     *  - concluiu o onboarding novo                -> Início
+     *  - tem rendas do fluxo antigo                -> Início
+     *  - tem salarioMensal > 0 (conta pré-v12)     -> Início
+     *  - nenhuma das anteriores                    -> Onboarding
+     */
     private void redirecionarParaInicio() {
         int userId = session.getUserId();
 
-        // Verifica se o usuário tem rendas cadastradas (se tiver, já fez o onboarding)
-        boolean temRendaCadastrada = !db.rendaDao().listarPorUsuario(userId).isEmpty();
+        boolean precisaOnboarding = OnboardingStore.precisaOnboarding(this, db, userId);
 
-        // Fallback de segurança: se for um usuário antigo (antes da v12), ele tem salarioMensal > 0
         Usuario user = db.usuarioDao().buscarPorId(userId);
         boolean temSalarioAntigo = user != null && user.getSalarioMensal() > 0;
 
-        if (temRendaCadastrada || temSalarioAntigo) {
-            // Usuário já configurado
+        if (!precisaOnboarding || temSalarioAntigo) {
             startActivity(new Intent(LoginActivity.this, InicioActivity.class));
         } else {
-            // Conta nova ou usuário que nunca configurou a renda
             startActivity(new Intent(LoginActivity.this, OnboardingActivity.class));
         }
         finish();

@@ -2,13 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ⭐ Permissões para notificações e alarmes -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-
-    <!-- ⭐ Permissão para biometria -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
@@ -45,7 +42,6 @@
         <activity android:name=".view.CartoesActivity" android:exported="false" />
         <activity android:name=".view.OnboardingActivity" />
 
-        <!-- ⭐ Recebe comprovantes compartilhados de outros apps (WhatsApp, Gmail, Galeria, etc.) -->
         <activity
             android:name=".view.ReceiptShareActivity"
             android:exported="true"
@@ -58,6 +54,17 @@
                 <data android:mimeType="application/pdf" />
             </intent-filter>
         </activity>
+
+        <!-- ⭐ CORREÇÃO: "Service" com S maiúsculo -->
+        <service
+            android:name=".Service.NotificationListenerServiceApp"
+            android:label="ORG Monitoramento"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
         <receiver android:name=".receiver.LembreteReceiver" android:exported="false" />
 

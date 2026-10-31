@@ -16,19 +16,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.BackupData;
-import com.example.controle_gastos.model.Renda;
-import com.example.controle_gastos.model.Usuario;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.BackupHelper;
 import com.example.controle_gastos.utils.BiometricHelper;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.NotificationHelper;
+import com.example.controle_gastos.utils.OnboardingStore;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.Locale;
 
 public class ConfiguracoesActivity extends AppCompatActivity {
@@ -94,7 +92,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         );
 
         atualizarPerfil();
-        atualizarSalarioSubtitulo();
+        atualizarSaldoInicialSubtitulo();
 
         switchLembretes.setChecked(AlarmeHelper.isLembretesAtivos(this));
 
@@ -110,8 +108,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
             switchBiometria.setChecked(biometriaEstadoAtual);
         }
 
-        // ======== AÇÕES DOS ITENS ========
-
         tvEditar.setOnClickListener(v ->
                 startActivity(new Intent(ConfiguracoesActivity.this, EditarPerfilActivity.class)));
 
@@ -121,7 +117,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         itemCategorias.setOnClickListener(v ->
                 startActivity(new Intent(ConfiguracoesActivity.this, CategoriasActivity.class)));
 
-        // ⭐ Abre a OnboardingActivity em modo de edição
         itemSalario.setOnClickListener(v -> {
             Intent i = new Intent(ConfiguracoesActivity.this, OnboardingActivity.class);
             i.putExtra(OnboardingActivity.EXTRA_EDITANDO, true);
@@ -164,8 +159,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
                     .show();
         });
 
-        // ======== NAVEGAÇÃO ========
-
         tabInicio.setOnClickListener(v -> {
             startActivity(new Intent(ConfiguracoesActivity.this, InicioActivity.class));
             finish();
@@ -192,7 +185,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         atualizarPerfil();
-        atualizarSalarioSubtitulo();
+        atualizarSaldoInicialSubtitulo();
     }
 
     private void atualizarPerfil() {
@@ -203,35 +196,16 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         }
     }
 
-    // ⭐ NOVO: Lê a tabela Renda para montar o subtítulo
-    private void atualizarSalarioSubtitulo() {
-        List<Renda> rendas = db.rendaDao().listarPorUsuario(session.getUserId());
-        NumberFormat nf = NumberFormat.getCurrencyInstance(LOCALE_BR);
-
-        if (!rendas.isEmpty()) {
-            double total = 0;
-            boolean variavel = false;
-            for (Renda r : rendas) {
-                total += r.valor;
-                if ("VARIAVEL".equals(r.tipo)) variavel = true;
-            }
-            String texto = (variavel ? "Média de " : "") + nf.format(total) + " por mês";
-            if (rendas.size() > 1) texto += " · " + rendas.size() + " recebimentos";
-            tvSalarioAtual.setText(texto);
-            return;
-        }
-
-        Usuario user = db.usuarioDao().buscarPorId(session.getUserId());
-        if (user != null && user.getSalarioMensal() > 0) {
-            tvSalarioAtual.setText("Atual: " + nf.format(user.getSalarioMensal()));
+    private void atualizarSaldoInicialSubtitulo() {
+        int userId = session.getUserId();
+        if (OnboardingStore.temSaldoInicial(this, userId)) {
+            tvSalarioAtual.setText("Saldo inicial: "
+                    + NumberFormat.getCurrencyInstance(LOCALE_BR)
+                    .format(OnboardingStore.getSaldoInicial(this, userId)));
         } else {
-            tvSalarioAtual.setText("Defina sua renda e quando ela cai");
+            tvSalarioAtual.setText("Informe quanto você tem na conta");
         }
     }
-
-    // ==========================================
-    // BACKUP
-    // ==========================================
 
     private void mostrarDialogoBackup() {
         String[] opcoes = {
@@ -289,13 +263,19 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         int totalPix = data.chavesPix != null ? data.chavesPix.size() : 0;
         int totalCategorias = data.categorias != null ? data.categorias.size() : 0;
 
+        // ⭐ Novas contagens
+        int totalContas = data.contas != null ? data.contas.size() : 0;
+        int totalTransacoes = data.transacoes != null ? data.transacoes.size() : 0;
+
         String mensagem = "Backup de " + data.dataBackup + "\n" +
                 "Usuário: " + data.nomeUsuario + "\n\n" +
                 "Contém:\n" +
                 "• " + totalDividas + " dívidas\n" +
                 "• " + totalCartoes + " cartões\n" +
                 "• " + totalPix + " chaves Pix\n" +
-                "• " + totalCategorias + " categorias\n\n" +
+                "• " + totalCategorias + " categorias\n" +
+                (totalContas > 0 ? "• " + totalContas + " conta(s) bancária(s)\n" : "") +
+                (totalTransacoes > 0 ? "• " + totalTransacoes + " transações automáticas\n" : "") + "\n" +
                 "Atenção: isso vai SUBSTITUIR todos os seus dados atuais.\n" +
                 "Deseja continuar?";
 
@@ -325,10 +305,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
             Toast.makeText(this, "Erro ao restaurar o backup.", Toast.LENGTH_LONG).show();
         }
     }
-
-    // ==========================================
-    // BIOMETRIA
-    // ==========================================
 
     private void ativarBiometria() {
         BiometricHelper.autenticar(
@@ -367,16 +343,13 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         Toast.makeText(this, "Biometria desativada.", Toast.LENGTH_SHORT).show();
     }
 
-    // ==========================================
-    // LIMPAR TUDO (mantido para testes)
-    // ==========================================
-
     private void mostrarDialogoLimparTudo() {
         new AlertDialog.Builder(this)
                 .setTitle("Limpar tudo (testes)")
                 .setMessage("Esta opção apaga TODAS as dívidas, transações e usuários cadastrados. Use apenas para testes. Tem certeza?")
                 .setPositiveButton("Sim, limpar tudo", (dialog, which) -> {
                     db.clearAllTables();
+                    OnboardingStore.limparTudo(this);
                     session.logout();
                     Toast.makeText(this, "Banco de dados limpo com sucesso!", Toast.LENGTH_LONG).show();
                     Intent intent = new Intent(ConfiguracoesActivity.this, LoginActivity.class);

@@ -11,16 +11,20 @@ import android.widget.ImageView; // ⭐ IMPORT ADICIONADO
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.HistoricoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.Transacao;
 import com.example.controle_gastos.utils.BottomNavHelper;
 import com.example.controle_gastos.utils.CsvExportHelper;
+import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.PdfExportHelper;
 import com.example.controle_gastos.utils.SessionManager;
 
@@ -38,7 +42,7 @@ public class HistoricoActivity extends AppCompatActivity {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    // ⭐ CORREÇÃO: btnVoltarHistorico é um ImageView, não TextView
+    // ⭐ CORREÇÃO: Variável agora é ImageView
     private ImageView btnVoltarHistorico;
     private TextView btnMesAnterior, btnMesProximo;
     private TextView tvMesAtual, tvBadgeAtual;
@@ -57,6 +61,9 @@ public class HistoricoActivity extends AppCompatActivity {
     private List<Divida> todasDividas = new ArrayList<>();
     private List<Divida> dividasDoMes = new ArrayList<>();
     private List<Divida> dividasFiltradas = new ArrayList<>();
+    private List<Transacao> transacoesDoMes = new ArrayList<>();
+
+    private List<Object> itensUnificados = new ArrayList<>();
 
     private int mesSelecionado;
     private int anoSelecionado;
@@ -71,11 +78,11 @@ public class HistoricoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_historico);
 
+        NavScrollHelper.attach(this);
+        BottomNavHelper.configurar(this, BottomNavHelper.INICIO);
+
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
-
-        // Barra inferior
-        BottomNavHelper.configurar(this, BottomNavHelper.RELATORIOS);
 
         btnVoltarHistorico = findViewById(R.id.btnVoltarHistorico);
         btnMesAnterior = findViewById(R.id.btnMesAnterior);
@@ -101,7 +108,6 @@ public class HistoricoActivity extends AppCompatActivity {
         mesSelecionado = c.get(Calendar.MONTH) + 1;
         anoSelecionado = c.get(Calendar.YEAR);
 
-        // ⭐ CORREÇÃO: Ação do botão voltar
         btnVoltarHistorico.setOnClickListener(v -> {
             finish();
             overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
@@ -112,7 +118,7 @@ public class HistoricoActivity extends AppCompatActivity {
             mesSelecionado--;
             if (mesSelecionado < 1) { mesSelecionado = 12; anoSelecionado--; }
             categoriaSelecionada = "Todos";
-            atualizarTela();
+            carregarDados();
         });
 
         btnMesProximo.setOnClickListener(v -> {
@@ -120,13 +126,13 @@ public class HistoricoActivity extends AppCompatActivity {
             mesSelecionado++;
             if (mesSelecionado > 12) { mesSelecionado = 1; anoSelecionado++; }
             categoriaSelecionada = "Todos";
-            atualizarTela();
+            carregarDados();
         });
 
         btnFiltroPeriodo.setOnClickListener(v -> abrirDialogoPeriodo());
         btnLimparFiltro.setOnClickListener(v -> {
             limparFiltroPeriodo();
-            atualizarTela();
+            carregarDados();
         });
 
         btnBaixarResumo.setOnClickListener(v -> mostrarDialogoExportacao());
@@ -135,12 +141,16 @@ public class HistoricoActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        carregarDividas();
-        atualizarTela();
+        carregarDados();
     }
 
-    private void carregarDividas() {
+    private void carregarDados() {
         todasDividas = db.dividaDao().listarTodasParaHistorico(session.getUserId());
+
+        String mesAno = String.format(LOCALE_BR, "%02d/%04d", mesSelecionado, anoSelecionado);
+        transacoesDoMes = db.transacaoDao().listarPorMes(session.getUserId(), mesAno);
+
+        atualizarTela();
     }
 
     private void atualizarTela() {
@@ -160,7 +170,8 @@ public class HistoricoActivity extends AppCompatActivity {
             return;
         }
 
-        String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
+        String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
         tvMesAtual.setText(meses[mesSelecionado - 1] + " " + anoSelecionado);
 
         Calendar c = Calendar.getInstance();
@@ -304,6 +315,17 @@ public class HistoricoActivity extends AppCompatActivity {
             }
         }
 
+        itensUnificados.clear();
+        itensUnificados.addAll(dividasFiltradas);
+        itensUnificados.addAll(transacoesDoMes);
+
+        // ⭐ MELHORIA: Usando List.sort em vez de Collections.sort para remover warning
+        itensUnificados.sort((o1, o2) -> {
+            String d1 = (o1 instanceof Divida) ? ((Divida) o1).getVencimento() : ((Transacao) o1).getData();
+            String d2 = (o2 instanceof Divida) ? ((Divida) o2).getVencimento() : ((Transacao) o2).getData();
+            return compararDatas(d1, d2);
+        });
+
         String nomePeriodo;
         if (filtroAtivo) {
             nomePeriodo = dataInicialFiltro + " A " + dataFinalFiltro;
@@ -316,7 +338,7 @@ public class HistoricoActivity extends AppCompatActivity {
                 : "LANÇAMENTOS DE " + nomePeriodo + ": " + categoriaSelecionada.toUpperCase();
         tvTituloListaHistorico.setText(titulo);
 
-        adapter = new HistoricoAdapter(dividasFiltradas);
+        adapter = new HistoricoAdapter(itensUnificados);
         rvLancamentosHistorico.setAdapter(adapter);
     }
 
@@ -386,13 +408,7 @@ public class HistoricoActivity extends AppCompatActivity {
     }
 
     private void exportarCsv() {
-        List<Divida> paraExportar = new ArrayList<>();
-        for (Divida d : dividasDoMes) {
-            if (categoriaSelecionada.equals("Todos") || d.getCategoria().equals(categoriaSelecionada)) {
-                paraExportar.add(d);
-            }
-        }
-        if (paraExportar.isEmpty()) {
+        if (dividasFiltradas.isEmpty() && transacoesDoMes.isEmpty()) {
             Toast.makeText(this, "Nenhum lançamento para exportar.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -403,7 +419,9 @@ public class HistoricoActivity extends AppCompatActivity {
             nomePeriodo = tvMesAtual.getText().toString();
         }
         String sufixo = categoriaSelecionada.equals("Todos") ? "" : "_" + categoriaSelecionada.toLowerCase().replace(" ", "_");
-        File arquivo = CsvExportHelper.gerarCsv(this, paraExportar, nomePeriodo + sufixo);
+
+        File arquivo = CsvExportHelper.gerarCsv(this, dividasFiltradas, transacoesDoMes, nomePeriodo + sufixo);
+
         if (arquivo == null) {
             Toast.makeText(this, "Erro ao gerar o arquivo CSV.", Toast.LENGTH_SHORT).show();
             return;
@@ -413,13 +431,7 @@ public class HistoricoActivity extends AppCompatActivity {
     }
 
     private void exportarPdf() {
-        List<Divida> paraExportar = new ArrayList<>();
-        for (Divida d : dividasDoMes) {
-            if (categoriaSelecionada.equals("Todos") || d.getCategoria().equals(categoriaSelecionada)) {
-                paraExportar.add(d);
-            }
-        }
-        if (paraExportar.isEmpty()) {
+        if (dividasFiltradas.isEmpty() && transacoesDoMes.isEmpty()) {
             Toast.makeText(this, "Nenhum lançamento para exportar.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -429,7 +441,9 @@ public class HistoricoActivity extends AppCompatActivity {
         } else {
             nomePeriodo = tvMesAtual.getText().toString();
         }
-        File arquivo = PdfExportHelper.gerarPdf(this, paraExportar, nomePeriodo, categoriaSelecionada);
+
+        File arquivo = PdfExportHelper.gerarPdf(this, dividasFiltradas, transacoesDoMes, nomePeriodo, categoriaSelecionada);
+
         if (arquivo == null) {
             Toast.makeText(this, "Erro ao gerar o PDF.", Toast.LENGTH_SHORT).show();
             return;

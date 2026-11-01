@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.DividaAgrupada;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -25,17 +26,17 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    private final List<Divida> dividas;
+    private final List<DividaAgrupada> listaAgrupada;
     private final OnDividaActionListener listener;
 
     public interface OnDividaActionListener {
-        void onExcluirClick(Divida divida);
-        void onEditarClick(Divida divida);
-        void onPagarClick(Divida divida);
+        void onExcluirClick(DividaAgrupada agrupada);
+        void onEditarClick(DividaAgrupada agrupada);
+        void onPagarClick(DividaAgrupada agrupada);
     }
 
-    public DividaAdapter(List<Divida> dividas, OnDividaActionListener listener) {
-        this.dividas = dividas;
+    public DividaAdapter(List<DividaAgrupada> listaAgrupada, OnDividaActionListener listener) {
+        this.listaAgrupada = listaAgrupada;
         this.listener = listener;
     }
 
@@ -49,17 +50,18 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Divida d = dividas.get(position);
+        DividaAgrupada agrupada = listaAgrupada.get(position);
+        Divida proxima = agrupada.getProximaParcela();
 
-        holder.tvTitulo.setText(d.getTitulo());
-        holder.tvDetalhe.setText(montarDetalhe(d));
-        holder.tvParcela.setText("Parcela " + d.getParcela());
+        holder.tvTitulo.setText(agrupada.getTitulo());
+        holder.tvDetalhe.setText(montarDetalhe(agrupada));
+        holder.tvParcela.setText("Parcela " + proxima.getParcela());
 
         // Data (bloco mês/dia) + texto de vencimento
         SimpleDateFormat sdfData = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR);
         Date data = null;
         try {
-            data = sdfData.parse(d.getVencimento());
+            data = sdfData.parse(proxima.getVencimento());
         } catch (Exception ignored) {
         }
 
@@ -72,9 +74,10 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             holder.tvDia.setText("--");
         }
 
-        holder.tvValor.setText(moeda(d.getValorTotal()));
+        // Valor restante total do grupo
+        holder.tvValor.setText(moeda(agrupada.getValorRestanteGrupo()));
 
-        if (d.isPago()) {
+        if (agrupada.isTotalmentePago()) {
             holder.itemView.setAlpha(0.75f);
             holder.tvValor.setTextColor(Color.parseColor("#94A3B8"));
             holder.tvVencimento.setText("Paga ✓");
@@ -95,10 +98,10 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             holder.btnPagar.setEnabled(true);
         }
 
-        // Progresso das parcelas (só quando é parcelado)
-        int totalParcelas = extrairTotalParcelas(d.getParcela());
+        // Progresso das parcelas
+        int totalParcelas = agrupada.getTotalParcelas();
         if (totalParcelas > 1) {
-            int pagas = contarPagas(d, totalParcelas);
+            int pagas = agrupada.getParcelasPagas();
             holder.llParcelas.setVisibility(View.VISIBLE);
             holder.tvProgresso.setText("Pagas: " + pagas + " de " + totalParcelas);
             holder.progressParcelas.setProgress(Math.min(100, (pagas * 100) / totalParcelas));
@@ -107,27 +110,24 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         }
 
         holder.btnExcluir.setOnClickListener(v -> {
-            if (listener != null) listener.onExcluirClick(d);
+            if (listener != null) listener.onExcluirClick(agrupada);
         });
         holder.btnEditar.setOnClickListener(v -> {
-            if (listener != null) listener.onEditarClick(d);
+            if (listener != null) listener.onEditarClick(agrupada);
         });
         holder.btnPagar.setOnClickListener(v -> {
-            if (listener != null && !d.isPago()) listener.onPagarClick(d);
+            if (listener != null && !agrupada.isTotalmentePago()) listener.onPagarClick(agrupada);
         });
     }
 
     @Override
     public int getItemCount() {
-        return dividas.size();
+        return listaAgrupada.size();
     }
 
-    // ------------------------------------------------------------------
-    // HELPERS
-    // ------------------------------------------------------------------
-    private String montarDetalhe(Divida d) {
-        String banco = d.getBanco() == null ? "" : d.getBanco().trim();
-        String categoria = d.getCategoria() == null ? "" : d.getCategoria().trim();
+    private String montarDetalhe(DividaAgrupada a) {
+        String banco = a.getBanco() == null ? "" : a.getBanco().trim();
+        String categoria = a.getCategoria() == null ? "" : a.getCategoria().trim();
         if (!banco.isEmpty() && !categoria.isEmpty()) return banco + " · " + categoria;
         if (!banco.isEmpty()) return banco;
         return categoria;
@@ -172,48 +172,6 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         c.set(Calendar.MINUTE, 0);
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
-    }
-
-    /** Conta quantas parcelas do mesmo grupo estão pagas (usa a lista atual). */
-    private int contarPagas(Divida atual, int totalParcelas) {
-        if (atual.getGrupoId() <= 0) {
-            return atual.isPago() ? 1 : 0;
-        }
-        int pagas = 0;
-        for (Divida outra : dividas) {
-            if (outra.getGrupoId() == atual.getGrupoId() && outra.isPago()) pagas++;
-        }
-        return Math.min(pagas, totalParcelas);
-    }
-
-    /**
-     * Extrai o TOTAL de parcelas do campo "X/Y".
-     * "2/4" → 4 | "1x" → 1 | "1x (À vista)" → 1
-     */
-    private int extrairTotalParcelas(String parcela) {
-        if (parcela == null) return 1;
-
-        if (parcela.contains("/")) {
-            try {
-                String[] partes = parcela.split("/");
-                String total = partes[1].replaceAll("[^0-9]", "");
-                if (!total.isEmpty()) {
-                    int n = Integer.parseInt(total);
-                    return n > 0 ? n : 1;
-                }
-            } catch (Exception e) {
-                return 1;
-            }
-        }
-
-        try {
-            String numeros = parcela.replaceAll("[^0-9]", "");
-            if (numeros.isEmpty()) return 1;
-            int n = Integer.parseInt(numeros);
-            return n > 0 ? n : 1;
-        } catch (NumberFormatException e) {
-            return 1;
-        }
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

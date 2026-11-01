@@ -10,13 +10,13 @@ import java.util.List;
 @Dao
 public interface TransacaoDao {
 
+    // ⭐ CORREÇÃO: Mudou de void para long para retornar o ID gerado
     @Insert
-    void inserir(Transacao transacao);
+    long inserir(Transacao transacao);
 
     @Query("SELECT * FROM transacoes WHERE usuarioId = :usuarioId ORDER BY data DESC")
     List<Transacao> listarPorUsuario(int usuarioId);
 
-    // ⭐ NOVO: Busca transações de um mês específico (formato MM/yyyy)
     @Query("SELECT * FROM transacoes WHERE usuarioId = :usuarioId AND substr(data, 4, 7) = :mesAno ORDER BY data DESC")
     List<Transacao> listarPorMes(int usuarioId, String mesAno);
 

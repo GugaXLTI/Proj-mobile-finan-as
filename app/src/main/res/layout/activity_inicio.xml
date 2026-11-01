@@ -123,22 +123,32 @@
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
+                    <!-- ⭐ CORREÇÃO: Área de toque 48dp -->
                     <ImageView
                         android:id="@+id/btnHistorico"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginEnd="4dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
                         android:contentDescription="Histórico"
+                        android:focusable="true"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
                         android:src="@drawable/ic_nav_chart"
                         app:tint="#94A3B8" />
 
+                    <!-- ⭐ CORREÇÃO: Área de toque 48dp -->
                     <ImageView
                         android:id="@+id/btnToggleSaldo"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
                         android:contentDescription="Mostrar ou ocultar saldo"
+                        android:focusable="true"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
                         android:src="@drawable/ic_eye_open"
                         app:tint="#94A3B8" />
                 </LinearLayout>

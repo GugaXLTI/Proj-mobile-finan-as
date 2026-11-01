@@ -17,6 +17,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.DividaAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.model.DividaAgrupada;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.SessionManager;
@@ -24,9 +25,12 @@ import com.example.controle_gastos.utils.SessionManager;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class DividasActivity extends AppCompatActivity implements DividaAdapter.OnDividaActionListener {
 
@@ -36,9 +40,9 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     private TextView tvTotalAPagar, tvTotalPago, tvTotalGeral, tvEmptyDividas;
     private TextView btnCadastrarDivida;
     private DividaAdapter adapter;
-    private List<Divida> dividas = new ArrayList<>();
 
-    // Navegação (aba ativa = LinearLayout, demais = ImageView)
+    private List<DividaAgrupada> listaAgrupada = new ArrayList<>();
+
     private ImageView tabInicio, tabLancar, tabRelatorios, tabConfig;
     private LinearLayout tabDividas;
 
@@ -102,24 +106,56 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     }
 
     private void carregarDividas() {
-        dividas = new ArrayList<>(db.dividaDao().listarPorUsuario(session.getUserId()));
+        List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
 
-        // Não pagas primeiro (por data de vencimento), pagas por último
-        dividas.sort(this::compararDividas);
+        // ⭐ LÓGICA DE AGRUPAMENTO
+        Map<Integer, List<Divida>> grupos = new HashMap<>();
+        List<Divida> avulsas = new ArrayList<>();
 
-        adapter = new DividaAdapter(dividas, this);
+        for (Divida d : todas) {
+            if (d.getGrupoId() > 0) {
+                if (!grupos.containsKey(d.getGrupoId())) {
+                    grupos.put(d.getGrupoId(), new ArrayList<>());
+                }
+                grupos.get(d.getGrupoId()).add(d);
+            } else {
+                avulsas.add(d);
+            }
+        }
+
+        listaAgrupada.clear();
+
+        // Adiciona os grupos
+        for (List<Divida> grupo : grupos.values()) {
+            // Ordena as parcelas do grupo pela data para garantir consistência
+            grupo.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
+            listaAgrupada.add(new DividaAgrupada(grupo));
+        }
+
+        // Adiciona as avulsas
+        for (Divida avulsa : avulsas) {
+            listaAgrupada.add(new DividaAgrupada(Collections.singletonList(avulsa)));
+        }
+
+        // Ordena a lista final: Não pagas primeiro (por data), pagas por último
+        listaAgrupada.sort(this::compararAgrupadas);
+
+        adapter = new DividaAdapter(listaAgrupada, this);
         rvDividas.setAdapter(adapter);
 
-        boolean vazio = dividas.isEmpty();
+        boolean vazio = listaAgrupada.isEmpty();
         tvEmptyDividas.setVisibility(vazio ? View.VISIBLE : View.GONE);
         rvDividas.setVisibility(vazio ? View.GONE : View.VISIBLE);
 
         atualizarTotais();
     }
 
-    private int compararDividas(Divida a, Divida b) {
-        if (a.isPago() != b.isPago()) return a.isPago() ? 1 : -1;
-        return compararDatas(a.getVencimento(), b.getVencimento());
+    private int compararAgrupadas(DividaAgrupada a, DividaAgrupada b) {
+        boolean pagoA = a.isTotalmentePago();
+        boolean pagoB = b.isTotalmentePago();
+        if (pagoA != pagoB) return pagoA ? 1 : -1;
+
+        return compararDatas(a.getProximaParcela().getVencimento(), b.getProximaParcela().getVencimento());
     }
 
     private int compararDatas(String d1, String d2) {
@@ -139,10 +175,10 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         double totalPago = 0;
         double totalGeral = 0;
 
-        for (Divida d : dividas) {
-            totalGeral += d.getValorTotal();
-            totalPago += d.getValorPago();
-            totalAPagar += d.getValorRestante();
+        for (DividaAgrupada a : listaAgrupada) {
+            totalGeral += a.getValorTotalGrupo();
+            totalPago += (a.getValorTotalGrupo() - a.getValorRestanteGrupo());
+            totalAPagar += a.getValorRestanteGrupo();
         }
 
         NumberFormat nf = NumberFormat.getCurrencyInstance(LOCALE_BR);
@@ -152,52 +188,51 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     }
 
     @Override
-    public void onExcluirClick(Divida divida) {
+    public void onExcluirClick(DividaAgrupada agrupada) {
         new AlertDialog.Builder(this)
                 .setTitle("Excluir dívida")
-                .setMessage("Tem certeza que deseja excluir \"" + divida.getTitulo() + "\"?\n\n" +
-                        "A dívida ficará registrada no Histórico como excluída.")
+                .setMessage("Tem certeza que deseja excluir \"" + agrupada.getTitulo() + "\"?\n\n" +
+                        "Todas as parcelas deste grupo serão canceladas e ficarão registradas no Histórico.")
                 .setPositiveButton("Excluir", (dialog, which) -> {
-                    AlarmeHelper.cancelar(this, divida);
-
-                    // SOFT DELETE: marca como excluída
-                    divida.setExcluida(true);
-                    db.dividaDao().atualizar(divida);
-
+                    for (Divida d : agrupada.parcelas) {
+                        AlarmeHelper.cancelar(this, d);
+                        d.setExcluida(true);
+                        db.dividaDao().atualizar(d);
+                    }
                     carregarDividas();
-                    Toast.makeText(this, "Dívida excluída: " + divida.getTitulo(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Dívida excluída: " + agrupada.getTitulo(), Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
 
     @Override
-    public void onEditarClick(Divida divida) {
+    public void onEditarClick(DividaAgrupada agrupada) {
+        // Abre a edição da primeira parcela do grupo
         Intent intent = new Intent(DividasActivity.this, CadastroDividaActivity.class);
-        intent.putExtra("divida_id", divida.getId());
+        intent.putExtra("divida_id", agrupada.getPrimeiroId());
         startActivity(intent);
     }
 
-    /**
-     * Pagar = quitar aquele registro (que já é UMA parcela).
-     */
     @Override
-    public void onPagarClick(Divida divida) {
-        if (divida.isPago()) {
-            Toast.makeText(this, "Essa parcela já está paga!", Toast.LENGTH_SHORT).show();
+    public void onPagarClick(DividaAgrupada agrupada) {
+        Divida proxima = agrupada.getProximaParcela();
+
+        if (proxima.isPago()) {
+            Toast.makeText(this, "Todas as parcelas já foram pagas!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        AlarmeHelper.cancelar(this, divida);
+        AlarmeHelper.cancelar(this, proxima);
 
-        divida.valorPago = divida.getValorTotal();
-        divida.setPago(true);
+        proxima.valorPago = proxima.getValorTotal();
+        proxima.setPago(true);
 
-        db.dividaDao().atualizar(divida);
+        db.dividaDao().atualizar(proxima);
         carregarDividas();
 
         Toast.makeText(this,
-                "Parcela paga: " + divida.getTitulo() + " (" + divida.getParcela() + ")",
+                "Parcela paga: " + proxima.getTitulo() + " (" + proxima.getParcela() + ")",
                 Toast.LENGTH_SHORT).show();
     }
 }

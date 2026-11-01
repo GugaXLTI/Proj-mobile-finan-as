@@ -1,7 +1,10 @@
 package com.example.controle_gastos.view;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -19,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
@@ -68,6 +72,20 @@ public class InicioActivity extends AppCompatActivity {
     private double rendaEsperadaMes = 0;
     private double saldoAtual = 0;
 
+    // ⭐ NOVO: Recebe o aviso do Serviço de Notificação
+    private final BroadcastReceiver transacaoReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "Sinal de nova transação recebido! Atualizando tela...");
+            try {
+                carregarDados();
+                atualizarDashboardFinanceiro();
+            } catch (Exception e) {
+                Log.e(TAG, "Erro ao atualizar via broadcast: " + e.getMessage());
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,7 +103,6 @@ public class InicioActivity extends AppCompatActivity {
         NotificationHelper.criarCanal(this);
         solicitarPermissaoNotificacao();
 
-        // Bind das views com proteção
         tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
         tvDataAtualInicio = findViewById(R.id.tvDataAtualInicio);
@@ -110,6 +127,9 @@ public class InicioActivity extends AppCompatActivity {
         tvCompromete = findViewById(R.id.tvCompromete);
         progressAtencao = findViewById(R.id.progressAtencao);
         btnVerTodosVencimentos = findViewById(R.id.btnVerTodosVencimentos);
+
+        btnToggleSaldo = findViewById(R.id.btnToggleSaldo);
+        btnHistorico = findViewById(R.id.btnHistorico);
 
         if (btnToggleSaldo != null) {
             btnToggleSaldo.setOnClickListener(v -> {
@@ -146,6 +166,21 @@ public class InicioActivity extends AppCompatActivity {
                 overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
             });
         }
+    }
+
+    // ⭐ NOVO: Registra o receptor quando a tela aparece
+    @Override
+    protected void onStart() {
+        super.onStart();
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                transacaoReceiver, new IntentFilter("NOVA_TRANSACAO_RECEBIDA"));
+    }
+
+    // ⭐ NOVO: Desregistra quando a tela some para não vazar memória
+    @Override
+    protected void onStop() {
+        super.onStop();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(transacaoReceiver);
     }
 
     private void solicitarPermissaoNotificacao() {

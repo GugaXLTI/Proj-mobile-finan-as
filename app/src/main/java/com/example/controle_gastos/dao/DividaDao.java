@@ -56,13 +56,18 @@ public interface DividaDao {
 
     // ======== BACKUP (Sprint 6) ========
 
-    // ⭐ Apaga todas as dívidas do usuário (usado ao restaurar backup)
     @Query("DELETE FROM dividas WHERE usuarioId = :usuarioId")
     void deletarTodosDoUsuario(int usuarioId);
 
-    // ⭐ NOVO (T126): Soma os gastos de um mês/ano específico para calcular o saldo
+    // ⭐ QUERY ANTIGA (Soma tudo, pago ou não)
     @Query("SELECT COALESCE(SUM(valorTotal), 0.0) FROM dividas " +
             "WHERE usuarioId = :usuarioId AND excluida = 0 " +
             "AND substr(vencimento, 4, 7) = :mesAno")
     double somarGastosDoMes(int usuarioId, String mesAno);
+
+    // ⭐ NOVA QUERY (T126): Soma apenas o que foi PAGO no mês (Fluxo de Caixa Real)
+    @Query("SELECT COALESCE(SUM(valorTotal), 0.0) FROM dividas " +
+            "WHERE usuarioId = :usuarioId AND excluida = 0 AND pago = 1 " +
+            "AND substr(vencimento, 4, 7) = :mesAno")
+    double somarGastosPagosDoMes(int usuarioId, String mesAno);
 }

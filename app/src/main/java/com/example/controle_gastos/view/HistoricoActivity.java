@@ -7,12 +7,11 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView; // ⭐ IMPORT ADICIONADO
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,6 +26,7 @@ import com.example.controle_gastos.utils.CsvExportHelper;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.PdfExportHelper;
 import com.example.controle_gastos.utils.SessionManager;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -42,7 +42,6 @@ public class HistoricoActivity extends AppCompatActivity {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    // ⭐ CORREÇÃO: Variável agora é ImageView
     private ImageView btnVoltarHistorico;
     private TextView btnMesAnterior, btnMesProximo;
     private TextView tvMesAtual, tvBadgeAtual;
@@ -319,7 +318,6 @@ public class HistoricoActivity extends AppCompatActivity {
         itensUnificados.addAll(dividasFiltradas);
         itensUnificados.addAll(transacoesDoMes);
 
-        // ⭐ MELHORIA: Usando List.sort em vez de Collections.sort para remover warning
         itensUnificados.sort((o1, o2) -> {
             String d1 = (o1 instanceof Divida) ? ((Divida) o1).getVencimento() : ((Transacao) o1).getData();
             String d2 = (o2 instanceof Divida) ? ((Divida) o2).getVencimento() : ((Transacao) o2).getData();
@@ -397,7 +395,7 @@ public class HistoricoActivity extends AppCompatActivity {
 
     private void mostrarDialogoExportacao() {
         String[] opcoes = {"📄  Exportar como CSV (Excel)", "📋  Exportar como PDF (Relatório)"};
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("Escolha o formato")
                 .setItems(opcoes, (dialog, which) -> {
                     if (which == 0) exportarCsv();

@@ -52,6 +52,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_badge_sincronizado"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="7dp"
                     android:text="● Sincronizado"
@@ -97,6 +99,60 @@
                 android:textColor="#94A3B8"
                 android:textSize="15sp" />
 
+            <!-- Card de Aviso para cadastrar banco -->
+            <LinearLayout
+                android:id="@+id/cardAvisoBanco"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:background="@drawable/bg_card_glass"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_icone_conf_ambar"
+                    android:gravity="center"
+                    android:text="⚡"
+                    android:textSize="20sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ativar Leitura Automática"
+                        android:textColor="#F59E0B"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cadastre seu banco para atualizar o saldo sozinho."
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnIrParaBancos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Configurar →"
+                    android:textColor="#34D399"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:padding="8dp" />
+            </LinearLayout>
+
             <!-- CARD SALDO -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -123,7 +179,6 @@
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
-                    <!-- ⭐ CORREÇÃO: Área de toque 48dp -->
                     <ImageView
                         android:id="@+id/btnHistorico"
                         android:layout_width="48dp"
@@ -138,7 +193,6 @@
                         android:src="@drawable/ic_nav_chart"
                         app:tint="#94A3B8" />
 
-                    <!-- ⭐ CORREÇÃO: Área de toque 48dp -->
                     <ImageView
                         android:id="@+id/btnToggleSaldo"
                         android:layout_width="48dp"
@@ -188,7 +242,7 @@
                             android:id="@+id/tvLabelRecebido"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Recebido no mês"
+                            android:text="Entradas automáticas"
                             android:textColor="#94A3B8"
                             android:textSize="13sp" />
 
@@ -228,79 +282,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- ⭐ NOVO CARD: PRÓXIMO RECEBIMENTO -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="14dp"
-                android:background="@drawable/bg_card_glass"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="18dp">
-
-                <ImageView
-                    android:id="@+id/ivProximoIcone"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_icone_conf_verde"
-                    android:importantForAccessibility="no"
-                    android:padding="11dp"
-                    android:src="@drawable/ic_conf_money"
-                    app:tint="#34D399" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvProximoCaption"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:letterSpacing="0.08"
-                        android:text="PRÓXIMO RECEBIMENTO"
-                        android:textColor="#94A3B8"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvProximoRecebimentoValor"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="R$ 0,00"
-                        android:textColor="#FFFFFF"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvProximoRecebimentoData"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="—"
-                        android:textColor="#94A3B8"
-                        android:textSize="13sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvProximoTag"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/bg_badge_atual"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="5dp"
-                    android:text="em 3 dias"
-                    android:textColor="#34D399"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-            </LinearLayout>
-
-            <!-- CARDS LADO A LADO -->
+            <!-- CARDS LADO A LADO (DÍVIDAS) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -498,7 +480,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="Compromete 0% da renda mensal"
+                        android:text="Total das contas que vencem este mês"
                         android:textColor="#94A3B8"
                         android:textSize="12sp" />
                 </LinearLayout>

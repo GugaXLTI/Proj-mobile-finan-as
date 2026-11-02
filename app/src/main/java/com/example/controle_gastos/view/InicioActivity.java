@@ -23,13 +23,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Conta;
 import com.example.controle_gastos.model.Divida;
-import com.example.controle_gastos.model.Renda;
 import com.example.controle_gastos.utils.BottomNavHelper;
+import com.example.controle_gastos.utils.FinancialReminderWorker;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.SessionManager;
@@ -41,6 +44,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class InicioActivity extends AppCompatActivity {
 
@@ -52,11 +56,13 @@ public class InicioActivity extends AppCompatActivity {
     private TextView tvSaldoDisponivelInicio, tvSalarioTotalInicio, tvGastosMesInicio;
     private TextView tvTituloSaldo, tvLabelRecebido;
     private TextView tvTotalDividasInicio, tvTotalPagoInicio;
-    private TextView tvProximoRecebimentoData, tvProximoRecebimentoValor, tvProximoCaption, tvProximoTag;
-    private ImageView ivProximoIcone;
     private ProgressBar progressOrcamento;
     private ImageView btnToggleSaldo, btnHistorico;
     private boolean isSaldoOculto = false;
+
+    private TextView tvSincronizado;
+    private LinearLayout cardAvisoBanco;
+    private TextView btnIrParaBancos;
 
     private TextView tvAlertaMes, tvBadgeContas, tvTotalAPagarMes, tvCompromete;
     private LinearLayout llContasMes, llTotalAPagar;
@@ -69,14 +75,11 @@ public class InicioActivity extends AppCompatActivity {
     private List<Divida> dividas = new ArrayList<>();
     private final List<Divida> contasDoMes = new ArrayList<>();
     private double totalVencendoMes = 0;
-    private double rendaEsperadaMes = 0;
     private double saldoAtual = 0;
 
-    // ⭐ NOVO: Recebe o aviso do Serviço de Notificação
     private final BroadcastReceiver transacaoReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "Sinal de nova transação recebido! Atualizando tela...");
             try {
                 carregarDados();
                 atualizarDashboardFinanceiro();
@@ -112,11 +115,6 @@ public class InicioActivity extends AppCompatActivity {
         tvSalarioTotalInicio = findViewById(R.id.tvSalarioTotalInicio);
         tvGastosMesInicio = findViewById(R.id.tvGastosMesInicio);
         progressOrcamento = findViewById(R.id.progressOrcamento);
-        ivProximoIcone = findViewById(R.id.ivProximoIcone);
-        tvProximoCaption = findViewById(R.id.tvProximoCaption);
-        tvProximoRecebimentoData = findViewById(R.id.tvProximoRecebimentoData);
-        tvProximoRecebimentoValor = findViewById(R.id.tvProximoRecebimentoValor);
-        tvProximoTag = findViewById(R.id.tvProximoTag);
         tvTotalDividasInicio = findViewById(R.id.tvTotalDividasInicio);
         tvTotalPagoInicio = findViewById(R.id.tvTotalPagoInicio);
         tvAlertaMes = findViewById(R.id.tvAlertaMes);
@@ -127,6 +125,10 @@ public class InicioActivity extends AppCompatActivity {
         tvCompromete = findViewById(R.id.tvCompromete);
         progressAtencao = findViewById(R.id.progressAtencao);
         btnVerTodosVencimentos = findViewById(R.id.btnVerTodosVencimentos);
+
+        tvSincronizado = findViewById(R.id.tvSincronizado);
+        cardAvisoBanco = findViewById(R.id.cardAvisoBanco);
+        btnIrParaBancos = findViewById(R.id.btnIrParaBancos);
 
         btnToggleSaldo = findViewById(R.id.btnToggleSaldo);
         btnHistorico = findViewById(R.id.btnHistorico);
@@ -156,6 +158,7 @@ public class InicioActivity extends AppCompatActivity {
         try {
             carregarDados();
             atualizarDashboardFinanceiro();
+            verificarAutomacaoBancaria();
         } catch (Exception e) {
             Log.e(TAG, "Erro ao carregar dados iniciais: " + e.getMessage());
         }
@@ -166,9 +169,50 @@ public class InicioActivity extends AppCompatActivity {
                 overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
             });
         }
+
+        // ⭐ AGENDAMENTO DAS NOTIFICAÇÕES INTELIGENTES
+        agendarLembretesFinanceiros();
     }
 
-    // ⭐ NOVO: Registra o receptor quando a tela aparece
+    private void agendarLembretesFinanceiros() {
+        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
+                FinancialReminderWorker.class,
+                1, TimeUnit.DAYS // Roda 1 vez por dia
+        )
+                .setInitialDelay(15, TimeUnit.MINUTES) // Espera 15 min após abrir o app
+                .build();
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "financial_reminders",
+                ExistingPeriodicWorkPolicy.UPDATE, // Atualiza se já existir
+                request
+        );
+    }
+
+    private void verificarAutomacaoBancaria() {
+        if (db == null || session == null) return;
+
+        boolean temBanco = !db.cartaoDao().listarPorUsuario(session.getUserId()).isEmpty();
+
+        if (temBanco) {
+            cardAvisoBanco.setVisibility(View.GONE);
+            tvSincronizado.setText("● Sincronizado");
+            tvSincronizado.setTextColor(Color.parseColor("#10B981"));
+            tvSincronizado.setBackgroundResource(R.drawable.bg_badge_sincronizado);
+            tvSincronizado.setOnClickListener(null);
+        } else {
+            cardAvisoBanco.setVisibility(View.VISIBLE);
+            tvSincronizado.setText("● Sem Automação");
+            tvSincronizado.setTextColor(Color.parseColor("#F87171"));
+            tvSincronizado.setBackgroundResource(R.drawable.bg_badge_aberto);
+
+            View.OnClickListener irParaCartoes = v -> startActivity(new Intent(this, CartoesActivity.class));
+            tvSincronizado.setOnClickListener(irParaCartoes);
+            btnIrParaBancos.setOnClickListener(irParaCartoes);
+            cardAvisoBanco.setOnClickListener(irParaCartoes);
+        }
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -176,7 +220,6 @@ public class InicioActivity extends AppCompatActivity {
                 transacaoReceiver, new IntentFilter("NOVA_TRANSACAO_RECEBIDA"));
     }
 
-    // ⭐ NOVO: Desregistra quando a tela some para não vazar memória
     @Override
     protected void onStop() {
         super.onStop();
@@ -213,6 +256,7 @@ public class InicioActivity extends AppCompatActivity {
         try {
             carregarDados();
             atualizarDashboardFinanceiro();
+            verificarAutomacaoBancaria();
         } catch (Exception e) {
             Log.e(TAG, "Erro ao retomar a tela: " + e.getMessage());
         }
@@ -238,9 +282,10 @@ public class InicioActivity extends AppCompatActivity {
 
         double entradas = db.transacaoDao().somarEntradas(session.getUserId());
         double saidasAuto = db.transacaoDao().somarSaidas(session.getUserId());
-        double gastosManuais = db.dividaDao().somarGastosDoMes(session.getUserId(), mesAnoAtual);
 
-        double saldoEmConta = saldoInicial + entradas - saidasAuto - gastosManuais;
+        double gastosManuaisPagos = db.dividaDao().somarGastosPagosDoMes(session.getUserId(), mesAnoAtual);
+
+        double saldoEmConta = saldoInicial + entradas - saidasAuto - gastosManuaisPagos;
         saldoAtual = saldoEmConta;
 
         if (tvTituloSaldo != null) tvTituloSaldo.setText("SALDO EM CONTA");
@@ -254,32 +299,16 @@ public class InicioActivity extends AppCompatActivity {
         } else {
             if (btnToggleSaldo != null) btnToggleSaldo.setImageResource(R.drawable.ic_eye_open);
             if (tvSalarioTotalInicio != null) tvSalarioTotalInicio.setText(moeda(entradas));
-            if (tvGastosMesInicio != null) tvGastosMesInicio.setText(moeda(gastosManuais + saidasAuto));
+            if (tvGastosMesInicio != null) tvGastosMesInicio.setText(moeda(gastosManuaisPagos + saidasAuto));
             if (tvSaldoDisponivelInicio != null) {
                 tvSaldoDisponivelInicio.setText(moeda(saldoEmConta));
                 tvSaldoDisponivelInicio.setTextColor(Color.parseColor(saldoEmConta < 0 ? "#F87171" : "#34D399"));
             }
         }
 
-        List<Renda> rendas = db.rendaDao().listarPorUsuario(session.getUserId());
-        Renda proximaFixa = null;
-        long menorDias = Long.MAX_VALUE;
-        rendaEsperadaMes = 0;
-
-        for (Renda r : rendas) {
-            rendaEsperadaMes += r.valor;
-            long dias = diasAteProximoRecebimento(r.diaRecebimento);
-            if (dias < menorDias) {
-                menorDias = dias;
-                proximaFixa = r;
-            }
-        }
-
-        atualizarCardProximoRecebimento(proximaFixa, menorDias);
-
         if (progressOrcamento != null) {
-            if (rendaEsperadaMes > 0) {
-                int pct = (int) ((gastosManuais / rendaEsperadaMes) * 100);
+            if (saldoInicial > 0) {
+                int pct = (int) (((gastosManuaisPagos + saidasAuto) / saldoInicial) * 100);
                 progressOrcamento.setProgress(Math.min(pct, 100));
             } else {
                 progressOrcamento.setProgress(0);
@@ -287,47 +316,6 @@ public class InicioActivity extends AppCompatActivity {
         }
 
         renderizarCardAtencao();
-    }
-
-    private void atualizarCardProximoRecebimento(Renda proximaFixa, long dias) {
-        if (tvProximoCaption == null || ivProximoIcone == null || tvProximoRecebimentoValor == null || tvProximoRecebimentoData == null || tvProximoTag == null) return;
-
-        if (proximaFixa != null) {
-            tvProximoCaption.setText("PREVISÃO DE ENTRADA");
-            ivProximoIcone.setImageResource(R.drawable.ic_conf_money);
-            tvProximoRecebimentoValor.setText(isSaldoOculto ? "R$ ••••" : moeda(proximaFixa.valor));
-            tvProximoRecebimentoData.setText(proximaFixa.descricao + " · dia " + proximaFixa.diaRecebimento);
-            tvProximoTag.setText(dias == 1 ? "amanhã" : "em " + dias + " dias");
-            tvProximoTag.setVisibility(View.VISIBLE);
-        } else {
-            tvProximoCaption.setText("PREVISÃO DE ENTRADA");
-            ivProximoIcone.setImageResource(R.drawable.ic_conf_money);
-            tvProximoRecebimentoValor.setText(moeda(0));
-            tvProximoRecebimentoData.setText("Nenhuma renda cadastrada");
-            tvProximoTag.setVisibility(View.GONE);
-        }
-    }
-
-    private long diasAteProximoRecebimento(int diaRecebimento) {
-        Calendar hoje = Calendar.getInstance();
-        hoje.set(Calendar.HOUR_OF_DAY, 0);
-        hoje.set(Calendar.MINUTE, 0);
-        hoje.set(Calendar.SECOND, 0);
-        hoje.set(Calendar.MILLISECOND, 0);
-
-        int dia = Math.max(diaRecebimento, 1);
-        int diaHoje = hoje.get(Calendar.DAY_OF_MONTH);
-        int ultimoDiaMesAtual = hoje.getActualMaximum(Calendar.DAY_OF_MONTH);
-
-        Calendar alvo = (Calendar) hoje.clone();
-        if (Math.min(dia, ultimoDiaMesAtual) > diaHoje) {
-            alvo.set(Calendar.DAY_OF_MONTH, Math.min(dia, ultimoDiaMesAtual));
-        } else {
-            alvo.set(Calendar.DAY_OF_MONTH, 1);
-            alvo.add(Calendar.MONTH, 1);
-            alvo.set(Calendar.DAY_OF_MONTH, Math.min(dia, alvo.getActualMaximum(Calendar.DAY_OF_MONTH)));
-        }
-        return Math.round((alvo.getTimeInMillis() - hoje.getTimeInMillis()) / 86400000.0);
     }
 
     private void carregarDados() {
@@ -443,21 +431,8 @@ public class InicioActivity extends AppCompatActivity {
         }
 
         tvTotalAPagarMes.setText(moeda(totalVencendoMes));
-
-        if (rendaEsperadaMes > 0) {
-            int pct = (int) Math.round((totalVencendoMes / rendaEsperadaMes) * 100);
-            progressAtencao.setProgress(Math.min(pct, 100));
-
-            String texto = "Compromete " + pct + "% da renda mensal";
-            if (!isSaldoOculto) {
-                double sobra = saldoAtual - totalVencendoMes;
-                texto += sobra >= 0 ? " · Sobra " + moeda(sobra) : " · Faltam " + moeda(-sobra);
-            }
-            tvCompromete.setText(texto);
-        } else {
-            progressAtencao.setProgress(0);
-            tvCompromete.setText("Total das contas que vencem este mês");
-        }
+        progressAtencao.setProgress(0);
+        tvCompromete.setText("Total das contas que vencem este mês");
     }
 
     private String moeda(double valor) {
@@ -518,7 +493,6 @@ public class InicioActivity extends AppCompatActivity {
                 return 1;
             }
         }
-
         try {
             String numeros = parcela.replaceAll("[^0-9]", "");
             if (numeros.isEmpty()) return 1;

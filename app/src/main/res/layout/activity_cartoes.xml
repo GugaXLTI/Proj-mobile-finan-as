@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg_screen">
+    android:background="@drawable/bg_gradient_inicio">
 
     <!-- Cabeçalho -->
     <LinearLayout
@@ -19,34 +19,38 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="←"
-            android:textColor="@color/text_white"
+            android:textColor="#FFFFFF"
             android:textSize="28sp"
             android:padding="8dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Cartões &amp; Chaves Pix"
-            android:textColor="@color/text_white"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginStart="16dp" />
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bancos Monitorados"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Cadastre seus bancos para leitura automática. Você pode editar ou excluir a qualquer momento."
+                android:textColor="#94A3B8"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- Abas -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/bg_screen"
-        app:tabIndicatorColor="@color/brand_green"
-        app:tabSelectedTextColor="@color/brand_green"
-        app:tabTextColor="@color/text_gray"
-        app:tabMode="fixed" />
-
-    <!-- ViewPager para trocar entre os Fragments -->
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager"
+    <!-- Container do Fragment -->
+    <FrameLayout
+        android:id="@+id/container_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

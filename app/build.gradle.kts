@@ -39,6 +39,8 @@ dependencies {
     implementation("androidx.activity:activity:1.8.0")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
+    implementation ("androidx.work:work-runtime:2.9.0")
+
     // ⭐ iText para geração de PDF
     implementation("com.itextpdf:itextg:5.5.10")
 

@@ -10,7 +10,6 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.controle_gastos.R;
@@ -23,6 +22,7 @@ import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.OnboardingStore;
 import com.example.controle_gastos.utils.SessionManager;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
@@ -145,7 +145,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         });
 
         itemDesconectar.setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                     .setTitle("Desconectar")
                     .setMessage("Tem certeza que deseja sair da sua conta?")
                     .setPositiveButton("Sim", (dialog, which) -> {
@@ -214,7 +214,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
                 "Limpar tudo (testes)"
         };
 
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("Backup dos dados")
                 .setItems(opcoes, (dialog, which) -> {
                     if (which == 0) {
@@ -250,7 +250,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     private void processarImportacao(Uri uri) {
         BackupData data = BackupHelper.lerArquivo(this, uri);
         if (data == null) {
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                     .setTitle("Backup inválido")
                     .setMessage("O arquivo selecionado não é um backup válido do ORG.\n\nVerifique se escolheu o arquivo correto e tente novamente.")
                     .setPositiveButton("OK", null)
@@ -263,7 +263,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         int totalPix = data.chavesPix != null ? data.chavesPix.size() : 0;
         int totalCategorias = data.categorias != null ? data.categorias.size() : 0;
 
-        // ⭐ Novas contagens
         int totalContas = data.contas != null ? data.contas.size() : 0;
         int totalTransacoes = data.transacoes != null ? data.transacoes.size() : 0;
 
@@ -279,7 +278,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
                 "Atenção: isso vai SUBSTITUIR todos os seus dados atuais.\n" +
                 "Deseja continuar?";
 
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("Restaurar backup")
                 .setMessage(mensagem)
                 .setPositiveButton("Sim, restaurar", (d, w) -> aplicarBackup(data))
@@ -290,7 +289,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     private void aplicarBackup(BackupData data) {
         boolean sucesso = BackupHelper.aplicarBackup(this, session.getUserId(), data);
         if (sucesso) {
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                     .setTitle("Backup restaurado")
                     .setMessage("Seus dados foram restaurados com sucesso!")
                     .setPositiveButton("OK", (d, w) -> {
@@ -344,7 +343,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     }
 
     private void mostrarDialogoLimparTudo() {
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("Limpar tudo (testes)")
                 .setMessage("Esta opção apaga TODAS as dívidas, transações e usuários cadastrados. Use apenas para testes. Tem certeza?")
                 .setPositiveButton("Sim, limpar tudo", (dialog, which) -> {

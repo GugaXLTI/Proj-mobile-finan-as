@@ -8,7 +8,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,6 +20,7 @@ import com.example.controle_gastos.model.DividaAgrupada;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.SessionManager;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -108,7 +108,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     private void carregarDividas() {
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
 
-        // ⭐ LÓGICA DE AGRUPAMENTO
         Map<Integer, List<Divida>> grupos = new HashMap<>();
         List<Divida> avulsas = new ArrayList<>();
 
@@ -125,19 +124,15 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
         listaAgrupada.clear();
 
-        // Adiciona os grupos
         for (List<Divida> grupo : grupos.values()) {
-            // Ordena as parcelas do grupo pela data para garantir consistência
             grupo.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
             listaAgrupada.add(new DividaAgrupada(grupo));
         }
 
-        // Adiciona as avulsas
         for (Divida avulsa : avulsas) {
             listaAgrupada.add(new DividaAgrupada(Collections.singletonList(avulsa)));
         }
 
-        // Ordena a lista final: Não pagas primeiro (por data), pagas por último
         listaAgrupada.sort(this::compararAgrupadas);
 
         adapter = new DividaAdapter(listaAgrupada, this);
@@ -189,7 +184,7 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
     @Override
     public void onExcluirClick(DividaAgrupada agrupada) {
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("Excluir dívida")
                 .setMessage("Tem certeza que deseja excluir \"" + agrupada.getTitulo() + "\"?\n\n" +
                         "Todas as parcelas deste grupo serão canceladas e ficarão registradas no Histórico.")
@@ -208,7 +203,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
     @Override
     public void onEditarClick(DividaAgrupada agrupada) {
-        // Abre a edição da primeira parcela do grupo
         Intent intent = new Intent(DividasActivity.this, CadastroDividaActivity.class);
         intent.putExtra("divida_id", agrupada.getPrimeiroId());
         startActivity(intent);

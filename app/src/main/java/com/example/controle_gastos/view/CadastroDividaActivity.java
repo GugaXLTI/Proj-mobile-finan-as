@@ -28,7 +28,6 @@ import com.example.controle_gastos.adapter.ChipSelecaoAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Cartao;
 import com.example.controle_gastos.model.Categoria;
-import com.example.controle_gastos.model.ChavePix;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.ParsedReceipt;
 import com.example.controle_gastos.utils.AlarmeHelper;
@@ -60,7 +59,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private ImageView ivComprovante;
 
     private RecyclerView rvSelecao;
-    private LinearLayout containerVazio;
+    private LinearLayout containerVazio, containerSelecao;
     private TextView btnNovoItem, btnNovaCategoria, tvTituloSelecao, tvResumoParcelas, tvSemCategoria;
     private Button btnCadastrarAgora;
     private LinearLayout boxDataCompra, boxVencimento, containerParcelas;
@@ -107,6 +106,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
         ivComprovante = findViewById(R.id.ivComprovante);
         rvSelecao = findViewById(R.id.rvSelecao);
         containerVazio = findViewById(R.id.containerVazio);
+        containerSelecao = findViewById(R.id.containerSelecao);
         btnNovoItem = findViewById(R.id.btnNovoItem);
         btnNovaCategoria = findViewById(R.id.btnNovaCategoria);
         tvTituloSelecao = findViewById(R.id.tvTituloSelecao);
@@ -275,6 +275,16 @@ public class CadastroDividaActivity extends AppCompatActivity {
         tvResumoParcelas.setVisibility(isAVista ? View.GONE : View.VISIBLE);
 
         itensSelecao.clear();
+
+        // ⭐ CORREÇÃO: Se for Pix, esconde a seleção de cartões/chaves
+        if (tipo.equals("Pix")) {
+            containerSelecao.setVisibility(View.GONE);
+            chipAdapter = null;
+            return;
+        }
+
+        containerSelecao.setVisibility(View.VISIBLE);
+
         if (tipo.equals("Cartão de Crédito") || tipo.equals("Cartão de Débito")) {
             String tipoCartaoFiltro = tipo.equals("Cartão de Crédito") ? "Crédito" : "Débito";
             tvTituloSelecao.setText("Selecione o Cartão");
@@ -286,13 +296,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
                     itensSelecao.add(new String[]{sigla, c.instituicao, c.instituicao, detalhe});
                 }
             }
-        } else if (tipo.equals("Pix")) {
-            tvTituloSelecao.setText("Selecione a Chave Pix");
-            List<ChavePix> chaves = db.chavePixDao().listarPorUsuario(session.getUserId());
-            for (ChavePix p : chaves) {
-                String sigla = p.nomeFavorecido.length() >= 2 ? p.nomeFavorecido.substring(0, 2).toUpperCase() : "PX";
-                itensSelecao.add(new String[]{sigla, p.nomeFavorecido, p.chave, p.chave});
-            }
         } else {
             tvTituloSelecao.setText("Selecione o Banco / Origem");
             itensSelecao.add(new String[]{"GE", "Genérico", "Genérico", ""});
@@ -301,7 +304,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
         if (itensSelecao.isEmpty()) {
             rvSelecao.setVisibility(View.GONE);
             containerVazio.setVisibility(View.VISIBLE);
-            String msg = tipo.equals("Pix") ? "Nenhuma chave Pix cadastrada." : "Nenhum cartão cadastrado.";
+            String msg = "Nenhum cartão cadastrado.";
             ((TextView) findViewById(R.id.tvMensagemVazio)).setText(msg);
             btnCadastrarAgora.setVisibility(View.VISIBLE);
             chipAdapter = null;
@@ -392,7 +395,10 @@ public class CadastroDividaActivity extends AppCompatActivity {
         if (valor <= 0) { Toast.makeText(this, "O valor deve ser maior que zero.", Toast.LENGTH_SHORT).show(); return; }
 
         String bancoSelecionado = tipoDivida;
-        if (chipAdapter != null && chipAdapter.getItemSelecionado() != null) { bancoSelecionado = chipAdapter.getItemSelecionado()[2]; }
+        // ⭐ Se não for Pix e tiver cartão selecionado, pega o banco do cartão
+        if (!tipoDivida.equals("Pix") && chipAdapter != null && chipAdapter.getItemSelecionado() != null) {
+            bancoSelecionado = chipAdapter.getItemSelecionado()[2];
+        }
 
         String parcelas = "1x (À vista)";
         if (isAVista) {

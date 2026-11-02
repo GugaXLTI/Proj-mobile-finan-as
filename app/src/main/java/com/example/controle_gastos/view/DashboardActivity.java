@@ -20,7 +20,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -49,6 +48,7 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.text.NumberFormat;
@@ -99,8 +99,6 @@ public class DashboardActivity extends AppCompatActivity {
 
     private List<Divida> todasDividas = new ArrayList<>();
     private final List<Divida> dividasFiltradas = new ArrayList<>();
-
-    // ⭐ NOVO: Lista para guardar as transações do mês
     private final List<Transacao> transacoesFiltradas = new ArrayList<>();
 
     private final Map<String, TextView> chipsFiltro = new LinkedHashMap<>();
@@ -121,7 +119,6 @@ public class DashboardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_dashboard);
 
         NavScrollHelper.attach(this);
-
         BottomNavHelper.configurar(this, BottomNavHelper.RELATORIOS);
 
         db = AppDatabase.getInstance(this);
@@ -193,7 +190,6 @@ public class DashboardActivity extends AppCompatActivity {
         }
         todasDividas.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
 
-        // ⭐ NOVO: Busca as transações do mês selecionado
         String mesAnoAtual = String.format(LOCALE_BR, "%02d/%04d", mesSelecionado, anoSelecionado);
         transacoesFiltradas.clear();
         transacoesFiltradas.addAll(db.transacaoDao().listarPorMes(session.getUserId(), mesAnoAtual));
@@ -218,33 +214,83 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void atualizarBalancoMensal() {
-        double gastos = 0;
-        for (Divida d : todasDividas) {
-            gastos += d.getValorTotal();
+        // 1. Verifica se o mês está completamente vazio
+        if (todasDividas.isEmpty() && transacoesFiltradas.isEmpty()) {
+            tvSalarioDash.setText("Sem dados");
+            tvGastosDash.setText("Sem dados");
+            tvSaldoDash.setText("Sem dados");
+            tvSaldoDash.setTextColor(Color.parseColor("#64748B"));
+            progressBalanco.setProgress(0);
+            tvBalancoCaption.setText("Nenhum lançamento registrado neste mês.");
+            return;
         }
 
-        Conta conta = db.contaDao().buscarPorUsuario(session.getUserId());
-        double saldoInicial = (conta != null) ? conta.saldoInicial : 0.0;
+        // 2. Calcula gastos TOTAIS (para o gráfico) e PAGOS (para o saldo real)
+        double gastosTotais = 0;
+        double gastosPagos = 0;
+        for (Divida d : todasDividas) {
+            gastosTotais += d.getValorTotal();
+            if (d.isPago()) {
+                gastosPagos += d.getValorTotal();
+            }
+        }
 
-        double entradas = db.transacaoDao().somarEntradas(session.getUserId());
-        double baseCalculo = saldoInicial + entradas;
+        // Adiciona as transações automáticas do espião
+        for (Transacao t : transacoesFiltradas) {
+            if ("SAIDA".equals(t.getTipo()) || "SAÍDA".equals(t.getTipo())) {
+                gastosTotais += t.getValor();
+                gastosPagos += t.getValor(); // O espião só lê o que já aconteceu, logo é pago
+            }
+        }
+
+        // 3. Entradas do mês
+        double entradasMes = 0;
+        for (Transacao t : transacoesFiltradas) {
+            if ("ENTRADA".equals(t.getTipo())) {
+                entradasMes += t.getValor();
+            }
+        }
+
+        // 4. Base de cálculo
+        Calendar hoje = Calendar.getInstance();
+        boolean ehMesAtual = (mesSelecionado == hoje.get(Calendar.MONTH) + 1) && (anoSelecionado == hoje.get(Calendar.YEAR));
+
+        double baseCalculo = entradasMes;
+        if (ehMesAtual) {
+            Conta conta = db.contaDao().buscarPorUsuario(session.getUserId());
+            double saldoInicial = (conta != null) ? conta.saldoInicial : 0.0;
+            baseCalculo += saldoInicial;
+        }
 
         tvSalarioDash.setText(moeda(baseCalculo));
-        tvGastosDash.setText(moeda(gastos));
+        tvGastosDash.setText(moeda(gastosTotais));
 
+        // 5. Calcula o Saldo Real e ajusta a legenda
         if (baseCalculo > 0) {
-            double saldo = baseCalculo - gastos;
-            tvSaldoDash.setText(moeda(saldo));
-            tvSaldoDash.setTextColor(Color.parseColor(saldo < 0 ? "#F87171" : "#34D399"));
+            double saldoReal = baseCalculo - gastosPagos;
+            tvSaldoDash.setText(moeda(saldoReal));
+            tvSaldoDash.setTextColor(Color.parseColor(saldoReal < 0 ? "#F87171" : "#34D399"));
 
-            int pct = (int) Math.round((gastos / baseCalculo) * 100);
+            int pct = (int) Math.round((gastosPagos / baseCalculo) * 100);
             progressBalanco.setProgress(Math.min(pct, 100));
-            tvBalancoCaption.setText(pct + "% do orçamento comprometido");
+
+            double aPagar = gastosTotais - gastosPagos;
+            if (aPagar > 0) {
+                tvBalancoCaption.setText(pct + "% pago. Você tem " + moeda(aPagar) + " a pagar.");
+            } else {
+                tvBalancoCaption.setText(pct + "% do orçamento comprometido");
+            }
         } else {
+            // Meses futuros que não têm saldo base nem entradas
             tvSaldoDash.setText(moeda(0));
             tvSaldoDash.setTextColor(Color.parseColor("#64748B"));
             progressBalanco.setProgress(0);
-            tvBalancoCaption.setText("Saldo base não encontrado.");
+
+            if (gastosTotais > 0) {
+                tvBalancoCaption.setText("Sem entradas previstas. " + moeda(gastosTotais) + " em contas.");
+            } else {
+                tvBalancoCaption.setText("Nenhuma movimentação registrada.");
+            }
         }
     }
 
@@ -484,7 +530,6 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void atualizarGraficoLinha() {
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
-
         int mesesPassados = mesesVisiveis / 2;
 
         Calendar c = Calendar.getInstance();
@@ -504,7 +549,7 @@ public class DashboardActivity extends AppCompatActivity {
 
             double totalMes = 0;
             for (Divida d : todas) {
-                if (pertenceAoMes(d, mesRef, anoRef)) {
+                if (pertenceAoMes(d, mesRef, anoRef) && d.isPago()) {
                     totalMes += d.getValorTotal();
                 }
             }
@@ -605,7 +650,7 @@ public class DashboardActivity extends AppCompatActivity {
     private void mostrarDialogoExportacao() {
         String[] opcoes = {"Exportar como CSV (Excel)", "Exportar como PDF (Relatório)"};
 
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("Escolha o formato")
                 .setItems(opcoes, (dialog, which) -> {
                     if (which == 0) {

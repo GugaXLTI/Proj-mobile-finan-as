@@ -148,12 +148,7 @@ public class InicioActivity extends AppCompatActivity {
         }
 
         atualizarNomeEAvatar();
-
-        if (tvDataAtualInicio != null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("MMMM 'de' yyyy", LOCALE_BR);
-            String mesAno = sdf.format(new Date());
-            tvDataAtualInicio.setText(mesAno.substring(0, 1).toUpperCase(LOCALE_BR) + mesAno.substring(1));
-        }
+        atualizarDataAtual(); // ⭐ Adicionado aqui
 
         try {
             carregarDados();
@@ -170,21 +165,29 @@ public class InicioActivity extends AppCompatActivity {
             });
         }
 
-        // ⭐ AGENDAMENTO DAS NOTIFICAÇÕES INTELIGENTES
         agendarLembretesFinanceiros();
+    }
+
+    // ⭐ NOVO MÉTODO: Atualiza a data no topo da tela
+    private void atualizarDataAtual() {
+        if (tvDataAtualInicio != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMMM 'de' yyyy", LOCALE_BR);
+            String mesAno = sdf.format(new Date());
+            tvDataAtualInicio.setText(mesAno.substring(0, 1).toUpperCase(LOCALE_BR) + mesAno.substring(1));
+        }
     }
 
     private void agendarLembretesFinanceiros() {
         PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
                 FinancialReminderWorker.class,
-                1, TimeUnit.DAYS // Roda 1 vez por dia
+                1, TimeUnit.DAYS
         )
-                .setInitialDelay(15, TimeUnit.MINUTES) // Espera 15 min após abrir o app
+                .setInitialDelay(15, TimeUnit.MINUTES)
                 .build();
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
                 "financial_reminders",
-                ExistingPeriodicWorkPolicy.UPDATE, // Atualiza se já existir
+                ExistingPeriodicWorkPolicy.UPDATE,
                 request
         );
     }
@@ -253,6 +256,7 @@ public class InicioActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         atualizarNomeEAvatar();
+        atualizarDataAtual(); // ⭐ Adicionado aqui também
         try {
             carregarDados();
             atualizarDashboardFinanceiro();

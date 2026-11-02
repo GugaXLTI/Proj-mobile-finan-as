@@ -29,10 +29,10 @@ import com.example.controle_gastos.model.ChavePix;
         entities = {
                 Usuario.class, Divida.class, Transacao.class, Categoria.class,
                 Cartao.class, ChavePix.class, ComprovanteProcessado.class, Renda.class,
-                Conta.class // ⭐ NOVO
+                Conta.class
         },
-        version = 13, // ⭐ ALTERADO
-        exportSchema = false
+        version = 13,
+        exportSchema = true // ⭐ ALTERADO AQUI: Agora vai gerar o JSON do schema para auto-migrations no futuro
 )
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -44,7 +44,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract ChavePixDao chavePixDao();
     public abstract ComprovanteProcessadoDao comprovanteProcessadoDao();
     public abstract RendaDao rendaDao();
-    public abstract ContaDao contaDao(); // ⭐ NOVO
+    public abstract ContaDao contaDao();
 
     private static AppDatabase INSTANCE;
 
@@ -60,9 +60,13 @@ public abstract class AppDatabase extends RoomDatabase {
                             Migrations.MIGRATION_9_10,
                             Migrations.MIGRATION_10_11,
                             Migrations.MIGRATION_11_12,
-                            Migrations.MIGRATION_12_13 // ⭐ NOVO
+                            Migrations.MIGRATION_12_13
                     )
-                    .fallbackToDestructiveMigration()
+                    // ⭐ MANTIDO REMOVIDO: .fallbackToDestructiveMigration()
+                    // NUNCA use isso em produção. Se a migração falhar, o app deve crashar,
+                    // mas os dados do usuário NÃO podem ser apagados.
+
+                    // ⚠️ AVISO: allowMainThreadQueries() é perigoso para a performance.
                     .allowMainThreadQueries()
                     .build();
         }

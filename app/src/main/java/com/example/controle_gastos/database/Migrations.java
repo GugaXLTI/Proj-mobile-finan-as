@@ -55,7 +55,6 @@ public class Migrations {
         }
     };
 
-    // ⭐ NOVO: Migration para a tabela Contas
     public static final Migration MIGRATION_12_13 = new Migration(12, 13) {
         @Override
         public void migrate(SupportSQLiteDatabase database) {

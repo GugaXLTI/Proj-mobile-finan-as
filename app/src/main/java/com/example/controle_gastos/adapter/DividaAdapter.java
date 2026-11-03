@@ -46,28 +46,27 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DividaAgrupada agrupada = lista.get(position);
+        Divida parcelaExibida = agrupada.getParcelaParaLista();
 
-        // ⭐ AQUI ESTÁ A MUDANÇA: Usa o novo método
-        Divida proxima = agrupada.getParcelaParaLista();
-
-        if (proxima == null) return;
+        if (parcelaExibida == null) return;
 
         holder.tvTitulo.setText(agrupada.getTitulo());
-        holder.tvDetalhe.setText(montarDetalhe(proxima));
+        holder.tvDetalhe.setText(montarDetalhe(parcelaExibida));
 
         NumberFormat nf = NumberFormat.getCurrencyInstance(LOCALE_BR);
-        holder.tvValor.setText(nf.format(proxima.getValorTotal()));
+        holder.tvValor.setText(nf.format(parcelaExibida.getValorTotal()));
 
         try {
-            Date data = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR).parse(proxima.getVencimento());
+            Date data = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR).parse(parcelaExibida.getVencimento());
             if (data != null) {
                 holder.tvMes.setText(new SimpleDateFormat("MMM", LOCALE_BR).format(data).replace(".", "").toUpperCase(LOCALE_BR));
                 holder.tvDia.setText(new SimpleDateFormat("dd", LOCALE_BR).format(data));
             }
         } catch (Exception ignored) {}
 
-        holder.tvParcela.setText("Parcela " + proxima.getParcela());
+        holder.tvParcela.setText("Parcela " + parcelaExibida.getParcela());
 
+        // Barra de Progresso e Contagem (Corretos, somam o grupo inteiro)
         int total = agrupada.getTotalParcelas();
         int pagas = agrupada.getParcelasPagas();
         holder.tvProgresso.setText("Pagas: " + pagas + " de " + total);
@@ -77,18 +76,22 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             holder.progressBar.setProgress(pagas);
         }
 
-        if (agrupada.isTotalmentePago()) {
+        // ⭐ A CORREÇÃO ESTÁ AQUI: Verifica se a parcela EXIBIDA está paga
+        if (parcelaExibida.isPago()) {
             holder.tvStatus.setText("Pago ✓");
-            holder.tvStatus.setTextColor(Color.parseColor("#34D399"));
-            holder.btnPagar.setVisibility(View.GONE);
+            holder.tvStatus.setTextColor(Color.parseColor("#34D399")); // Verde
+            holder.btnPagar.setVisibility(View.GONE); // Esconde o botão
+            holder.tvValor.setTextColor(Color.parseColor("#94A3B8")); // Deixa o valor cinza
         } else {
-            holder.btnPagar.setVisibility(View.VISIBLE);
-            if (isAtrasada(proxima.getVencimento())) {
+            holder.tvValor.setTextColor(Color.WHITE); // Volta o valor para branco
+            holder.btnPagar.setVisibility(View.VISIBLE); // Mostra o botão
+
+            if (isAtrasada(parcelaExibida.getVencimento())) {
                 holder.tvStatus.setText("Atrasada");
-                holder.tvStatus.setTextColor(Color.parseColor("#F87171"));
+                holder.tvStatus.setTextColor(Color.parseColor("#F87171")); // Vermelho
             } else {
-                holder.tvStatus.setText("Vence em " + calcularDias(proxima.getVencimento()) + " dias");
-                holder.tvStatus.setTextColor(Color.parseColor("#F59E0B"));
+                holder.tvStatus.setText("Vence em " + calcularDias(parcelaExibida.getVencimento()) + " dias");
+                holder.tvStatus.setTextColor(Color.parseColor("#F59E0B")); // Laranja
             }
         }
 

@@ -41,77 +41,68 @@
                 android:textColor="#94A3B8"
                 android:textSize="14sp" />
 
-            <!-- Filtros -->
+            <!-- ⭐ FILTROS DE TIPO (CHIPS) -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="12dp"
                 android:overScrollMode="never"
                 android:scrollbars="none">
 
-                <LinearLayout
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupFiltros"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
 
-                    <LinearLayout
-                        android:id="@+id/btnTodosDevedores"
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipTodas"
+                        style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/bg_pill_filtro"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="10dp">
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="Todas" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Todos devedores"
-                            android:textColor="#E2E8F0"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_marginStart="6dp"
-                            android:src="@drawable/ic_chevron_down"
-                            app:tint="#94A3B8" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/btnCategorias"
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipFixas"
+                        style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_pill_filtro"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="10dp">
+                        android:layout_height="wrap_content"
+                        android:text="Contas Fixas" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Categorias"
-                            android:textColor="#E2E8F0"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_marginStart="6dp"
-                            android:src="@drawable/ic_chevron_down"
-                            app:tint="#94A3B8" />
-                    </LinearLayout>
-                </LinearLayout>
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipNormais"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dívidas Normais" />
+                </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
+
+            <!-- ⭐ NOVO: BOTÃO DE FILTRO POR CATEGORIA -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/btnFiltroCategoria"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_pill_filtro"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:text="Todas as categorias"
+                    android:textColor="#E2E8F0"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:drawableEndCompat="@drawable/ic_chevron_down" />
+            </LinearLayout>
 
             <!-- Card de totais -->
             <LinearLayout

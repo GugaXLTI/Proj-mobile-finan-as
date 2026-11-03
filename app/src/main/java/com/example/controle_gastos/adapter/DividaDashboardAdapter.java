@@ -66,8 +66,14 @@ public class DividaDashboardAdapter extends RecyclerView.Adapter<DividaDashboard
         }
 
         if (d.isPago()) {
-            holder.tvStatus.setText("Pago ✓");
-            holder.tvStatus.setTextColor(Color.parseColor("#34D399"));
+            // ⭐ NOVA LÓGICA: Verifica se a data de vencimento é no futuro em relação a hoje
+            if (data != null && data.after(new Date())) {
+                holder.tvStatus.setText("Adiantada ✓");
+                holder.tvStatus.setTextColor(Color.parseColor("#60A5FA")); // Azul para indicar adiantamento
+            } else {
+                holder.tvStatus.setText("Pago ✓");
+                holder.tvStatus.setTextColor(Color.parseColor("#34D399")); // Verde normal
+            }
             holder.tvValor.setTextColor(Color.parseColor("#94A3B8"));
         } else {
             holder.tvValor.setTextColor(Color.WHITE);

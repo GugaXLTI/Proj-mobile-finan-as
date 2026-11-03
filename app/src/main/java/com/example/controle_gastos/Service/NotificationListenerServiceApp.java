@@ -17,8 +17,10 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Cartao;
+import com.example.controle_gastos.model.Divida; // ⭐ NOVO IMPORT
 import com.example.controle_gastos.model.Transacao;
 import com.example.controle_gastos.utils.BancoHelper;
+import com.example.controle_gastos.utils.NotificationHelper; // ⭐ NOVO IMPORT
 import com.example.controle_gastos.utils.NubankParser;
 import com.example.controle_gastos.utils.SessionManager;
 
@@ -82,7 +84,25 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
             Log.d(TAG, "Transação salva no banco com sucesso! ID: " + id);
 
             if (id > 0) {
-                // 1. Mostra a notificação de feedback no celular
+                // ⭐ NOVO: GATILHO DO ESPIÃO INTELIGENTE (Sugestão de Pagamento)
+                if ("SAIDA".equals(novaTransacao.tipo) || "SAÍDA".equals(novaTransacao.tipo)) {
+                    double valorLido = novaTransacao.valor;
+
+                    // 1. Tenta achar uma dívida com valor exato
+                    Divida dividaParaSugerir = db.dividaDao().buscarDividaAbertaPorValor(userId, valorLido);
+
+                    // 2. Se não achou exata, tenta achar com margem de erro (R$ 30)
+                    if (dividaParaSugerir == null) {
+                        dividaParaSugerir = db.dividaDao().buscarDividaAproximadaPorValor(userId, valorLido);
+                    }
+
+                    // 3. Se achou alguma dívida compatível, dispara a notificação com o botão "Sim"
+                    if (dividaParaSugerir != null) {
+                        NotificationHelper.mostrarNotificacaoSugestao(getApplicationContext(), dividaParaSugerir, valorLido);
+                    }
+                }
+
+                // 1. Mostra a notificação de feedback no celular (comportamento antigo)
                 notificarTransacao(novaTransacao, (int) id);
 
                 // 2. Avisa a tela de Início para atualizar em tempo real

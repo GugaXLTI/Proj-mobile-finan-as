@@ -2,6 +2,7 @@ package com.example.controle_gastos.view;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -22,13 +23,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.example.controle_gastos.R;
-import com.example.controle_gastos.database.AppDatabase; // ⭐ IMPORT ADICIONADO
-import com.example.controle_gastos.model.Conta; // ⭐ IMPORT ADICIONADO
+import com.example.controle_gastos.database.AppDatabase;
+import com.example.controle_gastos.model.Conta;
+import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.utils.OnboardingStore;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.text.NumberFormat;
+import java.util.Calendar;
 import java.util.Locale;
 
 public class OnboardingActivity extends AppCompatActivity {
@@ -39,7 +46,8 @@ public class OnboardingActivity extends AppCompatActivity {
 
     private static final int PG_WELCOME = 0;
     private static final int PG_SALDO = 1;
-    private static final int PG_PERMISSAO = 2;
+    private static final int PG_CONTAS = 2;
+    private static final int PG_PERMISSAO = 3;
 
     private ViewFlipper viewFlipper;
     private MaterialButton btnAvancar;
@@ -52,11 +60,19 @@ public class OnboardingActivity extends AppCompatActivity {
     private ImageView ivStatusPermissao;
     private MaterialButton btnAutorizar;
 
+    // ⭐ Variáveis da nova tela de Contas Fixas
+    private ChipGroup chipGroupContasOnb;
+    private TextView btnOutraContaOnb;
+    private final String[] contasComuns = {
+            "Água", "Energia", "Internet", "Aluguel",
+            "Gás", "Celular", "Streaming", "Condomínio"
+    };
+
     private double saldoInicial = 0;
     private boolean editando = false;
 
     private SessionManager session;
-    private AppDatabase db; // ⭐ Variável do banco de dados
+    private AppDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +80,7 @@ public class OnboardingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_onboarding);
 
         session = new SessionManager(this);
-        db = AppDatabase.getInstance(this); // ⭐ Inicializa o banco
+        db = AppDatabase.getInstance(this);
         editando = getIntent().getBooleanExtra(EXTRA_EDITANDO, false);
 
         viewFlipper = findViewById(R.id.viewFlipperOnboarding);
@@ -79,9 +95,11 @@ public class OnboardingActivity extends AppCompatActivity {
         LayoutInflater inflater = getLayoutInflater();
         viewFlipper.addView(inflater.inflate(R.layout.item_onb_welcome, viewFlipper, false));       // 0
         viewFlipper.addView(inflater.inflate(R.layout.item_onb_saldo_inicial, viewFlipper, false)); // 1
-        viewFlipper.addView(inflater.inflate(R.layout.item_onb_permissoes, viewFlipper, false));    // 2
+        viewFlipper.addView(inflater.inflate(R.layout.item_onb_contas, viewFlipper, false));        // 2 (NOVA)
+        viewFlipper.addView(inflater.inflate(R.layout.item_onb_permissoes, viewFlipper, false));    // 3
 
         setupSaldo();
+        setupContas();
         setupPermissao();
 
         btnAvancar.setOnClickListener(v -> avancarFluxo());
@@ -118,8 +136,6 @@ public class OnboardingActivity extends AppCompatActivity {
         configurarMascaraValor(editSaldoInicial);
 
         int userId = session.getUserId();
-
-        // ⭐ CORREÇÃO: Tenta pegar do Banco (Room) primeiro, depois do OnboardingStore
         Conta conta = db.contaDao().buscarPorUsuario(userId);
         if (conta != null) {
             saldoInicial = conta.saldoInicial;
@@ -132,6 +148,20 @@ public class OnboardingActivity extends AppCompatActivity {
             editSaldoInicial.setText(formatado);
             editSaldoInicial.setSelection(formatado.length());
         }
+    }
+
+    private void setupContas() {
+        View page = viewFlipper.getChildAt(PG_CONTAS);
+        chipGroupContasOnb = page.findViewById(R.id.chipGroupContasOnb);
+        btnOutraContaOnb = page.findViewById(R.id.btnOutraContaOnb);
+
+        for (String conta : contasComuns) {
+            Chip chip = criarChipEstilizado(conta);
+            chip.setOnClickListener(v -> abrirDialogConta(conta, chip));
+            chipGroupContasOnb.addView(chip);
+        }
+
+        btnOutraContaOnb.setOnClickListener(v -> abrirDialogConta(null, null));
     }
 
     private void setupPermissao() {
@@ -158,10 +188,8 @@ public class OnboardingActivity extends AppCompatActivity {
             }
             saldoInicial = lerValor(editSaldoInicial);
 
-            // Salva no SharedPreferences (lógica antiga)
             OnboardingStore.salvarSaldoInicial(this, session.getUserId(), saldoInicial);
 
-            // ⭐ CORREÇÃO: Salva no Banco de Dados (Room) para a InicioActivity ler
             Conta contaExistente = db.contaDao().buscarPorUsuario(session.getUserId());
             if (contaExistente != null) {
                 contaExistente.saldoInicial = saldoInicial;
@@ -175,8 +203,10 @@ public class OnboardingActivity extends AppCompatActivity {
                 Toast.makeText(this, "Saldo inicial atualizado!", Toast.LENGTH_SHORT).show();
                 finish();
             } else {
-                ir(PG_PERMISSAO);
+                ir(PG_CONTAS); // Vai para a tela de contas fixas
             }
+        } else if (atual == PG_CONTAS) {
+            ir(PG_PERMISSAO); // Avança para permissão
         } else {
             concluirOnboarding();
         }
@@ -185,6 +215,10 @@ public class OnboardingActivity extends AppCompatActivity {
     private boolean voltarFluxo() {
         int atual = viewFlipper.getDisplayedChild();
         if (atual == PG_PERMISSAO) {
+            ir(PG_CONTAS);
+            return true;
+        }
+        if (atual == PG_CONTAS) {
             ir(PG_SALDO);
             return true;
         }
@@ -213,15 +247,17 @@ public class OnboardingActivity extends AppCompatActivity {
         tvPasso.setVisibility(mostrarProgresso ? View.VISIBLE : View.INVISIBLE);
 
         if (mostrarProgresso) {
-            int atual = (pagina == PG_SALDO) ? 1 : 2;
-            montarProgresso(2, atual);
-            tvPasso.setText("Passo " + atual + " de 2");
+            int atual = (pagina == PG_SALDO) ? 1 : (pagina == PG_CONTAS ? 2 : 3);
+            montarProgresso(3, atual);
+            tvPasso.setText("Passo " + atual + " de 3");
         }
 
         if (pagina == PG_WELCOME) {
             btnAvancar.setText("Começar");
         } else if (pagina == PG_SALDO) {
             btnAvancar.setText(editando ? "Salvar" : "Continuar");
+        } else if (pagina == PG_CONTAS) {
+            btnAvancar.setText("Continuar");
         } else {
             btnAvancar.setText(notificacoesAutorizadas() ? "Concluir" : "Pular por enquanto");
         }
@@ -247,6 +283,102 @@ public class OnboardingActivity extends AppCompatActivity {
 
         if (pagina == PG_PERMISSAO) {
             btnAvancar.setText(notificacoesAutorizadas() ? "Concluir" : "Pular por enquanto");
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // LÓGICA DE CONTAS FIXAS (DIALOG E SALVAMENTO)
+    // ------------------------------------------------------------------
+    private Chip criarChipEstilizado(String texto) {
+        Chip chip = new Chip(this);
+        chip.setText(texto);
+        chip.setCheckable(true);
+        chip.setClickable(true);
+
+        int[][] states = new int[][] { new int[] {android.R.attr.state_checked}, new int[] {} };
+        int[] colors = new int[] { Color.parseColor("#123D33"), Color.parseColor("#111A2E") };
+        chip.setChipBackgroundColor(new ColorStateList(states, colors));
+
+        int[] textColors = new int[] { Color.parseColor("#34D399"), Color.parseColor("#E2E8F0") };
+        chip.setTextColor(new ColorStateList(states, textColors));
+
+        chip.setChipStrokeColor(ColorStateList.valueOf(Color.parseColor("#1E2A44")));
+        chip.setChipStrokeWidth(2f);
+        chip.setChipCornerRadius(24f);
+        return chip;
+    }
+
+    private void abrirDialogConta(String nomeContaPadrao, Chip chipVisual) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_quick_conta, null);
+
+        TextView tvTitulo = dialogView.findViewById(R.id.tvTituloDialogConta);
+        TextInputLayout tilNome = dialogView.findViewById(R.id.tilNomeConta);
+        com.google.android.material.textfield.TextInputEditText editNome = dialogView.findViewById(R.id.editNomeConta);
+        com.google.android.material.textfield.TextInputEditText editValor = dialogView.findViewById(R.id.editValorConta);
+        com.google.android.material.textfield.TextInputEditText editDia = dialogView.findViewById(R.id.editDiaVencimento);
+
+        if (nomeContaPadrao != null) {
+            tvTitulo.setText("Adicionar " + nomeContaPadrao);
+            tilNome.setVisibility(View.GONE);
+        } else {
+            tvTitulo.setText("Nova Conta");
+            tilNome.setVisibility(View.VISIBLE);
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .setPositiveButton("Adicionar", (dialog, which) -> {
+                    String nome = (nomeContaPadrao != null) ? nomeContaPadrao : editNome.getText().toString().trim();
+                    String valorStr = editValor.getText().toString().trim().replace(",", ".");
+                    String diaStr = editDia.getText().toString().trim();
+
+                    if (nome.isEmpty() || valorStr.isEmpty() || diaStr.isEmpty()) {
+                        Toast.makeText(this, "Preencha todos os campos.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    try {
+                        double valor = Double.parseDouble(valorStr);
+                        int diaVencimento = Integer.parseInt(diaStr);
+
+                        if (diaVencimento < 1 || diaVencimento > 31) {
+                            Toast.makeText(this, "Dia inválido. Use entre 1 e 31.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        salvarContaFixaNoBanco(nome, valor, diaVencimento);
+                        if (chipVisual != null) chipVisual.setChecked(true);
+
+                        // ⭐ Mensagem atualizada para tranquilizar o usuário
+                        Toast.makeText(this, nome + " adicionada! Você pode ajustar o valor a qualquer momento.", Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Valor ou dia inválido.", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void salvarContaFixaNoBanco(String nome, double valor, int diaVencimento) {
+        int grupoId = db.dividaDao().maxGrupoId() + 1;
+
+        Calendar cBase = Calendar.getInstance();
+        if (cBase.get(Calendar.DAY_OF_MONTH) > diaVencimento) {
+            cBase.add(Calendar.MONTH, 1);
+        }
+        cBase.set(Calendar.DAY_OF_MONTH, diaVencimento);
+
+        // Cria 12 meses de uma vez
+        for (int i = 0; i < 12; i++) {
+            Calendar cParcela = (Calendar) cBase.clone();
+            cParcela.add(Calendar.MONTH, i);
+            String vencParcela = String.format(LOCALE_BR, "%02d/%02d/%04d",
+                    cParcela.get(Calendar.DAY_OF_MONTH), cParcela.get(Calendar.MONTH) + 1, cParcela.get(Calendar.YEAR));
+
+            String numeroParcela = (i + 1) + "/12";
+
+            Divida parcela = new Divida(session.getUserId(), grupoId, nome, valor, valor, 0.0, "Conta Fixa", "Contas Fixas", numeroParcela, vencParcela, false, false);
+            db.dividaDao().inserir(parcela);
         }
     }
 

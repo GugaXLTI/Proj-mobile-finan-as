@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tvTituloDialogConta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nova Conta"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilNomeConta"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nome da conta (ex: Academia)"
+        android:visibility="gone"
+        android:layout_marginBottom="12dp"
+        app:boxStrokeColor="#10B981"
+        app:hintTextColor="#10B981">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editNomeConta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- ⭐ ALTERADO: Valor Estimado com Helper Text -->
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Valor estimado (R$)"
+        android:layout_marginBottom="16dp"
+        app:boxStrokeColor="#10B981"
+        app:hintTextColor="#10B981"
+        app:helperText="Não se preocupe se variar. Você poderá editar na tela de Dívidas quando a conta chegar."
+        app:helperTextTextColor="#94A3B8">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editValorConta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:textColor="#FFFFFF" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Dia do Vencimento (ex: 5)"
+        app:boxStrokeColor="#10B981"
+        app:hintTextColor="#10B981">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editDiaVencimento"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:maxLength="2"
+            android:textColor="#FFFFFF" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+</LinearLayout>

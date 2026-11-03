@@ -148,7 +148,7 @@ public class InicioActivity extends AppCompatActivity {
         }
 
         atualizarNomeEAvatar();
-        atualizarDataAtual(); // ⭐ Adicionado aqui
+        atualizarDataAtual();
 
         try {
             carregarDados();
@@ -168,7 +168,6 @@ public class InicioActivity extends AppCompatActivity {
         agendarLembretesFinanceiros();
     }
 
-    // ⭐ NOVO MÉTODO: Atualiza a data no topo da tela
     private void atualizarDataAtual() {
         if (tvDataAtualInicio != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("MMMM 'de' yyyy", LOCALE_BR);
@@ -256,7 +255,7 @@ public class InicioActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         atualizarNomeEAvatar();
-        atualizarDataAtual(); // ⭐ Adicionado aqui também
+        atualizarDataAtual();
         try {
             carregarDados();
             atualizarDashboardFinanceiro();
@@ -287,9 +286,10 @@ public class InicioActivity extends AppCompatActivity {
         double entradas = db.transacaoDao().somarEntradas(session.getUserId());
         double saidasAuto = db.transacaoDao().somarSaidas(session.getUserId());
 
-        double gastosManuaisPagos = db.dividaDao().somarGastosPagosDoMes(session.getUserId(), mesAnoAtual);
+        double gastosManuaisPagosTotal = db.dividaDao().somarGastosPagosTotal(session.getUserId());
+        double gastosManuaisPagosMes = db.dividaDao().somarGastosPagosDoMes(session.getUserId(), mesAnoAtual);
 
-        double saldoEmConta = saldoInicial + entradas - saidasAuto - gastosManuaisPagos;
+        double saldoEmConta = saldoInicial + entradas - saidasAuto - gastosManuaisPagosTotal;
         saldoAtual = saldoEmConta;
 
         if (tvTituloSaldo != null) tvTituloSaldo.setText("SALDO EM CONTA");
@@ -303,7 +303,7 @@ public class InicioActivity extends AppCompatActivity {
         } else {
             if (btnToggleSaldo != null) btnToggleSaldo.setImageResource(R.drawable.ic_eye_open);
             if (tvSalarioTotalInicio != null) tvSalarioTotalInicio.setText(moeda(entradas));
-            if (tvGastosMesInicio != null) tvGastosMesInicio.setText(moeda(gastosManuaisPagos + saidasAuto));
+            if (tvGastosMesInicio != null) tvGastosMesInicio.setText(moeda(gastosManuaisPagosMes + saidasAuto));
             if (tvSaldoDisponivelInicio != null) {
                 tvSaldoDisponivelInicio.setText(moeda(saldoEmConta));
                 tvSaldoDisponivelInicio.setTextColor(Color.parseColor(saldoEmConta < 0 ? "#F87171" : "#34D399"));
@@ -312,7 +312,7 @@ public class InicioActivity extends AppCompatActivity {
 
         if (progressOrcamento != null) {
             if (saldoInicial > 0) {
-                int pct = (int) (((gastosManuaisPagos + saidasAuto) / saldoInicial) * 100);
+                int pct = (int) (((gastosManuaisPagosTotal + saidasAuto) / saldoInicial) * 100);
                 progressOrcamento.setProgress(Math.min(pct, 100));
             } else {
                 progressOrcamento.setProgress(0);
@@ -329,20 +329,19 @@ public class InicioActivity extends AppCompatActivity {
     }
 
     private void atualizarTotais() {
-        double totalAPagar = 0;
-        double totalPago = 0;
-        totalVencendoMes = 0;
-        contasDoMes.clear();
-
         Calendar c = Calendar.getInstance();
         int mesAtual = c.get(Calendar.MONTH) + 1;
         int anoAtual = c.get(Calendar.YEAR);
+
+        double totalPago = 0;
+        totalVencendoMes = 0;
+        contasDoMes.clear();
 
         for (Divida d : dividas) {
             if (d.isPago()) {
                 totalPago += d.getValorTotal();
             } else {
-                totalAPagar += d.getValorRestante();
+                // Só entra na conta o que vence no mês atual
                 if (venceNoMes(d.getVencimento(), mesAtual, anoAtual)) {
                     totalVencendoMes += d.getValorRestante();
                     contasDoMes.add(d);
@@ -352,7 +351,8 @@ public class InicioActivity extends AppCompatActivity {
 
         contasDoMes.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
 
-        if (tvTotalDividasInicio != null) tvTotalDividasInicio.setText(moeda(totalAPagar));
+        // ⭐ MÁGICA AQUI: Agora o "Dívidas em aberto" mostra APENAS o que vence no mês
+        if (tvTotalDividasInicio != null) tvTotalDividasInicio.setText(moeda(totalVencendoMes));
         if (tvTotalPagoInicio != null) tvTotalPagoInicio.setText(moeda(totalPago));
     }
 

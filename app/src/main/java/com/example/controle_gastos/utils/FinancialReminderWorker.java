@@ -9,7 +9,9 @@ import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Divida;
 
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -41,10 +43,35 @@ public class FinancialReminderWorker extends Worker {
             return Result.success();
         }
 
-        // ⭐ CORREÇÃO AQUI: Trocado Locale.BR por new Locale("pt", "BR")
         Locale localeBR = new Locale("pt", "BR");
-        String mesAnoAtual = String.format(localeBR, "%02d/%04d", cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR));
+        NumberFormat nf = NumberFormat.getCurrencyInstance(localeBR);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", localeBR);
 
+        // ⭐ 1. NOVA PRIORIDADE: Checar dívidas atrasadas não pagas
+        List<Divida> dividasAbertas = db.dividaDao().listarAbertasParaChecarAtraso(userId);
+        Divida dividaAtrasada = null;
+
+        Date hoje = new Date();
+        for (Divida d : dividasAbertas) {
+            try {
+                Date vencimento = sdf.parse(d.getVencimento());
+                if (vencimento != null && vencimento.before(hoje)) {
+                    dividaAtrasada = d;
+                    break; // Pega a primeira que encontrar para não lotar de notificações
+                }
+            } catch (Exception e) {
+                // Ignora erros de data
+            }
+        }
+
+        if (dividaAtrasada != null) {
+            // Manda a notificação de "Você já pagou?"
+            NotificationHelper.mostrarNotificacaoAtraso(context, dividaAtrasada.getTitulo(), dividaAtrasada.getVencimento());
+            return Result.success(); // Se achou atrasada, encerra o worker para não mandar insight no mesmo dia
+        }
+
+        // ⭐ 2. Se não tem atrasadas, segue a lógica normal de Insights
+        String mesAnoAtual = String.format(localeBR, "%02d/%04d", cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR));
         List<Divida> todasDividas = db.dividaDao().listarPorUsuario(userId);
 
         Map<String, Double> gastosPorCategoria = new HashMap<>();
@@ -73,8 +100,6 @@ public class FinancialReminderWorker extends Worker {
                 categoriaTop = entry.getKey();
             }
         }
-
-        NumberFormat nf = NumberFormat.getCurrencyInstance(localeBR);
 
         if (categoriaTop != null && totalGasto > 0) {
             String msgInsight = "Você sabia que já gastou " + nf.format(valorTop) + " em " + categoriaTop + " este mês?";

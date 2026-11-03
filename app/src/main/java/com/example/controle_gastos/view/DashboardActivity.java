@@ -20,6 +20,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -112,11 +113,22 @@ public class DashboardActivity extends AppCompatActivity {
     private int anoSelecionado;
     private int mesesVisiveis = PERIODO_PADRAO;
     private String categoriaAtual = "Todos";
+    private boolean ehMesAtual = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Intent intent = new Intent(DashboardActivity.this, InicioActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+            }
+        });
 
         NavScrollHelper.attach(this);
         BottomNavHelper.configurar(this, BottomNavHelper.RELATORIOS);
@@ -180,12 +192,23 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void carregarDados() {
+        Calendar hoje = Calendar.getInstance();
+        ehMesAtual = (mesSelecionado == hoje.get(Calendar.MONTH) + 1) && (anoSelecionado == hoje.get(Calendar.YEAR));
+
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
         todasDividas = new ArrayList<>();
 
         for (Divida d : todas) {
-            if (pertenceAoMes(d, mesSelecionado, anoSelecionado)) {
-                todasDividas.add(d);
+            boolean venceNesteMes = pertenceAoMes(d, mesSelecionado, anoSelecionado);
+
+            if (ehMesAtual) {
+                if (venceNesteMes || d.isPago()) {
+                    todasDividas.add(d);
+                }
+            } else {
+                if (venceNesteMes && !d.isPago()) {
+                    todasDividas.add(d);
+                }
             }
         }
         todasDividas.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
@@ -206,15 +229,10 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void atualizarTituloMes() {
         tvMesAtualDash.setText(MESES[mesSelecionado - 1] + " " + anoSelecionado);
-
-        Calendar c = Calendar.getInstance();
-        boolean ehMesAtual = mesSelecionado == c.get(Calendar.MONTH) + 1
-                && anoSelecionado == c.get(Calendar.YEAR);
         tvBadgeAtualDash.setVisibility(ehMesAtual ? View.VISIBLE : View.INVISIBLE);
     }
 
     private void atualizarBalancoMensal() {
-        // 1. Verifica se o mês está completamente vazio
         if (todasDividas.isEmpty() && transacoesFiltradas.isEmpty()) {
             tvSalarioDash.setText("Sem dados");
             tvGastosDash.setText("Sem dados");
@@ -225,7 +243,6 @@ public class DashboardActivity extends AppCompatActivity {
             return;
         }
 
-        // 2. Calcula gastos TOTAIS (para o gráfico) e PAGOS (para o saldo real)
         double gastosTotais = 0;
         double gastosPagos = 0;
         for (Divida d : todasDividas) {
@@ -235,25 +252,19 @@ public class DashboardActivity extends AppCompatActivity {
             }
         }
 
-        // Adiciona as transações automáticas do espião
         for (Transacao t : transacoesFiltradas) {
             if ("SAIDA".equals(t.getTipo()) || "SAÍDA".equals(t.getTipo())) {
                 gastosTotais += t.getValor();
-                gastosPagos += t.getValor(); // O espião só lê o que já aconteceu, logo é pago
+                gastosPagos += t.getValor();
             }
         }
 
-        // 3. Entradas do mês
         double entradasMes = 0;
         for (Transacao t : transacoesFiltradas) {
             if ("ENTRADA".equals(t.getTipo())) {
                 entradasMes += t.getValor();
             }
         }
-
-        // 4. Base de cálculo
-        Calendar hoje = Calendar.getInstance();
-        boolean ehMesAtual = (mesSelecionado == hoje.get(Calendar.MONTH) + 1) && (anoSelecionado == hoje.get(Calendar.YEAR));
 
         double baseCalculo = entradasMes;
         if (ehMesAtual) {
@@ -265,7 +276,6 @@ public class DashboardActivity extends AppCompatActivity {
         tvSalarioDash.setText(moeda(baseCalculo));
         tvGastosDash.setText(moeda(gastosTotais));
 
-        // 5. Calcula o Saldo Real e ajusta a legenda
         if (baseCalculo > 0) {
             double saldoReal = baseCalculo - gastosPagos;
             tvSaldoDash.setText(moeda(saldoReal));
@@ -281,7 +291,6 @@ public class DashboardActivity extends AppCompatActivity {
                 tvBalancoCaption.setText(pct + "% do orçamento comprometido");
             }
         } else {
-            // Meses futuros que não têm saldo base nem entradas
             tvSaldoDash.setText(moeda(0));
             tvSaldoDash.setTextColor(Color.parseColor("#64748B"));
             progressBalanco.setProgress(0);
@@ -536,6 +545,10 @@ public class DashboardActivity extends AppCompatActivity {
         c.set(anoSelecionado, mesSelecionado - 1, 1);
         c.add(Calendar.MONTH, -mesesPassados);
 
+        Calendar hoje = Calendar.getInstance();
+        int mesHoje = hoje.get(Calendar.MONTH) + 1;
+        int anoHoje = hoje.get(Calendar.YEAR);
+
         List<Entry> entries = new ArrayList<>();
         final List<String> labelsMeses = new ArrayList<>();
         String[] nomesMeses = {"Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -547,10 +560,27 @@ public class DashboardActivity extends AppCompatActivity {
             int mesRef = c.get(Calendar.MONTH) + 1;
             int anoRef = c.get(Calendar.YEAR);
 
+            boolean isCurrent = (mesRef == mesHoje && anoRef == anoHoje);
+            boolean isFuture = (anoRef > anoHoje) || (anoRef == anoHoje && mesRef > mesHoje);
+
             double totalMes = 0;
             for (Divida d : todas) {
-                if (pertenceAoMes(d, mesRef, anoRef) && d.isPago()) {
-                    totalMes += d.getValorTotal();
+                // ⭐ LÓGICA CORRIGIDA PARA O GRÁFICO DE EVOLUÇÃO ⭐
+                if (isCurrent) {
+                    // Mês Atual: Soma tudo que foi pago (mesmo adiantado) + o que vence e não foi pago
+                    if (d.isPago() || pertenceAoMes(d, mesRef, anoRef)) {
+                        totalMes += d.getValorTotal();
+                    }
+                } else if (isFuture) {
+                    // Meses Futuros: Soma APENAS o que vence no mês E ainda não foi pago
+                    if (pertenceAoMes(d, mesRef, anoRef) && !d.isPago()) {
+                        totalMes += d.getValorTotal();
+                    }
+                } else {
+                    // Meses Passados: Soma pelo vencimento
+                    if (pertenceAoMes(d, mesRef, anoRef)) {
+                        totalMes += d.getValorTotal();
+                    }
                 }
             }
 

@@ -44,13 +44,13 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
     private List<Categoria> categorias;
     private List<Integer> contagens;
 
-    // Cor selecionada atualmente
     private String corSelecionada = "#A855F7";
 
-    // Paleta de cores
+    // ⭐ 12 Cores para ficar igual à tela de Dívidas
     private final String[] CORES = {
-            "#A855F7", "#10B981", "#F59E0B", "#EC4899",
-            "#EF4444", "#3B82F6", "#06B6D4", "#64748B"
+            "#10B981", "#34D399", "#3B82F6", "#06B6D4",
+            "#F59E0B", "#FCD34D", "#EF4444", "#EC4899",
+            "#8B5CF6", "#A855F7", "#64748B", "#94A3B8"
     };
 
     @Override
@@ -61,10 +61,8 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
 
-        // Popula categorias padrão na primeira vez
         CategoriaSeeder.popularSeVazio(this, session.getUserId());
 
-        // Vincula componentes
         rvCategorias = findViewById(R.id.rvCategorias);
         editNomeCategoria = findViewById(R.id.editNomeCategoria);
         tvPreviaTag = findViewById(R.id.tvPreviaTag);
@@ -80,10 +78,8 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
 
         rvCategorias.setLayoutManager(new LinearLayoutManager(this));
 
-        // Cria os círculos de cores
         criarPaletaCores();
 
-        // Atualiza a prévia quando o usuário digita
         editNomeCategoria.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -98,13 +94,10 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
             }
         });
 
-        // Botão Salvar
         btnSalvarCategoria.setOnClickListener(v -> salvarCategoria());
 
-        // Botão Voltar
         btnVoltar.setOnClickListener(v -> finish());
 
-        // Navegação
         tabInicio.setOnClickListener(v -> {
             startActivity(new Intent(CategoriasActivity.this, InicioActivity.class));
             finish();
@@ -125,16 +118,19 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
             finish();
         });
 
-        // Carrega as categorias
         carregarCategorias();
     }
 
     private void criarPaletaCores() {
+        containerCores.removeAllViews();
+
         for (String cor : CORES) {
             View circulo = new View(this);
             int tamanho = (int) (32 * getResources().getDisplayMetrics().density);
+
+            // Usando LinearLayout.LayoutParams mas com margens menores para caber 12 cores
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(tamanho, tamanho);
-            params.setMargins(8, 0, 8, 0);
+            params.setMargins(4, 0, 4, 0);
             circulo.setLayoutParams(params);
 
             GradientDrawable drawable = new GradientDrawable();
@@ -151,7 +147,6 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
             circulo.setTag(cor);
             containerCores.addView(circulo);
         }
-        // Marca a primeira cor como selecionada
         destacarCorSelecionada();
         atualizarCorPrevia();
     }
@@ -165,7 +160,6 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
             drawable.setColor(Color.parseColor(corDoView));
 
             if (corDoView.equals(corSelecionada)) {
-                // Selecionada: borda branca grossa
                 drawable.setStroke(4, Color.WHITE);
             } else {
                 drawable.setStroke(0, Color.TRANSPARENT);
@@ -182,8 +176,6 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
             drawable.setColor(Color.parseColor(corSelecionada));
             drawable.setStroke(1, Color.parseColor("#334155"));
             tvPreviaTag.setBackground(drawable);
-
-            // Ajusta cor do texto conforme o fundo (simples)
             tvPreviaTag.setTextColor(Color.WHITE);
         } catch (Exception e) {
             // fallback
@@ -198,14 +190,12 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
             return;
         }
 
-        // Verifica se já existe
         Categoria existente = db.categoriaDao().buscarPorNome(session.getUserId(), nome);
         if (existente != null) {
             Toast.makeText(this, "Já existe uma categoria com esse nome!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Cria a nova categoria
         Categoria nova = new Categoria(session.getUserId(), nome, corSelecionada);
         long id = db.categoriaDao().inserir(nova);
 
@@ -232,15 +222,10 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
         rvCategorias.setAdapter(adapter);
     }
 
-    /**
-     * ⭐ Bloqueia a exclusão se a categoria estiver em uso por dívidas.
-     * Se não estiver em uso, exclui normalmente.
-     */
     @Override
     public void onExcluirClick(Categoria categoria) {
         int count = db.categoriaDao().contarDividasPorCategoria(session.getUserId(), categoria.getNome());
 
-        // ⭐ Se houver dívidas usando essa categoria, BLOQUEIA a exclusão
         if (count > 0) {
             String textoDividas = count == 1 ? "1 dívida" : count + " dívidas";
 
@@ -254,7 +239,6 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
             return;
         }
 
-        // ⭐ Se não houver dívidas, permite excluir normalmente
         new AlertDialog.Builder(this)
                 .setTitle("Excluir categoria")
                 .setMessage("Tem certeza que deseja excluir \"" + categoria.getNome() + "\"?")

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#111A2E"
+    android:orientation="vertical"
+    android:paddingTop="24dp"
+    android:paddingBottom="32dp">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="20dp"
+        android:background="#334155" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="24dp"
+        android:text="Filtrar por Categoria"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:maxHeight="350dp">
+
+        <LinearLayout
+            android:id="@+id/llCategoriasBottomSheet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp" />
+    </ScrollView>
+
+    <!-- ⭐ NOVO: Botão de Adicionar Categoria -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="#1E2A44" />
+
+    <TextView
+        android:id="@+id/btnAdicionarCategoriaSheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:paddingHorizontal="40dp"
+        android:paddingVertical="20dp"
+        android:text="+ Adicionar nova categoria"
+        android:textColor="#34D399"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

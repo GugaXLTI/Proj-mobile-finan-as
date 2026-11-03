@@ -7,17 +7,14 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.DividaAgrupada;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -25,8 +22,7 @@ import java.util.Locale;
 public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder> {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
-
-    private final List<DividaAgrupada> listaAgrupada;
+    private final List<DividaAgrupada> lista;
     private final OnDividaActionListener listener;
 
     public interface OnDividaActionListener {
@@ -35,167 +31,120 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         void onPagarClick(DividaAgrupada agrupada);
     }
 
-    public DividaAdapter(List<DividaAgrupada> listaAgrupada, OnDividaActionListener listener) {
-        this.listaAgrupada = listaAgrupada;
+    public DividaAdapter(List<DividaAgrupada> lista, OnDividaActionListener listener) {
+        this.lista = lista;
         this.listener = listener;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_divida, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_divida, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        DividaAgrupada agrupada = listaAgrupada.get(position);
-        Divida proxima = agrupada.getProximaParcela();
+        DividaAgrupada agrupada = lista.get(position);
+
+        // ⭐ AQUI ESTÁ A MUDANÇA: Usa o novo método
+        Divida proxima = agrupada.getParcelaParaLista();
+
+        if (proxima == null) return;
 
         holder.tvTitulo.setText(agrupada.getTitulo());
-        holder.tvDetalhe.setText(montarDetalhe(agrupada));
+        holder.tvDetalhe.setText(montarDetalhe(proxima));
+
+        NumberFormat nf = NumberFormat.getCurrencyInstance(LOCALE_BR);
+        holder.tvValor.setText(nf.format(proxima.getValorTotal()));
+
+        try {
+            Date data = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR).parse(proxima.getVencimento());
+            if (data != null) {
+                holder.tvMes.setText(new SimpleDateFormat("MMM", LOCALE_BR).format(data).replace(".", "").toUpperCase(LOCALE_BR));
+                holder.tvDia.setText(new SimpleDateFormat("dd", LOCALE_BR).format(data));
+            }
+        } catch (Exception ignored) {}
+
         holder.tvParcela.setText("Parcela " + proxima.getParcela());
 
-        // Data (bloco mês/dia) + texto de vencimento
-        SimpleDateFormat sdfData = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR);
-        Date data = null;
-        try {
-            data = sdfData.parse(proxima.getVencimento());
-        } catch (Exception ignored) {
-        }
+        int total = agrupada.getTotalParcelas();
+        int pagas = agrupada.getParcelasPagas();
+        holder.tvProgresso.setText("Pagas: " + pagas + " de " + total);
 
-        if (data != null) {
-            holder.tvMes.setText(new SimpleDateFormat("MMM", LOCALE_BR)
-                    .format(data).replace(".", "").toUpperCase(LOCALE_BR));
-            holder.tvDia.setText(new SimpleDateFormat("dd", LOCALE_BR).format(data));
-        } else {
-            holder.tvMes.setText("--");
-            holder.tvDia.setText("--");
+        if (holder.progressBar != null) {
+            holder.progressBar.setMax(total);
+            holder.progressBar.setProgress(pagas);
         }
-
-        // Valor restante total do grupo
-        holder.tvValor.setText(moeda(agrupada.getValorRestanteGrupo()));
 
         if (agrupada.isTotalmentePago()) {
-            holder.itemView.setAlpha(0.75f);
-            holder.tvValor.setTextColor(Color.parseColor("#94A3B8"));
-            holder.tvVencimento.setText("Paga ✓");
-            holder.tvVencimento.setTextColor(Color.parseColor("#34D399"));
-
-            holder.btnPagar.setText("Pago ✓");
-            holder.btnPagar.setTextColor(Color.parseColor("#34D399"));
-            holder.btnPagar.setBackgroundResource(R.drawable.bg_botao_pago);
-            holder.btnPagar.setEnabled(false);
+            holder.tvStatus.setText("Pago ✓");
+            holder.tvStatus.setTextColor(Color.parseColor("#34D399"));
+            holder.btnPagar.setVisibility(View.GONE);
         } else {
-            holder.itemView.setAlpha(1f);
-            holder.tvValor.setTextColor(Color.WHITE);
-            definirTextoVencimento(holder.tvVencimento, data);
-
-            holder.btnPagar.setText("Pagar");
-            holder.btnPagar.setTextColor(Color.parseColor("#052E22"));
-            holder.btnPagar.setBackgroundResource(R.drawable.bg_botao_pagar);
-            holder.btnPagar.setEnabled(true);
+            holder.btnPagar.setVisibility(View.VISIBLE);
+            if (isAtrasada(proxima.getVencimento())) {
+                holder.tvStatus.setText("Atrasada");
+                holder.tvStatus.setTextColor(Color.parseColor("#F87171"));
+            } else {
+                holder.tvStatus.setText("Vence em " + calcularDias(proxima.getVencimento()) + " dias");
+                holder.tvStatus.setTextColor(Color.parseColor("#F59E0B"));
+            }
         }
 
-        // Progresso das parcelas
-        int totalParcelas = agrupada.getTotalParcelas();
-        if (totalParcelas > 1) {
-            int pagas = agrupada.getParcelasPagas();
-            holder.llParcelas.setVisibility(View.VISIBLE);
-            holder.tvProgresso.setText("Pagas: " + pagas + " de " + totalParcelas);
-            holder.progressParcelas.setProgress(Math.min(100, (pagas * 100) / totalParcelas));
-        } else {
-            holder.llParcelas.setVisibility(View.GONE);
-        }
-
-        holder.btnExcluir.setOnClickListener(v -> {
-            if (listener != null) listener.onExcluirClick(agrupada);
-        });
-        holder.btnEditar.setOnClickListener(v -> {
-            if (listener != null) listener.onEditarClick(agrupada);
-        });
-        holder.btnPagar.setOnClickListener(v -> {
-            if (listener != null && !agrupada.isTotalmentePago()) listener.onPagarClick(agrupada);
-        });
+        holder.btnPagar.setOnClickListener(v -> listener.onPagarClick(agrupada));
+        holder.btnEditar.setOnClickListener(v -> listener.onEditarClick(agrupada));
+        holder.btnExcluir.setOnClickListener(v -> listener.onExcluirClick(agrupada));
     }
 
     @Override
-    public int getItemCount() {
-        return listaAgrupada.size();
-    }
+    public int getItemCount() { return lista.size(); }
 
-    private String montarDetalhe(DividaAgrupada a) {
-        String banco = a.getBanco() == null ? "" : a.getBanco().trim();
-        String categoria = a.getCategoria() == null ? "" : a.getCategoria().trim();
+    private String montarDetalhe(Divida d) {
+        String banco = d.getBanco() == null ? "" : d.getBanco().trim();
+        String categoria = d.getCategoria() == null ? "" : d.getCategoria().trim();
         if (!banco.isEmpty() && !categoria.isEmpty()) return banco + " · " + categoria;
         if (!banco.isEmpty()) return banco;
-        return categoria;
+        if (!categoria.isEmpty()) return categoria;
+        return "Sem detalhes";
     }
 
-    private String moeda(double valor) {
-        return NumberFormat.getCurrencyInstance(LOCALE_BR).format(valor);
+    private boolean isAtrasada(String vencimento) {
+        try {
+            Date data = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR).parse(vencimento);
+            return data != null && data.before(new Date());
+        } catch (Exception e) { return false; }
     }
 
-    private void definirTextoVencimento(TextView tv, Date data) {
-        if (data == null) {
-            tv.setText("");
-            return;
-        }
-        long dias = diasAte(data);
-        if (dias < 0) {
-            tv.setText(dias == -1 ? "Venceu ontem" : "Venceu há " + (-dias) + " dias");
-            tv.setTextColor(Color.parseColor("#F87171"));
-        } else if (dias == 0) {
-            tv.setText("Vence hoje");
-            tv.setTextColor(Color.parseColor("#F59E0B"));
-        } else if (dias == 1) {
-            tv.setText("Vence amanhã");
-            tv.setTextColor(Color.parseColor("#F59E0B"));
-        } else {
-            tv.setText("Vence em " + dias + " dias");
-            tv.setTextColor(Color.parseColor(dias <= 5 ? "#F59E0B" : "#94A3B8"));
-        }
-    }
-
-    private long diasAte(Date data) {
-        Calendar hoje = Calendar.getInstance();
-        zerarHora(hoje);
-        Calendar alvo = Calendar.getInstance();
-        alvo.setTime(data);
-        zerarHora(alvo);
-        return Math.round((alvo.getTimeInMillis() - hoje.getTimeInMillis()) / 86400000.0);
-    }
-
-    private void zerarHora(Calendar c) {
-        c.set(Calendar.HOUR_OF_DAY, 0);
-        c.set(Calendar.MINUTE, 0);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
+    private long calcularDias(String vencimento) {
+        try {
+            Date data = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR).parse(vencimento);
+            if (data == null) return 0;
+            long diff = data.getTime() - new Date().getTime();
+            return Math.max(0, diff / (1000 * 60 * 60 * 24));
+        } catch (Exception e) { return 0; }
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitulo, tvValor, tvDetalhe, tvParcela, tvVencimento;
-        TextView tvMes, tvDia, tvProgresso, btnPagar;
-        ImageView btnExcluir, btnEditar;
-        View llParcelas;
-        ProgressBar progressParcelas;
+        TextView tvTitulo, tvValor, tvDetalhe, tvParcela, tvStatus, tvMes, tvDia, tvProgresso;
+        ProgressBar progressBar;
+        ImageView btnEditar, btnExcluir;
+        TextView btnPagar;
 
         ViewHolder(View itemView) {
             super(itemView);
             tvTitulo = itemView.findViewById(R.id.tvTituloDivida);
-            tvValor = itemView.findViewById(R.id.tvValorRestante);
             tvDetalhe = itemView.findViewById(R.id.tvDetalheDivida);
-            tvParcela = itemView.findViewById(R.id.tvParcela);
-            tvVencimento = itemView.findViewById(R.id.tvVencimento);
+            tvValor = itemView.findViewById(R.id.tvValorRestante);
+            tvStatus = itemView.findViewById(R.id.tvVencimento);
             tvMes = itemView.findViewById(R.id.tvMesDivida);
             tvDia = itemView.findViewById(R.id.tvDiaDivida);
+            tvParcela = itemView.findViewById(R.id.tvParcela);
             tvProgresso = itemView.findViewById(R.id.tvProgressoParcelas);
-            llParcelas = itemView.findViewById(R.id.llParcelas);
-            progressParcelas = itemView.findViewById(R.id.progressParcelas);
-            btnExcluir = itemView.findViewById(R.id.btnExcluir);
-            btnEditar = itemView.findViewById(R.id.btnEditar);
+            progressBar = itemView.findViewById(R.id.progressParcelas);
             btnPagar = itemView.findViewById(R.id.btnPagar);
+            btnEditar = itemView.findViewById(R.id.btnEditar);
+            btnExcluir = itemView.findViewById(R.id.btnExcluir);
         }
     }
 }

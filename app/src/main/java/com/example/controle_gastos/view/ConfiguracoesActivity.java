@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -52,6 +53,17 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_configuracoes);
+
+        // ⭐ Botão Voltar Customizado
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Intent intent = new Intent(ConfiguracoesActivity.this, InicioActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+            }
+        });
 
         NavScrollHelper.attach(this);
 
@@ -208,10 +220,10 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     }
 
     private void mostrarDialogoBackup() {
+        // ⭐ ALTERADO: Removida a opção "Limpar tudo (testes)"
         String[] opcoes = {
                 "Exportar backup (JSON)",
-                "Restaurar backup",
-                "Limpar tudo (testes)"
+                "Restaurar backup"
         };
 
         new MaterialAlertDialogBuilder(this)
@@ -221,8 +233,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
                         exportarBackup();
                     } else if (which == 1) {
                         solicitarArquivoBackup();
-                    } else {
-                        mostrarDialogoLimparTudo();
                     }
                 })
                 .setNegativeButton("Cancelar", null)
@@ -342,21 +352,5 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         Toast.makeText(this, "Biometria desativada.", Toast.LENGTH_SHORT).show();
     }
 
-    private void mostrarDialogoLimparTudo() {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Limpar tudo (testes)")
-                .setMessage("Esta opção apaga TODAS as dívidas, transações e usuários cadastrados. Use apenas para testes. Tem certeza?")
-                .setPositiveButton("Sim, limpar tudo", (dialog, which) -> {
-                    db.clearAllTables();
-                    OnboardingStore.limparTudo(this);
-                    session.logout();
-                    Toast.makeText(this, "Banco de dados limpo com sucesso!", Toast.LENGTH_LONG).show();
-                    Intent intent = new Intent(ConfiguracoesActivity.this, LoginActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    finish();
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
-    }
+    // ⭐ MÉTODO mostrarDialogoLimparTudo() FOI COMPLETAMENTE DELETADO DAQUI
 }

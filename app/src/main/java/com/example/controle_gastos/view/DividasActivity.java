@@ -2,6 +2,7 @@ package com.example.controle_gastos.view;
 
 import android.content.Intent;
 import android.graphics.Color;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -184,6 +185,10 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet_categorias, null);
         bottomSheetDialog.setContentView(view);
+
+        // ⭐ AS DUAS LINHAS MÁGICAS AQUI:
+        bottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+        bottomSheetDialog.getBehavior().setSkipCollapsed(true);
 
         LinearLayout llCategorias = view.findViewById(R.id.llCategoriasBottomSheet);
         TextView btnAdicionarCategoriaSheet = view.findViewById(R.id.btnAdicionarCategoriaSheet);
@@ -384,7 +389,7 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
             Divida proxima = agrupada.getProximaParcela();
             if (proxima == null) continue;
 
-            // ⭐ Oculta o grupo APENAS se não tiver NENHUMA parcela deste mês ou atrasada
+            // Oculta o grupo APENAS se não tiver NENHUMA parcela deste mês ou atrasada
             if (!isRelevanteParaMesAtual(agrupada)) {
                 continue;
             }
@@ -425,7 +430,7 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         atualizarTotais();
     }
 
-    // ⭐ NOVO: Checa se o grupo tem QUALQUER parcela neste mês ou anterior
+    // Checa se o grupo tem QUALQUER parcela neste mês ou anterior
     private boolean isRelevanteParaMesAtual(DividaAgrupada agrupada) {
         Calendar hoje = Calendar.getInstance();
         int mesAtual = hoje.get(Calendar.MONTH) + 1;

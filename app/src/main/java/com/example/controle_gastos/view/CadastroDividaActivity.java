@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -249,6 +250,31 @@ public class CadastroDividaActivity extends AppCompatActivity {
         return chip;
     }
 
+    // ⭐ Chip de categoria com a bolinha da cor cadastrada (mesma cor da tela de Categorias)
+    private Chip criarChipCategoria(String nome, String corHex) {
+        Chip chip = criarChip(nome);
+
+        int cor;
+        try {
+            cor = Color.parseColor(corHex);
+        } catch (Exception e) {
+            cor = Color.parseColor("#64748B");
+        }
+
+        GradientDrawable bolinha = new GradientDrawable();
+        bolinha.setShape(GradientDrawable.OVAL);
+        bolinha.setColor(cor);
+
+        chip.setChipIcon(bolinha);
+        chip.setChipIconTint(null);          // não deixa o tema pintar a bolinha
+        chip.setChipIconSize(dp(10));
+        chip.setChipIconVisible(true);
+        chip.setIconStartPadding(dp(6));
+        chip.setTextStartPadding(dp(2));
+        chip.setCheckedIconVisible(false);   // a seleção já aparece pela cor do chip
+        return chip;
+    }
+
     private void carregarCategoriasDoBanco() {
         categoriasDoBanco = db.categoriaDao().listarPorUsuario(session.getUserId());
         chipGroupCategoria.removeAllViews();
@@ -256,7 +282,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
             tvSemCategoria.setVisibility(View.VISIBLE);
         } else {
             tvSemCategoria.setVisibility(View.GONE);
-            for (Categoria c : categoriasDoBanco) { chipGroupCategoria.addView(criarChip(c.getNome())); }
+            for (Categoria c : categoriasDoBanco) { chipGroupCategoria.addView(criarChipCategoria(c.getNome(), c.getCor())); }
             if (chipGroupCategoria.getChildCount() > 0) { ((Chip) chipGroupCategoria.getChildAt(0)).setChecked(true); }
         }
     }
@@ -551,5 +577,9 @@ public class CadastroDividaActivity extends AppCompatActivity {
         p.setCategoria(i.getStringExtra("extra_prefill_categoria"));
         p.setParcelas(i.getIntExtra("extra_prefill_parcelas", 1));
         return p;
+    }
+
+    private int dp(int valor) {
+        return Math.round(valor * getResources().getDisplayMetrics().density);
     }
 }

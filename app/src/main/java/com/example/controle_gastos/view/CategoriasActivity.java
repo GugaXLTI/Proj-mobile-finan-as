@@ -1,6 +1,5 @@
 package com.example.controle_gastos.view;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -8,8 +7,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.GridLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -20,7 +19,9 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.adapter.CategoriaAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Categoria;
+import com.example.controle_gastos.utils.BottomNavHelper;
 import com.example.controle_gastos.utils.CategoriaSeeder;
+import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
 
@@ -31,12 +32,10 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
 
     private RecyclerView rvCategorias;
     private EditText editNomeCategoria;
-    private TextView tvPreviaTag;
+    private TextView tvPreviaTag, tvQtdCategorias;
     private MaterialButton btnSalvarCategoria;
     private ImageView btnVoltar;
-    private LinearLayout containerCores;
-
-    private TextView tabInicio, tabLancar, tabDividas, tabRelatorios, tabConfig;
+    private GridLayout containerCores;
 
     private AppDatabase db;
     private SessionManager session;
@@ -58,23 +57,23 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_categorias);
 
+        NavScrollHelper.attach(this);
+
         db = AppDatabase.getInstance(this);
         session = new SessionManager(this);
+
+        // Barra inferior reutilizável (esta tela é aberta pelas Configurações)
+        BottomNavHelper.configurar(this, BottomNavHelper.CONFIG);
 
         CategoriaSeeder.popularSeVazio(this, session.getUserId());
 
         rvCategorias = findViewById(R.id.rvCategorias);
         editNomeCategoria = findViewById(R.id.editNomeCategoria);
         tvPreviaTag = findViewById(R.id.tvPreviaTag);
+        tvQtdCategorias = findViewById(R.id.tvQtdCategorias);
         btnSalvarCategoria = findViewById(R.id.btnSalvarCategoria);
         btnVoltar = findViewById(R.id.btnVoltar);
         containerCores = findViewById(R.id.containerCores);
-
-        tabInicio = findViewById(R.id.tabInicio);
-        tabLancar = findViewById(R.id.tabLancar);
-        tabDividas = findViewById(R.id.tabDividas);
-        tabRelatorios = findViewById(R.id.tabRelatorios);
-        tabConfig = findViewById(R.id.tabConfig);
 
         rvCategorias.setLayoutManager(new LinearLayoutManager(this));
 
@@ -98,26 +97,6 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
 
         btnVoltar.setOnClickListener(v -> finish());
 
-        tabInicio.setOnClickListener(v -> {
-            startActivity(new Intent(CategoriasActivity.this, InicioActivity.class));
-            finish();
-        });
-        tabLancar.setOnClickListener(v -> {
-            startActivity(new Intent(CategoriasActivity.this, CadastroDividaActivity.class));
-        });
-        tabDividas.setOnClickListener(v -> {
-            startActivity(new Intent(CategoriasActivity.this, DividasActivity.class));
-            finish();
-        });
-        tabRelatorios.setOnClickListener(v -> {
-            startActivity(new Intent(CategoriasActivity.this, DashboardActivity.class));
-            finish();
-        });
-        tabConfig.setOnClickListener(v -> {
-            startActivity(new Intent(CategoriasActivity.this, ConfiguracoesActivity.class));
-            finish();
-        });
-
         carregarCategorias();
     }
 
@@ -126,17 +105,18 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
 
         for (String cor : CORES) {
             View circulo = new View(this);
-            int tamanho = (int) (32 * getResources().getDisplayMetrics().density);
 
-            // Usando LinearLayout.LayoutParams mas com margens menores para caber 12 cores
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(tamanho, tamanho);
-            params.setMargins(4, 0, 4, 0);
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.width = dp(36);
+            params.height = dp(36);
+            params.setMargins(dp(4), dp(4), dp(4), dp(4));
             circulo.setLayoutParams(params);
 
             GradientDrawable drawable = new GradientDrawable();
             drawable.setShape(GradientDrawable.OVAL);
             drawable.setColor(Color.parseColor(cor));
             circulo.setBackground(drawable);
+            circulo.setContentDescription("Cor " + cor);
 
             circulo.setOnClickListener(v -> {
                 corSelecionada = cor;
@@ -160,9 +140,13 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
             drawable.setColor(Color.parseColor(corDoView));
 
             if (corDoView.equals(corSelecionada)) {
-                drawable.setStroke(4, Color.WHITE);
+                drawable.setStroke(dp(3), Color.WHITE);
+                v.setScaleX(1.1f);
+                v.setScaleY(1.1f);
             } else {
                 drawable.setStroke(0, Color.TRANSPARENT);
+                v.setScaleX(1f);
+                v.setScaleY(1f);
             }
             v.setBackground(drawable);
         }
@@ -170,13 +154,23 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
 
     private void atualizarCorPrevia() {
         try {
-            GradientDrawable drawable = new GradientDrawable();
-            drawable.setShape(GradientDrawable.RECTANGLE);
-            drawable.setCornerRadius(24f);
-            drawable.setColor(Color.parseColor(corSelecionada));
-            drawable.setStroke(1, Color.parseColor("#334155"));
-            tvPreviaTag.setBackground(drawable);
+            int cor = Color.parseColor(corSelecionada);
+
+            // Fundo translúcido com a cor + borda na cor
+            GradientDrawable fundo = new GradientDrawable();
+            fundo.setShape(GradientDrawable.RECTANGLE);
+            fundo.setCornerRadius(dp(18));
+            fundo.setColor(Color.argb(40, Color.red(cor), Color.green(cor), Color.blue(cor)));
+            fundo.setStroke(dp(1), cor);
+            tvPreviaTag.setBackground(fundo);
             tvPreviaTag.setTextColor(Color.WHITE);
+
+            // Bolinha da cor antes do texto
+            GradientDrawable bolinha = new GradientDrawable();
+            bolinha.setShape(GradientDrawable.OVAL);
+            bolinha.setColor(cor);
+            bolinha.setSize(dp(10), dp(10));
+            tvPreviaTag.setCompoundDrawablesRelativeWithIntrinsicBounds(bolinha, null, null, null);
         } catch (Exception e) {
             // fallback
         }
@@ -220,6 +214,9 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
 
         adapter = new CategoriaAdapter(categorias, contagens, this);
         rvCategorias.setAdapter(adapter);
+
+        int total = categorias.size();
+        tvQtdCategorias.setText(total + (total == 1 ? " categoria" : " categorias"));
     }
 
     @Override
@@ -249,5 +246,9 @@ public class CategoriasActivity extends AppCompatActivity implements CategoriaAd
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
+    }
+
+    private int dp(int valor) {
+        return Math.round(valor * getResources().getDisplayMetrics().density);
     }
 }

@@ -66,7 +66,6 @@ import java.util.Map;
 public class DashboardActivity extends AppCompatActivity {
 
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
-
     private static final int[] PERIODOS_DISPONIVEIS = {3, 6, 12};
     private static final int PERIODO_PADRAO = 6;
 
@@ -193,20 +192,24 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void carregarDados() {
         Calendar hoje = Calendar.getInstance();
-        ehMesAtual = (mesSelecionado == hoje.get(Calendar.MONTH) + 1) && (anoSelecionado == hoje.get(Calendar.YEAR));
+        int mesHoje = hoje.get(Calendar.MONTH) + 1;
+        int anoHoje = hoje.get(Calendar.YEAR);
+
+        ehMesAtual = (mesSelecionado == mesHoje) && (anoSelecionado == anoHoje);
+
+        boolean ehMesFuturo = (anoSelecionado > anoHoje) || (anoSelecionado == anoHoje && mesSelecionado > mesHoje);
 
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
         todasDividas = new ArrayList<>();
 
         for (Divida d : todas) {
-            boolean venceNesteMes = pertenceAoMes(d, mesSelecionado, anoSelecionado);
-
-            if (ehMesAtual) {
-                if (venceNesteMes || d.isPago()) {
-                    todasDividas.add(d);
-                }
-            } else {
-                if (venceNesteMes && !d.isPago()) {
+            if (pertenceAoMes(d, mesSelecionado, anoSelecionado)) {
+                // ⭐ CORREÇÃO 1: Se for um mês futuro, só adiciona se já estiver pago (adiantado)
+                if (ehMesFuturo) {
+                    if (d.isPago()) {
+                        todasDividas.add(d);
+                    }
+                } else {
                     todasDividas.add(d);
                 }
             }
@@ -539,15 +542,12 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void atualizarGraficoLinha() {
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
-        int mesesPassados = mesesVisiveis / 2;
 
         Calendar c = Calendar.getInstance();
         c.set(anoSelecionado, mesSelecionado - 1, 1);
-        c.add(Calendar.MONTH, -mesesPassados);
 
-        Calendar hoje = Calendar.getInstance();
-        int mesHoje = hoje.get(Calendar.MONTH) + 1;
-        int anoHoje = hoje.get(Calendar.YEAR);
+        // ⭐ CORREÇÃO 2: Em vez de voltar meses, o gráfico começa no mês selecionado e vai para frente
+        // (Isso evita mostrar os meses passados vazios, como Set/Out)
 
         List<Entry> entries = new ArrayList<>();
         final List<String> labelsMeses = new ArrayList<>();
@@ -560,27 +560,10 @@ public class DashboardActivity extends AppCompatActivity {
             int mesRef = c.get(Calendar.MONTH) + 1;
             int anoRef = c.get(Calendar.YEAR);
 
-            boolean isCurrent = (mesRef == mesHoje && anoRef == anoHoje);
-            boolean isFuture = (anoRef > anoHoje) || (anoRef == anoHoje && mesRef > mesHoje);
-
             double totalMes = 0;
             for (Divida d : todas) {
-                // ⭐ LÓGICA CORRIGIDA PARA O GRÁFICO DE EVOLUÇÃO ⭐
-                if (isCurrent) {
-                    // Mês Atual: Soma tudo que foi pago (mesmo adiantado) + o que vence e não foi pago
-                    if (d.isPago() || pertenceAoMes(d, mesRef, anoRef)) {
-                        totalMes += d.getValorTotal();
-                    }
-                } else if (isFuture) {
-                    // Meses Futuros: Soma APENAS o que vence no mês E ainda não foi pago
-                    if (pertenceAoMes(d, mesRef, anoRef) && !d.isPago()) {
-                        totalMes += d.getValorTotal();
-                    }
-                } else {
-                    // Meses Passados: Soma pelo vencimento
-                    if (pertenceAoMes(d, mesRef, anoRef)) {
-                        totalMes += d.getValorTotal();
-                    }
+                if (pertenceAoMes(d, mesRef, anoRef) && d.isPago()) {
+                    totalMes += d.getValorTotal();
                 }
             }
 
@@ -588,7 +571,7 @@ public class DashboardActivity extends AppCompatActivity {
             labelsMeses.add(nomesMeses[mesRef - 1]);
             totalPeriodo += totalMes;
 
-            c.add(Calendar.MONTH, 1);
+            c.add(Calendar.MONTH, 1); // Avança para o próximo mês
         }
 
         double media = totalPeriodo / Math.max(mesesVisiveis, 1);

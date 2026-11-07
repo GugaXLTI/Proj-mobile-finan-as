@@ -453,6 +453,68 @@
                         app:thumbTint="@color/switch_thumb"
                         app:trackTint="@color/switch_track" />
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="70dp"
+                    android:background="#1E2A44" />
+
+                <!-- ⭐ NOVO: Otimização de Bateria -->
+                <LinearLayout
+                    android:id="@+id/itemBateria"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="72dp"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_icone_conf_ambar"
+                        android:importantForAccessibility="no"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_conf_bell"
+                        app:tint="#FBBF24" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Funcionamento em 2º plano"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvStatusBateria"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Configurar bateria e Autostart"
+                            android:textColor="#94A3B8"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#64748B" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- SEÇÃO: DADOS -->

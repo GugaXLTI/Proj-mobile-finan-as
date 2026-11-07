@@ -1,6 +1,7 @@
 package com.example.controle_gastos.database;
 
 import android.content.Context;
+import androidx.room.AutoMigration;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
@@ -31,8 +32,11 @@ import com.example.controle_gastos.model.ChavePix;
                 Cartao.class, ChavePix.class, ComprovanteProcessado.class, Renda.class,
                 Conta.class
         },
-        version = 13,
-        exportSchema = true // ⭐ ALTERADO AQUI: Agora vai gerar o JSON do schema para auto-migrations no futuro
+        version = 14, // ⭐ Versão atualizada
+        exportSchema = true,
+        autoMigrations = {
+                @AutoMigration(from = 13, to = 14) // ⭐ O Room cria o SQL automaticamente
+        }
 )
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -62,11 +66,6 @@ public abstract class AppDatabase extends RoomDatabase {
                             Migrations.MIGRATION_11_12,
                             Migrations.MIGRATION_12_13
                     )
-                    // ⭐ MANTIDO REMOVIDO: .fallbackToDestructiveMigration()
-                    // NUNCA use isso em produção. Se a migração falhar, o app deve crashar,
-                    // mas os dados do usuário NÃO podem ser apagados.
-
-                    // ⚠️ AVISO: allowMainThreadQueries() é perigoso para a performance.
                     .allowMainThreadQueries()
                     .build();
         }

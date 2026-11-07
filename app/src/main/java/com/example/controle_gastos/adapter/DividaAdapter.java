@@ -64,34 +64,48 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             }
         } catch (Exception ignored) {}
 
-        holder.tvParcela.setText("Parcela " + parcelaExibida.getParcela());
+        // ⭐ Lógica para Conta Fixa x Dívida Normal
+        if (parcelaExibida.isFixa()) {
+            holder.tvParcela.setText("Conta Fixa Mensal");
+            if (holder.tvProgresso != null) holder.tvProgresso.setVisibility(View.GONE);
+            if (holder.progressBar != null) holder.progressBar.setVisibility(View.GONE);
+        } else {
+            holder.tvParcela.setText("Parcela " + parcelaExibida.getParcela());
+            if (holder.tvProgresso != null) holder.tvProgresso.setVisibility(View.VISIBLE);
+            if (holder.progressBar != null) holder.progressBar.setVisibility(View.VISIBLE);
 
-        // Barra de Progresso e Contagem (Corretos, somam o grupo inteiro)
-        int total = agrupada.getTotalParcelas();
-        int pagas = agrupada.getParcelasPagas();
-        holder.tvProgresso.setText("Pagas: " + pagas + " de " + total);
+            int total = agrupada.getTotalParcelas();
+            int pagas = agrupada.getParcelasPagas();
+            holder.tvProgresso.setText("Pagas: " + pagas + " de " + total);
 
-        if (holder.progressBar != null) {
-            holder.progressBar.setMax(total);
-            holder.progressBar.setProgress(pagas);
+            if (holder.progressBar != null) {
+                holder.progressBar.setMax(total);
+                holder.progressBar.setProgress(pagas);
+            }
         }
 
-        // ⭐ A CORREÇÃO ESTÁ AQUI: Verifica se a parcela EXIBIDA está paga
+        // Verifica se a parcela visível está paga
         if (parcelaExibida.isPago()) {
-            holder.tvStatus.setText("Pago ✓");
-            holder.tvStatus.setTextColor(Color.parseColor("#34D399")); // Verde
-            holder.btnPagar.setVisibility(View.GONE); // Esconde o botão
-            holder.tvValor.setTextColor(Color.parseColor("#94A3B8")); // Deixa o valor cinza
+            holder.btnPagar.setVisibility(View.GONE);
+            holder.tvValor.setTextColor(Color.parseColor("#94A3B8"));
+
+            // ⭐ Mostra a data de pagamento se existir
+            if (parcelaExibida.getDataPagamento() != null && !parcelaExibida.getDataPagamento().isEmpty()) {
+                holder.tvStatus.setText("Pago em " + parcelaExibida.getDataPagamento());
+            } else {
+                holder.tvStatus.setText("Pago ✓");
+            }
+            holder.tvStatus.setTextColor(Color.parseColor("#34D399"));
         } else {
-            holder.tvValor.setTextColor(Color.WHITE); // Volta o valor para branco
-            holder.btnPagar.setVisibility(View.VISIBLE); // Mostra o botão
+            holder.tvValor.setTextColor(Color.WHITE);
+            holder.btnPagar.setVisibility(View.VISIBLE);
 
             if (isAtrasada(parcelaExibida.getVencimento())) {
                 holder.tvStatus.setText("Atrasada");
-                holder.tvStatus.setTextColor(Color.parseColor("#F87171")); // Vermelho
+                holder.tvStatus.setTextColor(Color.parseColor("#F87171"));
             } else {
                 holder.tvStatus.setText("Vence em " + calcularDias(parcelaExibida.getVencimento()) + " dias");
-                holder.tvStatus.setTextColor(Color.parseColor("#F59E0B")); // Laranja
+                holder.tvStatus.setTextColor(Color.parseColor("#F59E0B"));
             }
         }
 

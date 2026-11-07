@@ -17,22 +17,30 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Cartao;
-import com.example.controle_gastos.model.Divida; // ⭐ NOVO IMPORT
+import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.Transacao;
 import com.example.controle_gastos.utils.BancoHelper;
-import com.example.controle_gastos.utils.NotificationHelper; // ⭐ NOVO IMPORT
+import com.example.controle_gastos.utils.GenericBankParser;
+import com.example.controle_gastos.utils.NotificationHelper;
 import com.example.controle_gastos.utils.NubankParser;
 import com.example.controle_gastos.utils.SessionManager;
 
 import java.text.NumberFormat;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class NotificationListenerServiceApp extends NotificationListenerService {
 
     private static final String TAG = "NotifListener";
     private static final String CHANNEL_ID_FEEDBACK = "feedback_transacao";
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
+
+    // ⭐ NOVO: Cache para evitar notificações duplicadas
+    private static final long TEMPO_DEBOUNCE_MS = 5000; // 5 segundos
+    private static final Map<String, Long> cacheNotificacoes = new HashMap<>();
 
     @Override
     public void onCreate() {
@@ -55,16 +63,16 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
 
         if (cartoesDoUsuario.isEmpty()) return;
 
-        boolean ehBancoDoUsuario = false;
+        String bancoDetectado = null;
         for (Cartao c : cartoesDoUsuario) {
             String pacoteDoBanco = BancoHelper.getPackageName(c.instituicao);
             if (pacoteDoBanco != null && pacoteDoBanco.equals(packageName)) {
-                ehBancoDoUsuario = true;
+                bancoDetectado = c.instituicao;
                 break;
             }
         }
 
-        if (!ehBancoDoUsuario) return;
+        if (bancoDetectado == null) return;
 
         Bundle extras = sbn.getNotification().extras;
         if (extras == null) return;
@@ -75,37 +83,61 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
         if (text == null) return;
 
         String textoCompleto = (title != null ? title : "") + " " + text;
-        Log.d(TAG, "Notificação de banco capturada: " + textoCompleto);
 
-        Transacao novaTransacao = NubankParser.processarTexto(textoCompleto, userId);
+        // ⭐ PROTEÇÃO ANTI-DUPLICAÇÃO AQUI
+        String hashNotificacao = packageName + "_" + textoCompleto;
+        long agora = System.currentTimeMillis();
+
+        // Limpa o cache antigo (para não ficar na memória pra sempre)
+        Iterator<Map.Entry<String, Long>> iterator = cacheNotificacoes.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Long> entry = iterator.next();
+            if (agora - entry.getValue() > TEMPO_DEBOUNCE_MS) {
+                iterator.remove();
+            }
+        }
+
+        // Se a notificação está no cache e foi vista há menos de 5 segundos, ignora!
+        if (cacheNotificacoes.containsKey(hashNotificacao)) {
+            Log.d(TAG, "Notificação duplicada ignorada: " + textoCompleto);
+            return; // Sai do método e não salva no banco
+        }
+
+        // Se não está duplicada, coloca no cache e continua o processamento
+        cacheNotificacoes.put(hashNotificacao, agora);
+
+        Log.d(TAG, "Notificação de " + bancoDetectado + " capturada: " + textoCompleto);
+
+        // Escolhe qual Parser usar baseado no banco
+        Transacao novaTransacao;
+        if (bancoDetectado.toLowerCase().contains("nubank")) {
+            novaTransacao = NubankParser.processarTexto(textoCompleto, userId);
+        } else {
+            novaTransacao = GenericBankParser.processarTexto(textoCompleto, userId, bancoDetectado);
+        }
 
         if (novaTransacao != null) {
             long id = db.transacaoDao().inserir(novaTransacao);
             Log.d(TAG, "Transação salva no banco com sucesso! ID: " + id);
 
             if (id > 0) {
-                // ⭐ NOVO: GATILHO DO ESPIÃO INTELIGENTE (Sugestão de Pagamento)
+                // GATILHO DO ESPIÃO INTELIGENTE (Sugestão de Pagamento)
                 if ("SAIDA".equals(novaTransacao.tipo) || "SAÍDA".equals(novaTransacao.tipo)) {
                     double valorLido = novaTransacao.valor;
 
-                    // 1. Tenta achar uma dívida com valor exato
                     Divida dividaParaSugerir = db.dividaDao().buscarDividaAbertaPorValor(userId, valorLido);
 
-                    // 2. Se não achou exata, tenta achar com margem de erro (R$ 30)
                     if (dividaParaSugerir == null) {
                         dividaParaSugerir = db.dividaDao().buscarDividaAproximadaPorValor(userId, valorLido);
                     }
 
-                    // 3. Se achou alguma dívida compatível, dispara a notificação com o botão "Sim"
                     if (dividaParaSugerir != null) {
                         NotificationHelper.mostrarNotificacaoSugestao(getApplicationContext(), dividaParaSugerir, valorLido);
                     }
                 }
 
-                // 1. Mostra a notificação de feedback no celular (comportamento antigo)
                 notificarTransacao(novaTransacao, (int) id);
 
-                // 2. Avisa a tela de Início para atualizar em tempo real
                 Intent intent = new Intent("NOVA_TRANSACAO_RECEBIDA");
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
             }

@@ -18,6 +18,7 @@ import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.BackupData;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.BackupHelper;
+import com.example.controle_gastos.utils.BatteryHelper;
 import com.example.controle_gastos.utils.BiometricHelper;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.NotificationHelper;
@@ -35,9 +36,9 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
     private LinearLayout itemCartoes, itemCategorias, itemBackup, itemDesconectar, itemSalario;
-    private LinearLayout itemLembretes, itemBiometria;
+    private LinearLayout itemLembretes, itemBiometria, itemBateria;
     private SwitchMaterial switchLembretes, switchBiometria;
-    private TextView tvEditar, tvNomeUsuario, tvAvatar, tvSalarioAtual, tvBiometriaSub;
+    private TextView tvEditar, tvNomeUsuario, tvAvatar, tvSalarioAtual, tvBiometriaSub, tvStatusBateria;
 
     private ImageView tabInicio, tabLancar, tabDividas, tabRelatorios;
     private LinearLayout tabConfig;
@@ -54,7 +55,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_configuracoes);
 
-        // ⭐ Botão Voltar Customizado
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -79,6 +79,8 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         itemBiometria = findViewById(R.id.itemBiometria);
         itemBackup = findViewById(R.id.itemBackup);
         itemDesconectar = findViewById(R.id.itemDesconectar);
+        itemBateria = findViewById(R.id.itemBateria);
+        tvStatusBateria = findViewById(R.id.tvStatusBateria);
 
         switchLembretes = findViewById(R.id.switchLembretes);
         switchBiometria = findViewById(R.id.switchBiometria);
@@ -105,6 +107,7 @@ public class ConfiguracoesActivity extends AppCompatActivity {
 
         atualizarPerfil();
         atualizarSaldoInicialSubtitulo();
+        atualizarStatusBateria();
 
         switchLembretes.setChecked(AlarmeHelper.isLembretesAtivos(this));
 
@@ -141,6 +144,9 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         itemBiometria.setOnClickListener(v -> {
             if (switchBiometria.isEnabled()) switchBiometria.toggle();
         });
+
+        // ⭐ Lógica do item de Bateria
+        itemBateria.setOnClickListener(v -> mostrarDialogoBateria());
 
         switchLembretes.setOnCheckedChangeListener((buttonView, isChecked) -> {
             AlarmeHelper.setLembretesAtivos(ConfiguracoesActivity.this, isChecked);
@@ -198,6 +204,36 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         super.onResume();
         atualizarPerfil();
         atualizarSaldoInicialSubtitulo();
+        atualizarStatusBateria();
+    }
+
+    private void atualizarStatusBateria() {
+        if (BatteryHelper.isIgnoringBatteryOptimizations(this)) {
+            tvStatusBateria.setText("Otimização desativada (OK)");
+            tvStatusBateria.setTextColor(getResources().getColor(R.color.brand_green, getTheme()));
+        } else {
+            tvStatusBateria.setText("Configurar bateria e Autostart");
+            tvStatusBateria.setTextColor(getResources().getColor(R.color.text_gray, getTheme()));
+        }
+    }
+
+    private void mostrarDialogoBateria() {
+        String mensagem = "Para que o ORG capture suas notificações em segundo plano sem ser fechado pelo sistema, você precisa:\n\n" +
+                "1. Permitir que o app ignore a otimização de bateria.\n" +
+                "2. Ativar a 'Inicialização Automática' (Autostart) nas configurações do seu celular.\n\n" +
+                "Isso é essencial em aparelhos Xiaomi, Samsung, Motorola, etc.";
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Funcionamento em 2º plano")
+                .setMessage(mensagem)
+                .setPositiveButton("Configurar Bateria", (dialog, which) -> {
+                    BatteryHelper.requestIgnoreBatteryOptimizations(this);
+                })
+                .setNeutralButton("Abrir Autostart", (dialog, which) -> {
+                    BatteryHelper.openAutostartSettings(this);
+                })
+                .setNegativeButton("Fechar", null)
+                .show();
     }
 
     private void atualizarPerfil() {
@@ -220,7 +256,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
     }
 
     private void mostrarDialogoBackup() {
-        // ⭐ ALTERADO: Removida a opção "Limpar tudo (testes)"
         String[] opcoes = {
                 "Exportar backup (JSON)",
                 "Restaurar backup"
@@ -272,7 +307,6 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         int totalCartoes = data.cartoes != null ? data.cartoes.size() : 0;
         int totalPix = data.chavesPix != null ? data.chavesPix.size() : 0;
         int totalCategorias = data.categorias != null ? data.categorias.size() : 0;
-
         int totalContas = data.contas != null ? data.contas.size() : 0;
         int totalTransacoes = data.transacoes != null ? data.transacoes.size() : 0;
 
@@ -351,6 +385,4 @@ public class ConfiguracoesActivity extends AppCompatActivity {
         biometriaEstadoAtual = false;
         Toast.makeText(this, "Biometria desativada.", Toast.LENGTH_SHORT).show();
     }
-
-    // ⭐ MÉTODO mostrarDialogoLimparTudo() FOI COMPLETAMENTE DELETADO DAQUI
 }

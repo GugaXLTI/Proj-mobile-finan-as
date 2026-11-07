@@ -26,6 +26,7 @@ import com.example.controle_gastos.R;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Conta;
 import com.example.controle_gastos.model.Divida;
+import com.example.controle_gastos.utils.BatteryHelper;
 import com.example.controle_gastos.utils.OnboardingStore;
 import com.example.controle_gastos.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
@@ -60,7 +61,11 @@ public class OnboardingActivity extends AppCompatActivity {
     private ImageView ivStatusPermissao;
     private MaterialButton btnAutorizar;
 
-    // ⭐ Variáveis da nova tela de Contas Fixas
+    // ⭐ Novos elementos de bateria
+    private TextView tvStatusBateriaOnb;
+    private ImageView ivStatusBateriaOnb;
+    private MaterialButton btnConfigurarBateriaOnb;
+
     private ChipGroup chipGroupContasOnb;
     private TextView btnOutraContaOnb;
     private final String[] contasComuns = {
@@ -95,7 +100,7 @@ public class OnboardingActivity extends AppCompatActivity {
         LayoutInflater inflater = getLayoutInflater();
         viewFlipper.addView(inflater.inflate(R.layout.item_onb_welcome, viewFlipper, false));       // 0
         viewFlipper.addView(inflater.inflate(R.layout.item_onb_saldo_inicial, viewFlipper, false)); // 1
-        viewFlipper.addView(inflater.inflate(R.layout.item_onb_contas, viewFlipper, false));        // 2 (NOVA)
+        viewFlipper.addView(inflater.inflate(R.layout.item_onb_contas, viewFlipper, false));        // 2
         viewFlipper.addView(inflater.inflate(R.layout.item_onb_permissoes, viewFlipper, false));    // 3
 
         setupSaldo();
@@ -124,12 +129,10 @@ public class OnboardingActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         atualizarStatusPermissao();
+        atualizarStatusBateria(); // ⭐ Atualiza o status da bateria
         atualizarBotao();
     }
 
-    // ------------------------------------------------------------------
-    // SETUP DAS PÁGINAS
-    // ------------------------------------------------------------------
     private void setupSaldo() {
         View page = viewFlipper.getChildAt(PG_SALDO);
         editSaldoInicial = page.findViewById(R.id.editSaldoInicial);
@@ -166,16 +169,29 @@ public class OnboardingActivity extends AppCompatActivity {
 
     private void setupPermissao() {
         View page = viewFlipper.getChildAt(PG_PERMISSAO);
+
+        // Find das notificações
         tvStatusPermissao = page.findViewById(R.id.tvStatusPermissao);
         ivStatusPermissao = page.findViewById(R.id.ivStatusPermissao);
         btnAutorizar = page.findViewById(R.id.btnAutorizarNotificacoes);
-
         btnAutorizar.setOnClickListener(v -> abrirConfiguracaoNotificacoes());
+
+        // ⭐ Find dos novos elementos de bateria
+        tvStatusBateriaOnb = page.findViewById(R.id.tvStatusBateriaOnb);
+        ivStatusBateriaOnb = page.findViewById(R.id.ivStatusBateriaOnb);
+        btnConfigurarBateriaOnb = page.findViewById(R.id.btnConfigurarBateriaOnb);
+
+        btnConfigurarBateriaOnb.setOnClickListener(v -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Funcionamento em 2º plano")
+                    .setMessage("Para que o ORG capture notificações sem ser fechado, permita a otimização de bateria e ative o Autostart (Inicialização Automática) no seu celular.")
+                    .setPositiveButton("Configurar Bateria", (dialog, which) -> BatteryHelper.requestIgnoreBatteryOptimizations(this))
+                    .setNeutralButton("Autostart", (dialog, which) -> BatteryHelper.openAutostartSettings(this))
+                    .setNegativeButton("Fechar", null)
+                    .show();
+        });
     }
 
-    // ------------------------------------------------------------------
-    // NAVEGAÇÃO
-    // ------------------------------------------------------------------
     private void avancarFluxo() {
         int atual = viewFlipper.getDisplayedChild();
 
@@ -203,10 +219,10 @@ public class OnboardingActivity extends AppCompatActivity {
                 Toast.makeText(this, "Saldo inicial atualizado!", Toast.LENGTH_SHORT).show();
                 finish();
             } else {
-                ir(PG_CONTAS); // Vai para a tela de contas fixas
+                ir(PG_CONTAS);
             }
         } else if (atual == PG_CONTAS) {
-            ir(PG_PERMISSAO); // Avança para permissão
+            ir(PG_PERMISSAO);
         } else {
             concluirOnboarding();
         }
@@ -286,9 +302,6 @@ public class OnboardingActivity extends AppCompatActivity {
         }
     }
 
-    // ------------------------------------------------------------------
-    // LÓGICA DE CONTAS FIXAS (DIALOG E SALVAMENTO)
-    // ------------------------------------------------------------------
     private Chip criarChipEstilizado(String texto) {
         Chip chip = new Chip(this);
         chip.setText(texto);
@@ -349,7 +362,6 @@ public class OnboardingActivity extends AppCompatActivity {
                         salvarContaFixaNoBanco(nome, valor, diaVencimento);
                         if (chipVisual != null) chipVisual.setChecked(true);
 
-                        // ⭐ Mensagem atualizada para tranquilizar o usuário
                         Toast.makeText(this, nome + " adicionada! Você pode ajustar o valor a qualquer momento.", Toast.LENGTH_LONG).show();
                     } catch (Exception e) {
                         Toast.makeText(this, "Valor ou dia inválido.", Toast.LENGTH_SHORT).show();
@@ -368,7 +380,6 @@ public class OnboardingActivity extends AppCompatActivity {
         }
         cBase.set(Calendar.DAY_OF_MONTH, diaVencimento);
 
-        // Cria 12 meses de uma vez
         for (int i = 0; i < 12; i++) {
             Calendar cParcela = (Calendar) cBase.clone();
             cParcela.add(Calendar.MONTH, i);
@@ -377,14 +388,12 @@ public class OnboardingActivity extends AppCompatActivity {
 
             String numeroParcela = (i + 1) + "/12";
 
-            Divida parcela = new Divida(session.getUserId(), grupoId, nome, valor, valor, 0.0, "Conta Fixa", "Contas Fixas", numeroParcela, vencParcela, false, false);
+            // ⭐ CORREÇÃO AQUI: Adicionado o 'true' no final para indicar que é Conta Fixa
+            Divida parcela = new Divida(session.getUserId(), grupoId, nome, valor, valor, 0.0, "Conta Fixa", "Contas Fixas", numeroParcela, vencParcela, false, false, true);
             db.dividaDao().inserir(parcela);
         }
     }
 
-    // ------------------------------------------------------------------
-    // PERMISSÃO DE NOTIFICAÇÕES
-    // ------------------------------------------------------------------
     private boolean notificacoesAutorizadas() {
         return NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName());
     }
@@ -418,9 +427,23 @@ public class OnboardingActivity extends AppCompatActivity {
         }
     }
 
-    // ------------------------------------------------------------------
-    // CONCLUIR
-    // ------------------------------------------------------------------
+    private void atualizarStatusBateria() {
+        if (tvStatusBateriaOnb == null) return;
+
+        boolean bateriaOk = BatteryHelper.isIgnoringBatteryOptimizations(this);
+        if (bateriaOk) {
+            tvStatusBateriaOnb.setText("Otimização desativada (OK)");
+            tvStatusBateriaOnb.setTextColor(Color.parseColor("#34D399"));
+            if (ivStatusBateriaOnb != null) ivStatusBateriaOnb.setColorFilter(Color.parseColor("#34D399"));
+            if (btnConfigurarBateriaOnb != null) btnConfigurarBateriaOnb.setText("Gerenciar bateria");
+        } else {
+            tvStatusBateriaOnb.setText("Ainda com otimização ativa");
+            tvStatusBateriaOnb.setTextColor(Color.parseColor("#FCD34D"));
+            if (ivStatusBateriaOnb != null) ivStatusBateriaOnb.setColorFilter(Color.parseColor("#FBBF24"));
+            if (btnConfigurarBateriaOnb != null) btnConfigurarBateriaOnb.setText("Configurar bateria");
+        }
+    }
+
     private void concluirOnboarding() {
         int userId = session.getUserId();
 
@@ -432,9 +455,6 @@ public class OnboardingActivity extends AppCompatActivity {
         finish();
     }
 
-    // ------------------------------------------------------------------
-    // HELPERS
-    // ------------------------------------------------------------------
     private boolean saldoPreenchido() {
         return !editSaldoInicial.getText().toString().replaceAll("[^0-9]", "").isEmpty();
     }

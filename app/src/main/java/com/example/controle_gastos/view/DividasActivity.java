@@ -186,7 +186,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet_categorias, null);
         bottomSheetDialog.setContentView(view);
 
-        // ⭐ AS DUAS LINHAS MÁGICAS AQUI:
         bottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
         bottomSheetDialog.getBehavior().setSkipCollapsed(true);
 
@@ -389,7 +388,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
             Divida proxima = agrupada.getProximaParcela();
             if (proxima == null) continue;
 
-            // Oculta o grupo APENAS se não tiver NENHUMA parcela deste mês ou atrasada
             if (!isRelevanteParaMesAtual(agrupada)) {
                 continue;
             }
@@ -430,7 +428,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         atualizarTotais();
     }
 
-    // Checa se o grupo tem QUALQUER parcela neste mês ou anterior
     private boolean isRelevanteParaMesAtual(DividaAgrupada agrupada) {
         Calendar hoje = Calendar.getInstance();
         int mesAtual = hoje.get(Calendar.MONTH) + 1;
@@ -469,18 +466,16 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         double totalPago = 0;
         double totalGeral = 0;
 
-        Calendar hoje = Calendar.getInstance();
-        int mesAtual = hoje.get(Calendar.MONTH) + 1;
-        int anoAtual = hoje.get(Calendar.YEAR);
+        // Soma os totais baseados na lista filtrada (que é o que o usuário vê)
+        for (DividaAgrupada a : listaAgrupada) {
+            Divida p = a.getParcelaParaLista(); // Pega a parcela que está visível na tela
+            if (p != null) {
+                totalGeral += p.getValorTotal(); // O Total Geral agora bate com o que está na tela
 
-        for (DividaAgrupada a : listaAgrupadaCompleta) {
-            totalGeral += a.getValorTotalGrupo();
-            totalPago += (a.getValorTotalGrupo() - a.getValorRestanteGrupo());
-
-            Divida proxima = a.getProximaParcela();
-            if (proxima != null) {
-                if (ehMesmoMesOuAtrasado(proxima.getVencimento(), mesAtual, anoAtual)) {
-                    totalAPagar += a.getValorRestanteGrupo();
+                if (p.isPago()) {
+                    totalPago += p.getValorTotal();
+                } else {
+                    totalAPagar += p.getValorRestante();
                 }
             }
         }
@@ -532,10 +527,10 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
     @Override
     public void onPagarClick(DividaAgrupada agrupada) {
-        Divida proxima = agrupada.getProximaParcela();
+        Divida proxima = agrupada.getParcelaParaLista(); // Usa a parcela visível
 
-        if (proxima.isPago()) {
-            Toast.makeText(this, "Todas as parcelas já foram pagas!", Toast.LENGTH_SHORT).show();
+        if (proxima == null || proxima.isPago()) {
+            Toast.makeText(this, "Essa parcela já foi paga!", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -544,11 +539,13 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         proxima.valorPago = proxima.getValorTotal();
         proxima.setPago(true);
 
+        // ⭐ Grava a data de hoje no momento do pagamento
+        String hoje = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR).format(new Date());
+        proxima.setDataPagamento(hoje);
+
         db.dividaDao().atualizar(proxima);
         carregarDividas();
 
-        Toast.makeText(this,
-                "Parcela paga: " + proxima.getTitulo() + " (" + proxima.getParcela() + ")",
-                Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Parcela paga: " + proxima.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 }

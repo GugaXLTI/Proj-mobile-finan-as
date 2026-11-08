@@ -341,7 +341,6 @@ public class InicioActivity extends AppCompatActivity {
             if (d.isPago()) {
                 totalPago += d.getValorTotal();
             } else {
-                // Só entra na conta o que vence no mês atual
                 if (venceNoMes(d.getVencimento(), mesAtual, anoAtual)) {
                     totalVencendoMes += d.getValorRestante();
                     contasDoMes.add(d);
@@ -351,7 +350,6 @@ public class InicioActivity extends AppCompatActivity {
 
         contasDoMes.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
 
-        // ⭐ MÁGICA AQUI: Agora o "Dívidas em aberto" mostra APENAS o que vence no mês
         if (tvTotalDividasInicio != null) tvTotalDividasInicio.setText(moeda(totalVencendoMes));
         if (tvTotalPagoInicio != null) tvTotalPagoInicio.setText(moeda(totalPago));
     }
@@ -392,8 +390,13 @@ public class InicioActivity extends AppCompatActivity {
 
             if (tvTitulo != null) {
                 String titulo = d.getTitulo();
-                int total = extrairTotalParcelas(d.getParcela());
-                if (total > 1) titulo += " · parcela " + extrairNumeroParcela(d.getParcela()) + " de " + total;
+                // ⭐ CORREÇÃO AQUI: Verifica se é conta fixa antes de adicionar a parcela
+                if (!d.isFixa()) {
+                    int total = extrairTotalParcelas(d.getParcela());
+                    if (total > 1) {
+                        titulo += " · parcela " + extrairNumeroParcela(d.getParcela()) + " de " + total;
+                    }
+                }
                 tvTitulo.setText(titulo);
             }
             if (tvValor != null) tvValor.setText(moeda(d.getValorRestante()));

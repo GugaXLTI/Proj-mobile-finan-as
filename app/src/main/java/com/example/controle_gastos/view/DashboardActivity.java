@@ -246,18 +246,18 @@ public class DashboardActivity extends AppCompatActivity {
             return;
         }
 
-        double gastosTotais = 0;
         double gastosPagos = 0;
+
+        // ⭐ CORREÇÃO: Soma apenas o que foi pago
         for (Divida d : todasDividas) {
-            gastosTotais += d.getValorTotal();
             if (d.isPago()) {
                 gastosPagos += d.getValorTotal();
             }
         }
 
+        // Adiciona as transações automáticas do espião (que já são gastos reais)
         for (Transacao t : transacoesFiltradas) {
             if ("SAIDA".equals(t.getTipo()) || "SAÍDA".equals(t.getTipo())) {
-                gastosTotais += t.getValor();
                 gastosPagos += t.getValor();
             }
         }
@@ -277,7 +277,8 @@ public class DashboardActivity extends AppCompatActivity {
         }
 
         tvSalarioDash.setText(moeda(baseCalculo));
-        tvGastosDash.setText(moeda(gastosTotais));
+        // ⭐ Mostra apenas o que foi efetivamente pago
+        tvGastosDash.setText(moeda(gastosPagos));
 
         if (baseCalculo > 0) {
             double saldoReal = baseCalculo - gastosPagos;
@@ -287,19 +288,14 @@ public class DashboardActivity extends AppCompatActivity {
             int pct = (int) Math.round((gastosPagos / baseCalculo) * 100);
             progressBalanco.setProgress(Math.min(pct, 100));
 
-            double aPagar = gastosTotais - gastosPagos;
-            if (aPagar > 0) {
-                tvBalancoCaption.setText(pct + "% pago. Você tem " + moeda(aPagar) + " a pagar.");
-            } else {
-                tvBalancoCaption.setText(pct + "% do orçamento comprometido");
-            }
+            tvBalancoCaption.setText(pct + "% do orçamento comprometido");
         } else {
             tvSaldoDash.setText(moeda(0));
             tvSaldoDash.setTextColor(Color.parseColor("#64748B"));
             progressBalanco.setProgress(0);
 
-            if (gastosTotais > 0) {
-                tvBalancoCaption.setText("Sem entradas previstas. " + moeda(gastosTotais) + " em contas.");
+            if (gastosPagos > 0) {
+                tvBalancoCaption.setText("Sem entradas previstas. " + moeda(gastosPagos) + " pagos.");
             } else {
                 tvBalancoCaption.setText("Nenhuma movimentação registrada.");
             }
@@ -324,10 +320,14 @@ public class DashboardActivity extends AppCompatActivity {
     private void montarGraficoCategorias() {
         Map<String, Double> gastos = new HashMap<>();
         double total = 0;
+
+        // ⭐ CORREÇÃO: Só adiciona no gráfico se estiver pago
         for (Divida d : todasDividas) {
-            String cat = categoriaDe(d);
-            gastos.put(cat, gastos.getOrDefault(cat, 0.0) + d.getValorTotal());
-            total += d.getValorTotal();
+            if (d.isPago()) {
+                String cat = categoriaDe(d);
+                gastos.put(cat, gastos.getOrDefault(cat, 0.0) + d.getValorTotal());
+                total += d.getValorTotal();
+            }
         }
 
         List<Map.Entry<String, Double>> ordenado = new ArrayList<>(gastos.entrySet());
@@ -378,7 +378,7 @@ public class DashboardActivity extends AppCompatActivity {
             cores.add(Color.parseColor("#1E2A44"));
 
             TextView vazio = new TextView(this);
-            vazio.setText("Sem lançamentos neste mês");
+            vazio.setText("Nenhuma conta paga neste mês");
             vazio.setTextColor(Color.parseColor("#94A3B8"));
             vazio.setTextSize(14f);
             vazio.setGravity(Gravity.CENTER);

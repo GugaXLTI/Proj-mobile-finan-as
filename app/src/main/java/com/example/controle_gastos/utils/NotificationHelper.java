@@ -1,5 +1,6 @@
 package com.example.controle_gastos.utils;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -23,7 +24,11 @@ public class NotificationHelper {
     private static final String CHANNEL_INSIGHTS = "insights_financeiros";
     private static final String CHANNEL_VENCIMENTOS = "vencimentos_contas";
     private static final String CHANNEL_ATRASOS = "atrasos_contas";
-    private static final String CHANNEL_SUGESTAO = "sugestao_pagamento"; // ⭐ NOVO
+    private static final String CHANNEL_SUGESTAO = "sugestao_pagamento";
+
+    // ⭐ NOVO CANAL FOREGROUND
+    private static final String CHANNEL_FOREGROUND = "foreground_service";
+    public static final int FOREGROUND_NOTIFICATION_ID = 1001;
 
     public static void criarCanal(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -41,10 +46,31 @@ public class NotificationHelper {
             NotificationChannel canalSugestao = new NotificationChannel(CHANNEL_SUGESTAO, "Sugestões do Espião", NotificationManager.IMPORTANCE_HIGH);
             canalSugestao.setDescription("Quando o app detecta um pagamento que parece ser uma conta sua");
             manager.createNotificationChannel(canalSugestao);
+
+            // ⭐ CANAL SILENCIOSO PARA O FOREGROUND SERVICE
+            NotificationChannel canalForeground = new NotificationChannel(CHANNEL_FOREGROUND, "Monitoramento Ativo", NotificationManager.IMPORTANCE_LOW);
+            canalForeground.setDescription("Mantém o ORG lendo suas notificações em segundo plano");
+            canalForeground.setShowBadge(false);
+            manager.createNotificationChannel(canalForeground);
         }
     }
 
-    // ⭐ NOVO MÉTODO: Notificação de Sugestão de Pagamento
+    // ⭐ NOVO MÉTODO: Retorna a notificação fixa para o Foreground Service
+    public static Notification getForegroundNotification(Context context) {
+        Intent intent = new Intent(context, InicioActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        return new NotificationCompat.Builder(context, CHANNEL_FOREGROUND)
+                .setSmallIcon(R.drawable.ic_nav_home)
+                .setContentTitle("ORG está ativo")
+                .setContentText("Monitorando suas notificações para o fluxo de caixa.")
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true) // ⭐ Faz a notificação ser fixa (usuário não consegue apagar)
+                .setContentIntent(pendingIntent)
+                .build();
+    }
+
     public static void mostrarNotificacaoSugestao(Context context, Divida divida, double valorRealPago) {
         Intent intentMarcarPago = new Intent(context, SugestaoPagamentoReceiver.class);
         intentMarcarPago.putExtra("EXTRA_DIVIDA_ID", divida.getId());

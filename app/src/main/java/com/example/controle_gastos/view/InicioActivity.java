@@ -28,6 +28,7 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import com.example.controle_gastos.R;
+import com.example.controle_gastos.Service.MonitorService; // ⭐ IMPORT DO SERVIÇO
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Conta;
 import com.example.controle_gastos.model.Divida;
@@ -106,6 +107,9 @@ public class InicioActivity extends AppCompatActivity {
         NotificationHelper.criarCanal(this);
         solicitarPermissaoNotificacao();
 
+        // ⭐ INICIA O SERVIÇO DE MONITORAMENTO (FOREGROUND)
+        iniciarMonitoramento();
+
         tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
         tvNomeInicio = findViewById(R.id.tvNomeInicio);
         tvDataAtualInicio = findViewById(R.id.tvDataAtualInicio);
@@ -166,6 +170,20 @@ public class InicioActivity extends AppCompatActivity {
         }
 
         agendarLembretesFinanceiros();
+    }
+
+    // ⭐ MÉTODO PARA INICIAR O FOREGROUND SERVICE
+    private void iniciarMonitoramento() {
+        try {
+            Intent serviceIntent = new Intent(this, MonitorService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao iniciar MonitorService: " + e.getMessage());
+        }
     }
 
     private void atualizarDataAtual() {
@@ -245,6 +263,7 @@ public class InicioActivity extends AppCompatActivity {
         if (requestCode == REQ_NOTIFICACAO) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Lembretes ativados!", Toast.LENGTH_SHORT).show();
+                iniciarMonitoramento(); // ⭐ Tenta iniciar de novo se a permissão for dada agora
             } else {
                 Toast.makeText(this, "Sem permissão, os lembretes não vão funcionar.", Toast.LENGTH_LONG).show();
             }
@@ -390,7 +409,6 @@ public class InicioActivity extends AppCompatActivity {
 
             if (tvTitulo != null) {
                 String titulo = d.getTitulo();
-                // ⭐ CORREÇÃO AQUI: Verifica se é conta fixa antes de adicionar a parcela
                 if (!d.isFixa()) {
                     int total = extrairTotalParcelas(d.getParcela());
                     if (total > 1) {

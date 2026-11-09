@@ -32,10 +32,10 @@ import com.example.controle_gastos.model.ChavePix;
                 Cartao.class, ChavePix.class, ComprovanteProcessado.class, Renda.class,
                 Conta.class
         },
-        version = 14, // ⭐ Versão atualizada
+        version = 14,
         exportSchema = true,
         autoMigrations = {
-                @AutoMigration(from = 13, to = 14) // ⭐ O Room cria o SQL automaticamente
+                @AutoMigration(from = 13, to = 14)
         }
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -66,6 +66,9 @@ public abstract class AppDatabase extends RoomDatabase {
                             Migrations.MIGRATION_11_12,
                             Migrations.MIGRATION_12_13
                     )
+                    // ⭐ A MÁGICA AQUI: Se o banco for versão 1 a 7, ele deleta e cria novo.
+                    // Se for 8+, ele aplica as migrações.
+                    .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5, 6, 7)
                     .allowMainThreadQueries()
                     .build();
         }

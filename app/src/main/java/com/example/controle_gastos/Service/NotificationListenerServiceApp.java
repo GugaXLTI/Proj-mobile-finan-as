@@ -38,8 +38,7 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
     private static final String CHANNEL_ID_FEEDBACK = "feedback_transacao";
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
-    // ⭐ NOVO: Cache para evitar notificações duplicadas
-    private static final long TEMPO_DEBOUNCE_MS = 5000; // 5 segundos
+    private static final long TEMPO_DEBOUNCE_MS = 5000;
     private static final Map<String, Long> cacheNotificacoes = new HashMap<>();
 
     @Override
@@ -84,11 +83,9 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
 
         String textoCompleto = (title != null ? title : "") + " " + text;
 
-        // ⭐ PROTEÇÃO ANTI-DUPLICAÇÃO AQUI
         String hashNotificacao = packageName + "_" + textoCompleto;
         long agora = System.currentTimeMillis();
 
-        // Limpa o cache antigo (para não ficar na memória pra sempre)
         Iterator<Map.Entry<String, Long>> iterator = cacheNotificacoes.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, Long> entry = iterator.next();
@@ -97,18 +94,15 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
             }
         }
 
-        // Se a notificação está no cache e foi vista há menos de 5 segundos, ignora!
         if (cacheNotificacoes.containsKey(hashNotificacao)) {
             Log.d(TAG, "Notificação duplicada ignorada: " + textoCompleto);
-            return; // Sai do método e não salva no banco
+            return;
         }
 
-        // Se não está duplicada, coloca no cache e continua o processamento
         cacheNotificacoes.put(hashNotificacao, agora);
 
         Log.d(TAG, "Notificação de " + bancoDetectado + " capturada: " + textoCompleto);
 
-        // Escolhe qual Parser usar baseado no banco
         Transacao novaTransacao;
         if (bancoDetectado.toLowerCase().contains("nubank")) {
             novaTransacao = NubankParser.processarTexto(textoCompleto, userId);
@@ -121,13 +115,13 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
             Log.d(TAG, "Transação salva no banco com sucesso! ID: " + id);
 
             if (id > 0) {
-                // GATILHO DO ESPIÃO INTELIGENTE (Sugestão de Pagamento)
                 if ("SAIDA".equals(novaTransacao.tipo) || "SAÍDA".equals(novaTransacao.tipo)) {
                     double valorLido = novaTransacao.valor;
 
                     Divida dividaParaSugerir = db.dividaDao().buscarDividaAbertaPorValor(userId, valorLido);
 
                     if (dividaParaSugerir == null) {
+                        // ⭐ CORREÇÃO DO NOME DO MÉTODO AQUI
                         dividaParaSugerir = db.dividaDao().buscarDividaAproximadaPorValor(userId, valorLido);
                     }
 

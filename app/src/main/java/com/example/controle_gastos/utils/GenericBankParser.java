@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 public class GenericBankParser {
 
     private static final String TAG = "GenericBankParser";
-    // Regex universal para capturar valores em Reais (ex: R$ 10,50 ou 1.500,00)
+    // Regex universal para capturar valores em Reais (ex: R$ 10,50 ou R$ 0,43)
     private static final String REGEX_VALOR = "R\\$\\s*?(\\d{1,3}(\\.\\d{3})*,\\d{2}|\\d+,\\d{2})";
 
     public static Transacao processarTexto(String textoBruto, int usuarioId, String nomeBanco) {
@@ -36,29 +36,39 @@ public class GenericBankParser {
         if (valorExtraido <= 0.0) return null;
 
         String textoMinusculo = textoBruto.toLowerCase();
-        String tipo = "SAIDA"; // Padrão é saída
+        String tipo = "SAIDA"; // Padrão
         String categoria = "Outros";
         String descricao = "Transação " + nomeBanco;
 
-        // 2. Detecta se é ENTRADA ou SAÍDA
-        // Palavras-chave comuns de ENTRADA
-        if (textoMinusculo.contains("recebeu") || textoMinusculo.contains("recebida") ||
-                textoMinusculo.contains("entrada") || textoMinusculo.contains("depósito") ||
-                textoMinusculo.contains("credito") || textoMinusculo.contains("crédito") ||
-                textoMinusculo.contains("pix de") || textoMinusculo.contains("transferência de")) {
+        // ⭐ PALAVRAS-CHAVE REFORÇADAS
+        boolean isEntrada = textoMinusculo.contains("recebeu") ||
+                textoMinusculo.contains("recebido") ||
+                textoMinusculo.contains("recebida") ||
+                textoMinusculo.contains("entrada") ||
+                textoMinusculo.contains("depósito") ||
+                textoMinusculo.contains("credito") ||
+                textoMinusculo.contains("crédito") ||
+                textoMinusculo.contains("creditado") ||
+                textoMinusculo.contains("pix de") ||
+                textoMinusculo.contains("transferência de");
 
+        boolean isSaida = textoMinusculo.contains("enviou") ||
+                textoMinusculo.contains("enviado") ||
+                textoMinusculo.contains("pagamento") ||
+                textoMinusculo.contains("compra") ||
+                textoMinusculo.contains("débito") ||
+                textoMinusculo.contains("debito") ||
+                textoMinusculo.contains("debitado") ||
+                textoMinusculo.contains("pix para") ||
+                textoMinusculo.contains("saque") ||
+                textoMinusculo.contains("boleto");
+
+        // Se for ENTRADA, tem prioridade (ignora o "enviou" em notificações de recebimento)
+        if (isEntrada) {
             tipo = "ENTRADA";
             categoria = "Receita";
             descricao = "Pix / Depósito Recebido (" + nomeBanco + ")";
-
-        }
-        // Palavras-chave comuns de SAÍDA
-        else if (textoMinusculo.contains("enviou") || textoMinusculo.contains("enviado") ||
-                textoMinusculo.contains("pagamento") || textoMinusculo.contains("compra") ||
-                textoMinusculo.contains("débito") || textoMinusculo.contains("debito") ||
-                textoMinusculo.contains("pix para") || textoMinusculo.contains("saque") ||
-                textoMinusculo.contains("boleto")) {
-
+        } else if (isSaida) {
             tipo = "SAIDA";
 
             // Tenta extrair o nome do estabelecimento/beneficiário
@@ -82,9 +92,12 @@ public class GenericBankParser {
             } else if (textoMinusculo.contains("netflix") || textoMinusculo.contains("spotify") || textoMinusculo.contains("youtube")) {
                 categoria = "Assinaturas";
             }
+        } else {
+            // Se não achou nenhuma palavra forte, salva como saída genérica para não perder o dado
+            tipo = "SAIDA";
+            descricao = "Transação " + nomeBanco;
         }
 
-        // 3. Cria a transação
         String dataAtual = new SimpleDateFormat("dd/MM/yyyy", new Locale("pt", "BR")).format(new Date());
         Transacao transacao = new Transacao(usuarioId, descricao, valorExtraido, dataAtual, tipo, categoria);
 

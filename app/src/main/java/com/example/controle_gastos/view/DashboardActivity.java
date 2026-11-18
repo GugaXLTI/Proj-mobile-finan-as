@@ -73,14 +73,9 @@ public class DashboardActivity extends AppCompatActivity {
             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
 
     private static final int[] CORES = {
-            Color.parseColor("#10B981"),
-            Color.parseColor("#3B82F6"),
-            Color.parseColor("#F59E0B"),
-            Color.parseColor("#EC4899"),
-            Color.parseColor("#06B6D4"),
-            Color.parseColor("#EF4444"),
-            Color.parseColor("#8B5CF6"),
-            Color.parseColor("#EAB308")
+            Color.parseColor("#10B981"), Color.parseColor("#3B82F6"), Color.parseColor("#F59E0B"),
+            Color.parseColor("#EC4899"), Color.parseColor("#06B6D4"), Color.parseColor("#EF4444"),
+            Color.parseColor("#8B5CF6"), Color.parseColor("#EAB308")
     };
 
     private PieChart pieChart;
@@ -100,6 +95,9 @@ public class DashboardActivity extends AppCompatActivity {
     private List<Divida> todasDividas = new ArrayList<>();
     private final List<Divida> dividasFiltradas = new ArrayList<>();
     private final List<Transacao> transacoesFiltradas = new ArrayList<>();
+
+    // ⭐ NOVO: Lista separada para o gráfico e balanço de gastos
+    private final List<Divida> dividasPagasNoMes = new ArrayList<>();
 
     private final Map<String, TextView> chipsFiltro = new LinkedHashMap<>();
     private final Map<String, View> legendaRows = new HashMap<>();
@@ -197,28 +195,29 @@ public class DashboardActivity extends AppCompatActivity {
 
         ehMesAtual = (mesSelecionado == mesHoje) && (anoSelecionado == anoHoje);
 
-        boolean ehMesFuturo = (anoSelecionado > anoHoje) || (anoSelecionado == anoHoje && mesSelecionado > mesHoje);
-
         List<Divida> todas = db.dividaDao().listarPorUsuario(session.getUserId());
         todasDividas = new ArrayList<>();
+        dividasPagasNoMes.clear();
+
+        String mesAnoStr = String.format(LOCALE_BR, "%02d/%04d", mesSelecionado, anoSelecionado);
 
         for (Divida d : todas) {
+            // 1. Filtro para a Lista (Vencimento no mês)
             if (pertenceAoMes(d, mesSelecionado, anoSelecionado)) {
-                // ⭐ CORREÇÃO 1: Se for um mês futuro, só adiciona se já estiver pago (adiantado)
-                if (ehMesFuturo) {
-                    if (d.isPago()) {
-                        todasDividas.add(d);
-                    }
-                } else {
-                    todasDividas.add(d);
+                todasDividas.add(d);
+            }
+
+            // 2. Filtro para o Gráfico e Balanço (Data de Pagamento no mês)
+            if (d.isPago() && d.getDataPagamento() != null && d.getDataPagamento().length() >= 10) {
+                if (d.getDataPagamento().substring(3).equals(mesAnoStr)) {
+                    dividasPagasNoMes.add(d);
                 }
             }
         }
         todasDividas.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
 
-        String mesAnoAtual = String.format(LOCALE_BR, "%02d/%04d", mesSelecionado, anoSelecionado);
         transacoesFiltradas.clear();
-        transacoesFiltradas.addAll(db.transacaoDao().listarPorMes(session.getUserId(), mesAnoAtual));
+        transacoesFiltradas.addAll(db.transacaoDao().listarPorMes(session.getUserId(), mesAnoStr));
 
         categoriaAtual = "Todos";
 
@@ -236,7 +235,7 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void atualizarBalancoMensal() {
-        if (todasDividas.isEmpty() && transacoesFiltradas.isEmpty()) {
+        if (todasDividas.isEmpty() && transacoesFiltradas.isEmpty() && dividasPagasNoMes.isEmpty()) {
             tvSalarioDash.setText("Sem dados");
             tvGastosDash.setText("Sem dados");
             tvSaldoDash.setText("Sem dados");
@@ -246,16 +245,12 @@ public class DashboardActivity extends AppCompatActivity {
             return;
         }
 
+        // ⭐ Gastos Pagos: Soma o que foi pago no mês (dataPagamento)
         double gastosPagos = 0;
-
-        // ⭐ CORREÇÃO: Soma apenas o que foi pago
-        for (Divida d : todasDividas) {
-            if (d.isPago()) {
-                gastosPagos += d.getValorTotal();
-            }
+        for (Divida d : dividasPagasNoMes) {
+            gastosPagos += d.getValorTotal();
         }
 
-        // Adiciona as transações automáticas do espião (que já são gastos reais)
         for (Transacao t : transacoesFiltradas) {
             if ("SAIDA".equals(t.getTipo()) || "SAÍDA".equals(t.getTipo())) {
                 gastosPagos += t.getValor();
@@ -273,11 +268,15 @@ public class DashboardActivity extends AppCompatActivity {
         if (ehMesAtual) {
             Conta conta = db.contaDao().buscarPorUsuario(session.getUserId());
             double saldoInicial = (conta != null) ? conta.saldoInicial : 0.0;
-            baseCalculo += saldoInicial;
+            double entradasTotal = db.transacaoDao().somarEntradas(session.getUserId());
+            double saidasTotal = db.transacaoDao().somarSaidas(session.getUserId());
+            double gastosPagosTotal = db.dividaDao().somarGastosPagosTotal(session.getUserId());
+
+            double saldoAtual = saldoInicial + entradasTotal - saidasTotal - gastosPagosTotal;
+            baseCalculo = saldoAtual + gastosPagos; // Base do mês = Saldo Atual + Gastos do Mês
         }
 
         tvSalarioDash.setText(moeda(baseCalculo));
-        // ⭐ Mostra apenas o que foi efetivamente pago
         tvGastosDash.setText(moeda(gastosPagos));
 
         if (baseCalculo > 0) {
@@ -321,13 +320,11 @@ public class DashboardActivity extends AppCompatActivity {
         Map<String, Double> gastos = new HashMap<>();
         double total = 0;
 
-        // ⭐ CORREÇÃO: Só adiciona no gráfico se estiver pago
-        for (Divida d : todasDividas) {
-            if (d.isPago()) {
-                String cat = categoriaDe(d);
-                gastos.put(cat, gastos.getOrDefault(cat, 0.0) + d.getValorTotal());
-                total += d.getValorTotal();
-            }
+        // ⭐ Usa a lista de dívidas pagas no mês (pela data de pagamento)
+        for (Divida d : dividasPagasNoMes) {
+            String cat = categoriaDe(d);
+            gastos.put(cat, gastos.getOrDefault(cat, 0.0) + d.getValorTotal());
+            total += d.getValorTotal();
         }
 
         List<Map.Entry<String, Double>> ordenado = new ArrayList<>(gastos.entrySet());
@@ -546,9 +543,6 @@ public class DashboardActivity extends AppCompatActivity {
         Calendar c = Calendar.getInstance();
         c.set(anoSelecionado, mesSelecionado - 1, 1);
 
-        // ⭐ CORREÇÃO 2: Em vez de voltar meses, o gráfico começa no mês selecionado e vai para frente
-        // (Isso evita mostrar os meses passados vazios, como Set/Out)
-
         List<Entry> entries = new ArrayList<>();
         final List<String> labelsMeses = new ArrayList<>();
         String[] nomesMeses = {"Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -559,11 +553,15 @@ public class DashboardActivity extends AppCompatActivity {
         for (int i = 0; i < mesesVisiveis; i++) {
             int mesRef = c.get(Calendar.MONTH) + 1;
             int anoRef = c.get(Calendar.YEAR);
+            String mesAnoRef = String.format(LOCALE_BR, "%02d/%04d", mesRef, anoRef);
 
             double totalMes = 0;
             for (Divida d : todas) {
-                if (pertenceAoMes(d, mesRef, anoRef) && d.isPago()) {
-                    totalMes += d.getValorTotal();
+                // ⭐ Gráfico de Linha: Usa a DATA DE PAGAMENTO (Regime de Caixa)
+                if (d.isPago() && d.getDataPagamento() != null && d.getDataPagamento().length() >= 10) {
+                    if (d.getDataPagamento().substring(3).equals(mesAnoRef)) {
+                        totalMes += d.getValorTotal();
+                    }
                 }
             }
 
@@ -571,7 +569,7 @@ public class DashboardActivity extends AppCompatActivity {
             labelsMeses.add(nomesMeses[mesRef - 1]);
             totalPeriodo += totalMes;
 
-            c.add(Calendar.MONTH, 1); // Avança para o próximo mês
+            c.add(Calendar.MONTH, 1);
         }
 
         double media = totalPeriodo / Math.max(mesesVisiveis, 1);

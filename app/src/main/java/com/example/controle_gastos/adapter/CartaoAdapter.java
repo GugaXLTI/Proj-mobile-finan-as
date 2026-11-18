@@ -1,14 +1,20 @@
 package com.example.controle_gastos.adapter;
 
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.model.Cartao;
 import java.util.List;
+import java.util.Locale;
 
 public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder> {
 
@@ -22,10 +28,13 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
         void onItemClick(Cartao cartao);
     }
 
-    private List<Cartao> listaCartoes;
-    private String nomeUsuario;
+    private final List<Cartao> listaCartoes;
+    private final String nomeUsuario;
     private OnItemLongClickListener longClickListener;
     private OnItemClickListener clickListener;
+
+    // Define o texto/cor do status "leitura automática" de cada card
+    private boolean leituraAtiva = false;
 
     public CartaoAdapter(List<Cartao> listaCartoes, String nomeUsuario) {
         this.listaCartoes = listaCartoes;
@@ -40,6 +49,25 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
         this.clickListener = listener;
     }
 
+    public void setLeituraAtiva(boolean ativa) {
+        if (this.leituraAtiva != ativa) {
+            this.leituraAtiva = ativa;
+            notifyDataSetChanged();
+        }
+    }
+
+    /** Cor de destaque de cada banco (também usada pelos chips do formulário). */
+    public static int corDoBanco(String instituicao) {
+        String s = instituicao == null ? "" : instituicao.toLowerCase(Locale.ROOT);
+        if (s.contains("nubank") || s.equals("nu")) return Color.parseColor("#8A05BE");
+        if (s.contains("inter")) return Color.parseColor("#FF7A00");
+        if (s.contains("itaú") || s.contains("itau")) return Color.parseColor("#EC7000");
+        if (s.contains("bradesco")) return Color.parseColor("#CC092F");
+        if (s.contains("santander")) return Color.parseColor("#EC0000");
+        if (s.contains("caixa")) return Color.parseColor("#005CA9");
+        return Color.parseColor("#64748B");
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -51,34 +79,80 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Cartao cartao = listaCartoes.get(position);
+        Context ctx = holder.itemView.getContext();
+        float d = ctx.getResources().getDisplayMetrics().density;
 
+        String instituicao = cartao.instituicao != null ? cartao.instituicao : "";
         String tipo = (cartao.tipo != null) ? cartao.tipo : "Crédito";
-        holder.tvNomeCartao.setText(cartao.instituicao + " • " + tipo);
-        holder.tvNumeroCartao.setText("•••• •••• " + cartao.ultimos4Digitos);
-        holder.tvTitular.setText(nomeUsuario.toUpperCase());
-        holder.tvVencimento.setText("Dia " + cartao.diaVencimento);
+        int cor = corDoBanco(instituicao);
 
-        if (cartao.bandeira != null && !cartao.bandeira.isEmpty()) {
-            holder.tvBandeira.setText(cartao.bandeira.toUpperCase());
-        } else {
-            String sigla = cartao.instituicao.length() >= 2 ? cartao.instituicao.substring(0, 2) : cartao.instituicao;
-            holder.tvBandeira.setText(sigla.toUpperCase());
+        // Fundo do cartão: gradiente na cor da marca
+        GradientDrawable fundo = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                new int[]{ColorUtils.setAlphaComponent(cor, 80), Color.parseColor("#111A2E")});
+        fundo.setCornerRadius(24 * d);
+        fundo.setStroke(Math.max(1, Math.round(d)), ColorUtils.setAlphaComponent(cor, 110));
+        holder.root.setBackground(fundo);
+
+        // Sigla (bandeira se existir, senão as 2 primeiras letras do banco)
+        String sigla = (cartao.bandeira != null && !cartao.bandeira.trim().isEmpty())
+                ? cartao.bandeira.trim() : instituicao;
+        sigla = sigla.length() >= 2 ? sigla.substring(0, 2) : sigla;
+        holder.tvSigla.setText(sigla.toUpperCase(Locale.ROOT));
+
+        GradientDrawable badge = new GradientDrawable();
+        badge.setCornerRadius(14 * d);
+        badge.setColor(cor);
+        holder.tvSigla.setBackground(badge);
+
+        holder.tvNomeCartao.setText(instituicao);
+        holder.tvTipoCartao.setText(tipo);
+
+        // Subtítulo: apelido (se for diferente do banco) e, em cartões antigos, o final
+        StringBuilder sub = new StringBuilder();
+        String apelido = cartao.apelido != null ? cartao.apelido.trim() : "";
+        if (!apelido.isEmpty() && !apelido.equalsIgnoreCase(instituicao)) {
+            sub.append(apelido);
         }
+        String final4 = cartao.ultimos4Digitos != null ? cartao.ultimos4Digitos.trim() : "";
+        if (!final4.isEmpty()) {
+            if (sub.length() > 0) sub.append(" · ");
+            sub.append("final ").append(final4);
+        }
+        holder.tvApelido.setText(sub.toString());
+        holder.tvApelido.setVisibility(sub.length() == 0 ? View.GONE : View.VISIBLE);
+
+        // Status da leitura automática
+        int corStatus = Color.parseColor(leituraAtiva ? "#34D399" : "#FBBF24");
+        GradientDrawable dot = new GradientDrawable();
+        dot.setShape(GradientDrawable.OVAL);
+        dot.setColor(corStatus);
+        holder.vDotStatus.setBackground(dot);
+        holder.tvStatusLeitura.setText(leituraAtiva
+                ? "Leitura automática ativa"
+                : "Aguardando permissão de leitura");
+        holder.tvStatusLeitura.setTextColor(corStatus);
+
+        holder.tvTitular.setText(nomeUsuario != null ? nomeUsuario.toUpperCase(Locale.ROOT) : "");
 
         // ⭐ Clique normal = editar
         holder.itemView.setOnClickListener(v -> {
-            if (clickListener != null) {
-                clickListener.onItemClick(cartao);
-            }
+            if (clickListener != null) clickListener.onItemClick(cartao);
+        });
+        holder.btnEditar.setOnClickListener(v -> {
+            if (clickListener != null) clickListener.onItemClick(cartao);
         });
 
-        // ⭐ Clique longo = excluir
+        // ⭐ Clique longo = excluir (e também o ícone da lixeira)
         holder.itemView.setOnLongClickListener(v -> {
             if (longClickListener != null) {
                 longClickListener.onItemLongClick(cartao);
                 return true;
             }
             return false;
+        });
+        holder.btnExcluir.setOnClickListener(v -> {
+            if (longClickListener != null) longClickListener.onItemLongClick(cartao);
         });
     }
 
@@ -88,15 +162,22 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvNomeCartao, tvBandeira, tvNumeroCartao, tvTitular, tvVencimento;
+        View root, vDotStatus;
+        TextView tvSigla, tvNomeCartao, tvApelido, tvTipoCartao, tvStatusLeitura, tvTitular;
+        ImageView btnEditar, btnExcluir;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            root = itemView.findViewById(R.id.rootCartao);
+            vDotStatus = itemView.findViewById(R.id.vDotStatus);
+            tvSigla = itemView.findViewById(R.id.tvBandeira);
             tvNomeCartao = itemView.findViewById(R.id.tvNomeCartao);
-            tvBandeira = itemView.findViewById(R.id.tvBandeira);
-            tvNumeroCartao = itemView.findViewById(R.id.tvNumeroCartao);
+            tvApelido = itemView.findViewById(R.id.tvApelidoCartao);
+            tvTipoCartao = itemView.findViewById(R.id.tvTipoCartao);
+            tvStatusLeitura = itemView.findViewById(R.id.tvStatusLeitura);
             tvTitular = itemView.findViewById(R.id.tvTitular);
-            tvVencimento = itemView.findViewById(R.id.tvVencimento);
+            btnEditar = itemView.findViewById(R.id.btnEditarCartao);
+            btnExcluir = itemView.findViewById(R.id.btnExcluirCartao);
         }
     }
 }

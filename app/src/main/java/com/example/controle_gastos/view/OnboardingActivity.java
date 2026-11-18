@@ -61,7 +61,6 @@ public class OnboardingActivity extends AppCompatActivity {
     private ImageView ivStatusPermissao;
     private MaterialButton btnAutorizar;
 
-    // ⭐ Novos elementos de bateria
     private TextView tvStatusBateriaOnb;
     private ImageView ivStatusBateriaOnb;
     private MaterialButton btnConfigurarBateriaOnb;
@@ -123,13 +122,17 @@ public class OnboardingActivity extends AppCompatActivity {
         });
 
         ir(editando ? PG_SALDO : PG_WELCOME);
+
+        if (editando) {
+            Toast.makeText(this, "Atenção: Alterar o saldo redefine a base. Gastos pagos podem deixar o saldo negativo.", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         atualizarStatusPermissao();
-        atualizarStatusBateria(); // ⭐ Atualiza o status da bateria
+        atualizarStatusBateria();
         atualizarBotao();
     }
 
@@ -169,14 +172,11 @@ public class OnboardingActivity extends AppCompatActivity {
 
     private void setupPermissao() {
         View page = viewFlipper.getChildAt(PG_PERMISSAO);
-
-        // Find das notificações
         tvStatusPermissao = page.findViewById(R.id.tvStatusPermissao);
         ivStatusPermissao = page.findViewById(R.id.ivStatusPermissao);
         btnAutorizar = page.findViewById(R.id.btnAutorizarNotificacoes);
         btnAutorizar.setOnClickListener(v -> abrirConfiguracaoNotificacoes());
 
-        // ⭐ Find dos novos elementos de bateria
         tvStatusBateriaOnb = page.findViewById(R.id.tvStatusBateriaOnb);
         ivStatusBateriaOnb = page.findViewById(R.id.ivStatusBateriaOnb);
         btnConfigurarBateriaOnb = page.findViewById(R.id.btnConfigurarBateriaOnb);
@@ -388,7 +388,6 @@ public class OnboardingActivity extends AppCompatActivity {
 
             String numeroParcela = (i + 1) + "/12";
 
-            // ⭐ CORREÇÃO AQUI: Adicionado o 'true' no final para indicar que é Conta Fixa
             Divida parcela = new Divida(session.getUserId(), grupoId, nome, valor, valor, 0.0, "Conta Fixa", "Contas Fixas", numeroParcela, vencParcela, false, false, true);
             db.dividaDao().inserir(parcela);
         }

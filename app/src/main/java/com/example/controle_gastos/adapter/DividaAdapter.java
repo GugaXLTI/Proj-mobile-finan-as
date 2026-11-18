@@ -1,6 +1,7 @@
 package com.example.controle_gastos.adapter;
 
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.DividaAgrupada;
+import com.example.controle_gastos.utils.BancoHelper;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -53,6 +55,31 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         holder.tvTitulo.setText(agrupada.getTitulo());
         holder.tvDetalhe.setText(montarDetalhe(parcelaExibida));
 
+        try {
+            String banco = parcelaExibida.getBanco();
+            if (banco != null && !banco.trim().isEmpty() && !banco.equalsIgnoreCase("Genérico")) {
+                holder.tvBankIcon.setVisibility(View.VISIBLE);
+
+                String iniciais;
+                if (banco.toLowerCase().contains("pix")) {
+                    iniciais = "PX";
+                } else {
+                    iniciais = banco.length() >= 2 ? banco.substring(0, 2).toUpperCase() : banco.toUpperCase();
+                }
+
+                holder.tvBankIcon.setText(iniciais);
+
+                GradientDrawable shape = new GradientDrawable();
+                shape.setShape(GradientDrawable.OVAL);
+                shape.setColor(BancoHelper.getCorBanco(banco));
+                holder.tvBankIcon.setBackground(shape);
+            } else {
+                holder.tvBankIcon.setVisibility(View.GONE);
+            }
+        } catch (Exception e) {
+            holder.tvBankIcon.setVisibility(View.GONE);
+        }
+
         NumberFormat nf = NumberFormat.getCurrencyInstance(LOCALE_BR);
         holder.tvValor.setText(nf.format(parcelaExibida.getValorTotal()));
 
@@ -64,7 +91,6 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             }
         } catch (Exception ignored) {}
 
-        // ⭐ Lógica para Conta Fixa x Dívida Normal
         if (parcelaExibida.isFixa()) {
             holder.tvParcela.setText("Conta Fixa Mensal");
             if (holder.tvProgresso != null) holder.tvProgresso.setVisibility(View.GONE);
@@ -84,15 +110,18 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             }
         }
 
-        // Verifica se a parcela visível está paga
         if (parcelaExibida.isPago()) {
             holder.btnPagar.setVisibility(View.GONE);
             holder.tvValor.setTextColor(Color.parseColor("#94A3B8"));
 
-            // ⭐ Mostra a data de pagamento se existir
-            if (parcelaExibida.getDataPagamento() != null && !parcelaExibida.getDataPagamento().isEmpty()) {
-                holder.tvStatus.setText("Pago em " + parcelaExibida.getDataPagamento());
-            } else {
+            try {
+                // ⭐ AQUI MUDOU DE "Pago em" PARA "Pago dia"
+                if (parcelaExibida.getDataPagamento() != null && !parcelaExibida.getDataPagamento().isEmpty()) {
+                    holder.tvStatus.setText("Pago dia " + parcelaExibida.getDataPagamento());
+                } else {
+                    holder.tvStatus.setText("Pago ✓");
+                }
+            } catch (Exception e) {
                 holder.tvStatus.setText("Pago ✓");
             }
             holder.tvStatus.setTextColor(Color.parseColor("#34D399"));
@@ -120,6 +149,12 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
     private String montarDetalhe(Divida d) {
         String banco = d.getBanco() == null ? "" : d.getBanco().trim();
         String categoria = d.getCategoria() == null ? "" : d.getCategoria().trim();
+
+        if (banco.toLowerCase().contains("pix")) {
+            if (!categoria.isEmpty()) return banco + " · " + categoria;
+            return banco;
+        }
+
         if (!banco.isEmpty() && !categoria.isEmpty()) return banco + " · " + categoria;
         if (!banco.isEmpty()) return banco;
         if (!categoria.isEmpty()) return categoria;
@@ -143,7 +178,7 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitulo, tvValor, tvDetalhe, tvParcela, tvStatus, tvMes, tvDia, tvProgresso;
+        TextView tvTitulo, tvValor, tvDetalhe, tvParcela, tvStatus, tvMes, tvDia, tvProgresso, tvBankIcon;
         ProgressBar progressBar;
         ImageView btnEditar, btnExcluir;
         TextView btnPagar;
@@ -162,6 +197,7 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             btnPagar = itemView.findViewById(R.id.btnPagar);
             btnEditar = itemView.findViewById(R.id.btnEditar);
             btnExcluir = itemView.findViewById(R.id.btnExcluir);
+            tvBankIcon = itemView.findViewById(R.id.tvBankIcon);
         }
     }
 }

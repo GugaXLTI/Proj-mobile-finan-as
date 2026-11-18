@@ -47,8 +47,10 @@ import com.google.android.material.chip.ChipGroup;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class CadastroDividaActivity extends AppCompatActivity {
 
@@ -64,6 +66,9 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private TextView btnNovoItem, btnNovaCategoria, tvTituloSelecao, tvResumoParcelas, tvSemCategoria;
     private Button btnCadastrarAgora;
     private LinearLayout boxDataCompra, boxVencimento, containerParcelas;
+
+    private View overlaySucesso;
+    private MaterialButton btnConcluirSucesso;
 
     private AppDatabase db;
     private SessionManager session;
@@ -117,6 +122,10 @@ public class CadastroDividaActivity extends AppCompatActivity {
         boxDataCompra = findViewById(R.id.boxDataCompra);
         boxVencimento = findViewById(R.id.boxVencimento);
         containerParcelas = findViewById(R.id.containerParcelas);
+
+        overlaySucesso = findViewById(R.id.overlaySucesso);
+        btnConcluirSucesso = findViewById(R.id.btnConcluirSucesso);
+        btnConcluirSucesso.setOnClickListener(v -> finish());
 
         rvSelecao.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
@@ -250,28 +259,25 @@ public class CadastroDividaActivity extends AppCompatActivity {
         return chip;
     }
 
-    // ⭐ Chip de categoria com a bolinha da cor cadastrada (mesma cor da tela de Categorias)
     private Chip criarChipCategoria(String nome, String corHex) {
         Chip chip = criarChip(nome);
-
         int cor;
         try {
             cor = Color.parseColor(corHex);
         } catch (Exception e) {
             cor = Color.parseColor("#64748B");
         }
-
         GradientDrawable bolinha = new GradientDrawable();
         bolinha.setShape(GradientDrawable.OVAL);
         bolinha.setColor(cor);
 
         chip.setChipIcon(bolinha);
-        chip.setChipIconTint(null);          // não deixa o tema pintar a bolinha
+        chip.setChipIconTint(null);
         chip.setChipIconSize(dp(10));
         chip.setChipIconVisible(true);
         chip.setIconStartPadding(dp(6));
         chip.setTextStartPadding(dp(2));
-        chip.setCheckedIconVisible(false);   // a seleção já aparece pela cor do chip
+        chip.setCheckedIconVisible(false);
         return chip;
     }
 
@@ -301,14 +307,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         tvResumoParcelas.setVisibility(isAVista ? View.GONE : View.VISIBLE);
 
         itensSelecao.clear();
-
-        // ⭐ CORREÇÃO: Se for Pix, esconde a seleção de cartões/chaves
-        if (tipo.equals("Pix")) {
-            containerSelecao.setVisibility(View.GONE);
-            chipAdapter = null;
-            return;
-        }
-
         containerSelecao.setVisibility(View.VISIBLE);
 
         if (tipo.equals("Cartão de Crédito") || tipo.equals("Cartão de Débito")) {
@@ -318,8 +316,20 @@ public class CadastroDividaActivity extends AppCompatActivity {
             for (Cartao c : cartoes) {
                 if (c.tipo != null && c.tipo.equals(tipoCartaoFiltro)) {
                     String sigla = c.instituicao.length() >= 2 ? c.instituicao.substring(0, 2).toUpperCase() : c.instituicao;
-                    String detalhe = "•••• " + (c.ultimos4Digitos != null ? c.ultimos4Digitos : "0000");
+                    String detalhe = (c.ultimos4Digitos != null && !c.ultimos4Digitos.trim().isEmpty())
+                            ? "•••• " + c.ultimos4Digitos
+                            : tipoCartaoFiltro;
                     itensSelecao.add(new String[]{sigla, c.instituicao, c.instituicao, detalhe});
+                }
+            }
+        } else if (tipo.equals("Pix")) {
+            tvTituloSelecao.setText("Selecione o Banco do Pix");
+            List<Cartao> cartoes = db.cartaoDao().listarPorUsuario(session.getUserId());
+            Set<String> instituicoesUnicas = new HashSet<>();
+            for (Cartao c : cartoes) {
+                if (instituicoesUnicas.add(c.instituicao)) {
+                    String sigla = c.instituicao.length() >= 2 ? c.instituicao.substring(0, 2).toUpperCase() : c.instituicao;
+                    itensSelecao.add(new String[]{sigla, c.instituicao, c.instituicao, "Pix"});
                 }
             }
         } else {
@@ -421,9 +431,12 @@ public class CadastroDividaActivity extends AppCompatActivity {
         if (valor <= 0) { Toast.makeText(this, "O valor deve ser maior que zero.", Toast.LENGTH_SHORT).show(); return; }
 
         String bancoSelecionado = tipoDivida;
-        // ⭐ Se não for Pix e tiver cartão selecionado, pega o banco do cartão
-        if (!tipoDivida.equals("Pix") && chipAdapter != null && chipAdapter.getItemSelecionado() != null) {
-            bancoSelecionado = chipAdapter.getItemSelecionado()[2];
+        if (chipAdapter != null && chipAdapter.getItemSelecionado() != null) {
+            if (tipoDivida.equals("Pix")) {
+                bancoSelecionado = "Pix (" + chipAdapter.getItemSelecionado()[2] + ")";
+            } else {
+                bancoSelecionado = chipAdapter.getItemSelecionado()[2];
+            }
         }
 
         String parcelas = "1x (À vista)";
@@ -447,17 +460,17 @@ public class CadastroDividaActivity extends AppCompatActivity {
             dividaEmEdicao.parcela = isAVista ? "1x (À vista)" : parcelas;
             dividaEmEdicao.vencimento = vencimento;
             db.dividaDao().atualizar(dividaEmEdicao);
-            if (!dividaEmEdicao.isPago()) { AlarmeHelper.agendar(this, dividaEmEdicao); }
-            Toast.makeText(this, "Dívida atualizada!", Toast.LENGTH_SHORT).show();
-            finish();
+            if (!dividaEmEdicao.isPago()) { agendarAlarmeSeguro(dividaEmEdicao); }
+            mostrarTelaSucesso();
             return;
         }
 
         if (isAVista) {
             Divida nova = new Divida(session.getUserId(), descricao, valor, valor, valor, bancoSelecionado, categoria, "1x (À vista)", vencimento, true);
+            // ⭐ AQUI ESTÁ A MÁGICA: Salva a data de pagamento igual à data de vencimento (que é a data da compra em compras à vista)
+            nova.setDataPagamento(vencimento);
             db.dividaDao().inserir(nova);
-            Toast.makeText(this, "Lançamento à vista registrado!", Toast.LENGTH_SHORT).show();
-            finish();
+            mostrarTelaSucesso();
             return;
         }
 
@@ -469,10 +482,9 @@ public class CadastroDividaActivity extends AppCompatActivity {
             long id = db.dividaDao().inserir(nova);
             if (id > 0) {
                 nova.id = (int) id;
-                AlarmeHelper.agendar(this, nova);
+                agendarAlarmeSeguro(nova);
             }
-            Toast.makeText(this, "Dívida cadastrada!", Toast.LENGTH_SHORT).show();
-            finish();
+            mostrarTelaSucesso();
             return;
         }
 
@@ -490,21 +502,44 @@ public class CadastroDividaActivity extends AppCompatActivity {
             long idGerado = db.dividaDao().inserir(parcela);
             if (idGerado > 0) {
                 parcela.id = (int) idGerado;
-                AlarmeHelper.agendar(this, parcela);
+                agendarAlarmeSeguro(parcela);
             }
         }
-        Toast.makeText(this, "Dívida parcelada em " + numParcelas + "x cadastrada!", Toast.LENGTH_LONG).show();
-        finish();
+        mostrarTelaSucesso();
+    }
+
+    private void agendarAlarmeSeguro(Divida divida) {
+        try {
+            AlarmeHelper.agendar(this, divida);
+        } catch (Exception e) {
+            android.util.Log.e("CadastroDivida", "Erro ao agendar alarme: " + e.getMessage());
+        }
+    }
+
+    private void mostrarTelaSucesso() {
+        if (overlaySucesso != null) {
+            overlaySucesso.setVisibility(View.VISIBLE);
+            overlaySucesso.setAlpha(0f);
+            overlaySucesso.animate().alpha(1f).setDuration(300).start();
+        } else {
+            finish();
+        }
     }
 
     private void preencherCampos(Divida d) {
         editDescricao.setText(d.getTitulo());
         editValor.setText(String.format(new Locale("pt", "BR"), "R$ %.2f", d.getValorTotal()));
         editVencimento.setText(d.getVencimento());
+
+        String bancoDivida = d.getBanco() != null ? d.getBanco() : "";
         for (int i = 0; i < chipGroupTipo.getChildCount(); i++) {
             Chip chip = (Chip) chipGroupTipo.getChildAt(i);
             String tipo = chip.getText().toString();
-            if ((tipo.equals("Pix") && d.getBanco() != null && d.getBanco().length() > 20) || (d.getBanco() != null && d.getBanco().equals(tipo))) {
+
+            if (tipo.equals("Pix") && bancoDivida.toLowerCase().contains("pix")) {
+                chip.setChecked(true);
+                break;
+            } else if (!tipo.equals("Pix") && bancoDivida.equalsIgnoreCase(tipo)) {
                 chip.setChecked(true);
                 break;
             }

@@ -154,23 +154,30 @@
                         android:textColor="#94A3B8"
                         android:textSize="14sp" />
 
-                    <!-- ⭐ ChipGroup Parcelas -->
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/chipGroupParcelas"
+                    <!-- ⭐ HORIZONTAL SCROLLVIEW PARA COMPACTAR OS CHIPS -->
+                    <HorizontalScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        app:chipSpacingHorizontal="8dp"
-                        app:chipSpacingVertical="8dp"
-                        app:singleSelection="true"
-                        app:selectionRequired="true" />
+                        android:overScrollMode="never"
+                        android:scrollbars="none">
+
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/chipGroupParcelas"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:chipSpacingHorizontal="8dp"
+                            app:singleLine="true"
+                            app:singleSelection="true"
+                            app:selectionRequired="true" />
+                    </HorizontalScrollView>
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvResumoParcelas"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="10dp"
                     android:text="1x de R$ 0,00 · à vista"
                     android:textColor="#94A3B8"
                     android:textSize="14sp" />
@@ -185,16 +192,22 @@
                 android:textColor="#94A3B8"
                 android:textSize="14sp" />
 
-            <!-- ⭐ ChipGroup Tipo -->
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupTipo"
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                app:chipSpacingHorizontal="8dp"
-                app:chipSpacingVertical="8dp"
-                app:singleSelection="true"
-                app:selectionRequired="true" />
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupTipo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="8dp"
+                    app:singleLine="true"
+                    app:singleSelection="true"
+                    app:selectionRequired="true" />
+            </HorizontalScrollView>
 
             <!-- CARTÃO / CHAVE PIX / BANCO -->
             <LinearLayout
@@ -366,16 +379,22 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- ⭐ ChipGroup Categoria -->
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupCategoria"
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                app:chipSpacingHorizontal="8dp"
-                app:chipSpacingVertical="8dp"
-                app:singleSelection="true"
-                app:selectionRequired="true" />
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupCategoria"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="8dp"
+                    app:singleLine="true"
+                    app:singleSelection="true"
+                    app:selectionRequired="true" />
+            </HorizontalScrollView>
 
             <TextView
                 android:id="@+id/tvSemCategoria"
@@ -527,5 +546,73 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- ⭐ OVERLAY DE SUCESSO -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/overlaySucesso"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#E6070E17"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="32dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <View
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:background="@drawable/bg_circulo_sucesso" />
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="-60dp"
+                android:layout_marginBottom="20dp"
+                android:src="@drawable/ic_check"
+                app:tint="#04170E" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dívida registrada!"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:text="O lançamento já entrou no seu planejamento mensal."
+                android:textColor="#94A3B8"
+                android:textSize="15sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConcluirSucesso"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="32dp"
+                android:backgroundTint="#10B981"
+                android:text="Voltar ao Início"
+                android:textAllCaps="false"
+                android:textColor="#04170E"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,148 +1,263 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollCartoes"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_screen"
-    android:padding="16dp">
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:overScrollMode="never"
+    android:paddingBottom="112dp"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tipo do Cartão"
-            android:textColor="@color/text_gray"
-            android:textSize="12sp" />
-        <Spinner
-            android:id="@+id/spinnerTipoCartao"
+        <!-- AVISO: leitura de notificações desligada -->
+        <LinearLayout
+            android:id="@+id/llAvisoPermissao"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_form_field"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Instituição Bancária"
-            android:textColor="@color/text_gray"
-            android:textSize="12sp" />
-        <Spinner
-            android:id="@+id/spinnerInstituicao"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_form_field"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Apelido do Cartão"
-            android:textColor="@color/text_gray"
-            android:textSize="12sp" />
-        <EditText
-            android:id="@+id/etApelidoCartao"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_form_field"
             android:layout_marginBottom="16dp"
-            android:hint="Ex: Cartão Principal"
-            android:textColorHint="@color/text_hint"
-            android:textColor="@color/text_white"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp" />
+            android:background="@drawable/bg_card_atencao"
+            android:orientation="vertical"
+            android:padding="18dp"
+            android:visibility="gone">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_onb_info"
+                    app:tint="#FBBF24" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:text="Leitura automática desligada"
+                    android:textColor="#FCD34D"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Autorize o acesso às notificações para o ORG registrar seus gastos sozinho."
+                android:textColor="#94A3B8"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/btnAutorizarLeitura"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_botao_secundario"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:text="Autorizar acesso"
+                android:textColor="#FBBF24"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- FORMULÁRIO -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
-            <LinearLayout
-                android:layout_width="0dp"
+            android:background="@drawable/bg_card_glass"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Últimos 4 Dígitos"
-                    android:textColor="@color/text_gray"
-                    android:textSize="12sp" />
-                <EditText
-                    android:id="@+id/etUltimos4"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_form_field"
-                    android:hint="4892"
-                    android:textColorHint="@color/text_hint"
-                    android:textColor="@color/text_white"
-                    android:inputType="number"
-                    android:maxLength="4"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp" />
-            </LinearLayout>
-            <LinearLayout
-                android:layout_width="0dp"
+                android:letterSpacing="0.08"
+                android:text="ADICIONAR BANCO"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="12dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Dia Vencimento"
-                    android:textColor="@color/text_gray"
-                    android:textSize="12sp" />
-                <EditText
-                    android:id="@+id/etDiaVencimento"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_form_field"
-                    android:hint="15"
-                    android:textColorHint="@color/text_hint"
-                    android:textColor="@color/text_white"
-                    android:inputType="number"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp" />
-            </LinearLayout>
+                android:layout_marginTop="16dp"
+                android:text="Instituição"
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupInstituicao"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                app:selectionRequired="true"
+                app:singleSelection="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Tipo do cartão"
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupTipoCartao"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                app:selectionRequired="true"
+                app:singleSelection="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Apelido (opcional)"
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/etApelidoCartao"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_lancar_campo"
+                android:hint="Ex: Conta principal"
+                android:importantForAutofill="no"
+                android:inputType="textCapSentences"
+                android:maxLines="1"
+                android:paddingHorizontal="16dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#64748B"
+                android:textSize="15sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGuardarCartao"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="24dp"
+                android:backgroundTint="#10B981"
+                android:text="Adicionar banco"
+                android:textAllCaps="false"
+                android:textColor="#052E22"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp" />
+
+            <TextView
+                android:id="@+id/btnCancelarEdicaoCartao"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_botao_secundario"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:text="Cancelar edição"
+                android:textColor="#E2E8F0"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btnGuardarCartao"
+        <!-- TÍTULO DA LISTA + CONTAGEM -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="+ Guardar Cartão"
-            android:background="@drawable/bg_button_green"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <!-- ⭐ NOVO: Botão Cancelar Edição (escondido por padrão) -->
-        <Button
-            android:id="@+id/btnCancelarEdicaoCartao"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="✕ Cancelar edição"
-            android:background="#2A3A5A"
-            android:textColor="@color/text_white"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp"
-            android:visibility="gone" />
-
-        <TextView
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="CARTÕES ATIVOS"
-            android:textColor="@color/text_gray"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="12dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="28dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:letterSpacing="0.08"
+                android:text="BANCOS CADASTRADOS"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvQtdCartoes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_atual"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="5dp"
+                android:text="0 bancos"
+                android:textColor="#34D399"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvCartoes"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+
+        <!-- ESTADO VAZIO -->
+        <LinearLayout
+            android:id="@+id/llVazioCartoes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card_glass"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="28dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_icone_conf_verde"
+                android:importantForAccessibility="no"
+                android:padding="14dp"
+                android:src="@drawable/ic_banco"
+                app:tint="#34D399" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Nenhum banco cadastrado"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="Adicione o banco acima para o ORG ler as notificações dele."
+                android:textColor="#94A3B8"
+                android:textSize="13sp" />
+        </LinearLayout>
+
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

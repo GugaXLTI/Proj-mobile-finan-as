@@ -5,7 +5,8 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_gradient_inicio">
 
-    <ScrollView
+    <!-- ⭐ TROCADO ScrollView POR NestedScrollView -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
@@ -41,7 +42,7 @@
                 android:textColor="#94A3B8"
                 android:textSize="14sp" />
 
-            <!-- ⭐ FILTROS DE TIPO (CHIPS) -->
+            <!-- FILTROS DE TIPO (CHIPS) -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -57,14 +58,6 @@
                     app:selectionRequired="true">
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chipTodas"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="Todas" />
-
-                    <com.google.android.material.chip.Chip
                         android:id="@+id/chipFixas"
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
@@ -76,11 +69,12 @@
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:checked="true"
                         android:text="Dívidas Normais" />
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
 
-            <!-- ⭐ NOVO: BOTÃO DE FILTRO POR CATEGORIA -->
+            <!-- BOTÃO DE FILTRO POR CATEGORIA -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -127,7 +121,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="R$ 1.500,00"
+                    android:text="R$ 0,00"
                     android:textColor="#F87171"
                     android:textSize="32sp"
                     android:textStyle="bold" />
@@ -161,7 +155,7 @@
                             android:id="@+id/tvTotalPago"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="R$ 1.550,00"
+                            android:text="R$ 0,00"
                             android:textColor="#34D399"
                             android:textSize="17sp"
                             android:textStyle="bold" />
@@ -185,7 +179,7 @@
                             android:id="@+id/tvTotalGeral"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="R$ 3.050,00"
+                            android:text="R$ 0,00"
                             android:textColor="#FFFFFF"
                             android:textSize="17sp"
                             android:textStyle="bold" />
@@ -227,7 +221,7 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <!-- BARRA DE NAVEGAÇÃO FLUTUANTE -->
     <LinearLayout

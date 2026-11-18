@@ -2,7 +2,6 @@ package com.example.controle_gastos.view;
 
 import android.content.Intent;
 import android.graphics.Color;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -29,6 +28,7 @@ import com.example.controle_gastos.model.DividaAgrupada;
 import com.example.controle_gastos.utils.AlarmeHelper;
 import com.example.controle_gastos.utils.NavScrollHelper;
 import com.example.controle_gastos.utils.SessionManager;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -57,8 +57,11 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
     private ChipGroup chipGroupFiltros;
     private TextView btnFiltroCategoria;
-    private String filtroAtual = "Todas";
-    private String categoriaFiltro = "Todas";
+
+    // ⭐ Padrão agora é "Normais", sem o chip "Todas"
+    private String filtroTipoAtual = "Normais";
+    private String filtroCategoriaAtual = "Todas";
+
     private List<DividaAgrupada> listaAgrupadaCompleta = new ArrayList<>();
     private List<DividaAgrupada> listaAgrupada = new ArrayList<>();
 
@@ -151,9 +154,13 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         chipGroupFiltros.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
             int id = checkedIds.get(0);
-            if (id == R.id.chipTodas) filtroAtual = "Todas";
-            else if (id == R.id.chipFixas) filtroAtual = "Fixas";
-            else if (id == R.id.chipNormais) filtroAtual = "Normais";
+
+            // ⭐ REMOVIDO O if (id == R.id.chipTodas) AQUI
+            if (id == R.id.chipFixas) {
+                filtroTipoAtual = "Fixas";
+            } else if (id == R.id.chipNormais) {
+                filtroTipoAtual = "Normais";
+            }
             aplicarFiltro();
         });
     }
@@ -233,7 +240,7 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
             tvCategoria.setTextSize(16f);
             tvCategoria.setTextColor(Color.parseColor("#E2E8F0"));
 
-            if (catNome.equals(categoriaFiltro)) {
+            if (catNome.equalsIgnoreCase(filtroCategoriaAtual)) {
                 tvCategoria.setTextColor(Color.parseColor("#34D399"));
                 tvCategoria.setText("✓  " + catNome);
                 tvCategoria.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -243,8 +250,8 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
             row.addView(tvCategoria);
 
             row.setOnClickListener(v -> {
-                categoriaFiltro = catNome;
-                btnFiltroCategoria.setText(categoriaFiltro.equals("Todas") ? "Todas as categorias" : categoriaFiltro);
+                filtroCategoriaAtual = catNome;
+                btnFiltroCategoria.setText(filtroCategoriaAtual.equals("Todas") ? "Todas as categorias" : filtroCategoriaAtual);
                 aplicarFiltro();
                 bottomSheetDialog.dismiss();
             });
@@ -324,8 +331,8 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
                         long id = db.categoriaDao().inserir(novaCat);
 
                         if (id > 0) {
-                            categoriaFiltro = nome;
-                            btnFiltroCategoria.setText(categoriaFiltro);
+                            filtroCategoriaAtual = nome;
+                            btnFiltroCategoria.setText(filtroCategoriaAtual);
                             aplicarFiltro();
 
                             sheetDialog.dismiss();
@@ -384,81 +391,50 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
     private void aplicarFiltro() {
         listaAgrupada.clear();
 
-        for (DividaAgrupada agrupada : listaAgrupadaCompleta) {
-            Divida proxima = agrupada.getProximaParcela();
-            if (proxima == null) continue;
+        boolean exibirTodasCategorias = filtroCategoriaAtual == null
+                || filtroCategoriaAtual.trim().isEmpty()
+                || filtroCategoriaAtual.equalsIgnoreCase("Todas")
+                || filtroCategoriaAtual.equalsIgnoreCase("Todas as categorias");
 
-            if (!isRelevanteParaMesAtual(agrupada)) {
-                continue;
-            }
+        for (DividaAgrupada agrupada : listaAgrupadaCompleta) {
+            Divida proxima = agrupada.getParcelaParaLista();
+            if (proxima == null) continue;
 
             String cat = proxima.getCategoria() != null ? proxima.getCategoria().trim() : "";
             String banco = proxima.getBanco() != null ? proxima.getBanco().toLowerCase() : "";
             boolean isContaFixa = cat.toLowerCase().contains("fixa") || banco.contains("fixa");
 
-            boolean passaFiltroTipo = false;
-            if (filtroAtual.equals("Todas")) passaFiltroTipo = true;
-            else if (filtroAtual.equals("Fixas") && isContaFixa) passaFiltroTipo = true;
-            else if (filtroAtual.equals("Normais") && !isContaFixa) passaFiltroTipo = true;
+            boolean passaTipo = false;
+            if (filtroTipoAtual.equals("Fixas") && isContaFixa) passaTipo = true;
+            else if (filtroTipoAtual.equals("Normais") && !isContaFixa) passaTipo = true;
 
-            boolean passaFiltroCategoria = categoriaFiltro.equals("Todas") || cat.equalsIgnoreCase(categoriaFiltro);
+            if (!passaTipo) continue;
 
-            if (passaFiltroTipo && passaFiltroCategoria) {
+            boolean passaCategoria = exibirTodasCategorias || cat.equalsIgnoreCase(filtroCategoriaAtual.trim());
+
+            if (passaCategoria) {
                 listaAgrupada.add(agrupada);
             }
         }
 
-        if (adapter == null) {
-            adapter = new DividaAdapter(listaAgrupada, this);
-            rvDividas.setAdapter(adapter);
-        } else {
-            adapter.notifyDataSetChanged();
-        }
+        adapter = new DividaAdapter(listaAgrupada, this);
+        rvDividas.setAdapter(adapter);
 
         boolean vazio = listaAgrupada.isEmpty();
         tvEmptyDividas.setVisibility(vazio ? View.VISIBLE : View.GONE);
         rvDividas.setVisibility(vazio ? View.GONE : View.VISIBLE);
 
-        if (vazio && (!filtroAtual.equals("Todas") || !categoriaFiltro.equals("Todas"))) {
-            tvEmptyDividas.setText("Nenhuma conta encontrada com esses filtros.");
-        } else {
-            tvEmptyDividas.setText("Você ainda não tem dívidas cadastradas.");
+        if (vazio) {
+            if (!exibirTodasCategorias) {
+                tvEmptyDividas.setText("Nenhuma conta encontrada com esses filtros.");
+            } else if (filtroTipoAtual.equals("Fixas")) {
+                tvEmptyDividas.setText("Você ainda não tem contas fixas cadastradas.");
+            } else {
+                tvEmptyDividas.setText("Você ainda não tem dívidas normais cadastradas.");
+            }
         }
 
         atualizarTotais();
-    }
-
-    private boolean isRelevanteParaMesAtual(DividaAgrupada agrupada) {
-        Calendar hoje = Calendar.getInstance();
-        int mesAtual = hoje.get(Calendar.MONTH) + 1;
-        int anoAtual = hoje.get(Calendar.YEAR);
-
-        for (Divida d : agrupada.parcelas) {
-            if (ehMesmoMesOuAtrasado(d.getVencimento(), mesAtual, anoAtual)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private int compararAgrupadas(DividaAgrupada a, DividaAgrupada b) {
-        boolean pagoA = a.isTotalmentePago();
-        boolean pagoB = b.isTotalmentePago();
-        if (pagoA != pagoB) return pagoA ? 1 : -1;
-
-        return compararDatas(a.getProximaParcela().getVencimento(), b.getProximaParcela().getVencimento());
-    }
-
-    private int compararDatas(String d1, String d2) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR);
-            Date data1 = sdf.parse(d1);
-            Date data2 = sdf.parse(d2);
-            if (data1 == null || data2 == null) return 0;
-            return data1.compareTo(data2);
-        } catch (Exception e) {
-            return 0;
-        }
     }
 
     private void atualizarTotais() {
@@ -466,16 +442,20 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         double totalPago = 0;
         double totalGeral = 0;
 
-        // Soma os totais baseados na lista filtrada (que é o que o usuário vê)
-        for (DividaAgrupada a : listaAgrupada) {
-            Divida p = a.getParcelaParaLista(); // Pega a parcela que está visível na tela
-            if (p != null) {
-                totalGeral += p.getValorTotal(); // O Total Geral agora bate com o que está na tela
+        Calendar hoje = Calendar.getInstance();
+        int mesAtual = hoje.get(Calendar.MONTH) + 1;
+        int anoAtual = hoje.get(Calendar.YEAR);
 
-                if (p.isPago()) {
-                    totalPago += p.getValorTotal();
+        for (DividaAgrupada a : listaAgrupada) {
+            for (Divida d : a.parcelas) {
+                totalGeral += d.getValorTotal();
+
+                if (d.isPago()) {
+                    totalPago += d.getValorTotal();
                 } else {
-                    totalAPagar += p.getValorRestante();
+                    if (ehMesmoMesOuAtrasado(d.getVencimento(), mesAtual, anoAtual)) {
+                        totalAPagar += d.getValorRestante();
+                    }
                 }
             }
         }
@@ -496,6 +476,26 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
             return (ano < anoAtual) || (ano == anoAtual && mes <= mesAtual);
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    private int compararAgrupadas(DividaAgrupada a, DividaAgrupada b) {
+        boolean pagoA = a.isTotalmentePago();
+        boolean pagoB = b.isTotalmentePago();
+        if (pagoA != pagoB) return pagoA ? 1 : -1;
+
+        return compararDatas(a.getProximaParcela().getVencimento(), b.getProximaParcela().getVencimento());
+    }
+
+    private int compararDatas(String d1, String d2) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR);
+            Date data1 = sdf.parse(d1);
+            Date data2 = sdf.parse(d2);
+            if (data1 == null || data2 == null) return 0;
+            return data1.compareTo(data2);
+        } catch (Exception e) {
+            return 0;
         }
     }
 
@@ -527,7 +527,7 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
 
     @Override
     public void onPagarClick(DividaAgrupada agrupada) {
-        Divida proxima = agrupada.getParcelaParaLista(); // Usa a parcela visível
+        Divida proxima = agrupada.getParcelaParaLista();
 
         if (proxima == null || proxima.isPago()) {
             Toast.makeText(this, "Essa parcela já foi paga!", Toast.LENGTH_SHORT).show();
@@ -539,7 +539,6 @@ public class DividasActivity extends AppCompatActivity implements DividaAdapter.
         proxima.valorPago = proxima.getValorTotal();
         proxima.setPago(true);
 
-        // ⭐ Grava a data de hoje no momento do pagamento
         String hoje = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR).format(new Date());
         proxima.setDataPagamento(hoje);
 

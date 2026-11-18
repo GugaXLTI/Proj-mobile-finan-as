@@ -51,10 +51,17 @@ public interface DividaDao {
     @Query("DELETE FROM dividas WHERE usuarioId = :usuarioId")
     void deletarTodosDoUsuario(int usuarioId);
 
+    // ⭐ NOVO: Soma gastos pelo VENCIMENTO (Regime de Competência - usado no Dashboard por enquanto)
     @Query("SELECT COALESCE(SUM(valorTotal), 0.0) FROM dividas " +
             "WHERE usuarioId = :usuarioId AND excluida = 0 AND pago = 1 " +
             "AND substr(vencimento, 4, 7) = :mesAno")
     double somarGastosPagosDoMes(int usuarioId, String mesAno);
+
+    // ⭐ NOVO: Soma gastos pela DATA DE PAGAMENTO (Regime de Caixa - O que realmente importa!)
+    @Query("SELECT COALESCE(SUM(valorTotal), 0.0) FROM dividas " +
+            "WHERE usuarioId = :usuarioId AND excluida = 0 AND pago = 1 " +
+            "AND substr(dataPagamento, 4, 7) = :mesAno")
+    double somarGastosPagosPorDataPagamento(int usuarioId, String mesAno);
 
     @Query("SELECT COALESCE(SUM(valorTotal), 0.0) FROM dividas " +
             "WHERE usuarioId = :usuarioId AND excluida = 0 AND pago = 1")
@@ -70,7 +77,6 @@ public interface DividaDao {
             "AND valorTotal BETWEEN (:valor - 30.0) AND (:valor + 30.0) LIMIT 1")
     Divida buscarDividaAproximadaPorValor(int usuarioId, double valor);
 
-    // ⭐ NOVO: Soma o valor em aberto APENAS das contas que vencem no mês atual ou já atrasadas
     @Query("SELECT COALESCE(SUM(valorTotal), 0.0) FROM dividas " +
             "WHERE usuarioId = :usuarioId AND excluida = 0 AND pago = 0 " +
             "AND substr(vencimento, 4, 7) <= :mesAnoAtual")

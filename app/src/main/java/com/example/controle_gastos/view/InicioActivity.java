@@ -28,7 +28,7 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import com.example.controle_gastos.R;
-import com.example.controle_gastos.Service.MonitorService; // ⭐ IMPORT DO SERVIÇO
+import com.example.controle_gastos.Service.MonitorService;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Conta;
 import com.example.controle_gastos.model.Divida;
@@ -106,8 +106,6 @@ public class InicioActivity extends AppCompatActivity {
 
         NotificationHelper.criarCanal(this);
         solicitarPermissaoNotificacao();
-
-        // ⭐ INICIA O SERVIÇO DE MONITORAMENTO (FOREGROUND)
         iniciarMonitoramento();
 
         tvAvatarInicio = findViewById(R.id.tvAvatarInicio);
@@ -172,7 +170,6 @@ public class InicioActivity extends AppCompatActivity {
         agendarLembretesFinanceiros();
     }
 
-    // ⭐ MÉTODO PARA INICIAR O FOREGROUND SERVICE
     private void iniciarMonitoramento() {
         try {
             Intent serviceIntent = new Intent(this, MonitorService.class);
@@ -196,9 +193,7 @@ public class InicioActivity extends AppCompatActivity {
 
     private void agendarLembretesFinanceiros() {
         PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
-                FinancialReminderWorker.class,
-                1, TimeUnit.DAYS
-        )
+                FinancialReminderWorker.class, 1, TimeUnit.DAYS)
                 .setInitialDelay(15, TimeUnit.MINUTES)
                 .build();
 
@@ -263,7 +258,7 @@ public class InicioActivity extends AppCompatActivity {
         if (requestCode == REQ_NOTIFICACAO) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Lembretes ativados!", Toast.LENGTH_SHORT).show();
-                iniciarMonitoramento(); // ⭐ Tenta iniciar de novo se a permissão for dada agora
+                iniciarMonitoramento();
             } else {
                 Toast.makeText(this, "Sem permissão, os lembretes não vão funcionar.", Toast.LENGTH_LONG).show();
             }
@@ -293,6 +288,7 @@ public class InicioActivity extends AppCompatActivity {
         }
     }
 
+    // Substitua o método atualizarDashboardFinanceiro() por este:
     private void atualizarDashboardFinanceiro() {
         if (db == null || session == null) return;
 
@@ -306,7 +302,9 @@ public class InicioActivity extends AppCompatActivity {
         double saidasAuto = db.transacaoDao().somarSaidas(session.getUserId());
 
         double gastosManuaisPagosTotal = db.dividaDao().somarGastosPagosTotal(session.getUserId());
-        double gastosManuaisPagosMes = db.dividaDao().somarGastosPagosDoMes(session.getUserId(), mesAnoAtual);
+
+        // ⭐ CORREÇÃO: Agora puxa os gastos do mês baseados na DATA DE PAGAMENTO
+        double gastosManuaisPagosMes = db.dividaDao().somarGastosPagosPorDataPagamento(session.getUserId(), mesAnoAtual);
 
         double saldoEmConta = saldoInicial + entradas - saidasAuto - gastosManuaisPagosTotal;
         saldoAtual = saldoEmConta;

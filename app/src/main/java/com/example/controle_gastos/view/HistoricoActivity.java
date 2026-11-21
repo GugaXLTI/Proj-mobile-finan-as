@@ -199,19 +199,35 @@ public class HistoricoActivity extends AppCompatActivity {
             return;
         }
 
+        String mesAnoStr = String.format(LOCALE_BR, "%02d/%04d", mesSelecionado, anoSelecionado);
+
         for (Divida d : todasDividas) {
+            // ⭐ NOVA LÓGICA: Adiciona se VENCE no mês OU se foi PAGA no mês
+            boolean venceNoMes = false;
             String venc = d.getVencimento();
-            if (venc == null || venc.isEmpty()) continue;
-            try {
-                String[] partes = venc.split("/");
-                if (partes.length == 3) {
-                    int mes = Integer.parseInt(partes[1]);
-                    int ano = Integer.parseInt(partes[2]);
-                    if (mes == mesSelecionado && ano == anoSelecionado) {
-                        dividasDoMes.add(d);
+            if (venc != null && !venc.isEmpty()) {
+                try {
+                    String[] partes = venc.split("/");
+                    if (partes.length == 3) {
+                        int mes = Integer.parseInt(partes[1]);
+                        int ano = Integer.parseInt(partes[2]);
+                        if (mes == mesSelecionado && ano == anoSelecionado) {
+                            venceNoMes = true;
+                        }
                     }
+                } catch (Exception ignored) { }
+            }
+
+            boolean pagoNoMes = false;
+            if (d.isPago() && d.getDataPagamento() != null && d.getDataPagamento().length() >= 10) {
+                if (d.getDataPagamento().substring(3).equals(mesAnoStr)) {
+                    pagoNoMes = true;
                 }
-            } catch (Exception e) { }
+            }
+
+            if (venceNoMes || pagoNoMes) {
+                dividasDoMes.add(d);
+            }
         }
     }
 

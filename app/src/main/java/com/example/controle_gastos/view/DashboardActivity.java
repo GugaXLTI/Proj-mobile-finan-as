@@ -95,8 +95,6 @@ public class DashboardActivity extends AppCompatActivity {
     private List<Divida> todasDividas = new ArrayList<>();
     private final List<Divida> dividasFiltradas = new ArrayList<>();
     private final List<Transacao> transacoesFiltradas = new ArrayList<>();
-
-    // ⭐ NOVO: Lista separada para o gráfico e balanço de gastos
     private final List<Divida> dividasPagasNoMes = new ArrayList<>();
 
     private final Map<String, TextView> chipsFiltro = new LinkedHashMap<>();
@@ -202,16 +200,18 @@ public class DashboardActivity extends AppCompatActivity {
         String mesAnoStr = String.format(LOCALE_BR, "%02d/%04d", mesSelecionado, anoSelecionado);
 
         for (Divida d : todas) {
-            // 1. Filtro para a Lista (Vencimento no mês)
-            if (pertenceAoMes(d, mesSelecionado, anoSelecionado)) {
-                todasDividas.add(d);
-            }
-
-            // 2. Filtro para o Gráfico e Balanço (Data de Pagamento no mês)
+            // ⭐ Verifica se a dívida foi PAGA neste mês (independente do vencimento)
+            boolean pagoNesteMes = false;
             if (d.isPago() && d.getDataPagamento() != null && d.getDataPagamento().length() >= 10) {
                 if (d.getDataPagamento().substring(3).equals(mesAnoStr)) {
+                    pagoNesteMes = true;
                     dividasPagasNoMes.add(d);
                 }
+            }
+
+            // ⭐ Adiciona na lista (para aparecer embaixo e nos filtros) se ela vence neste mês OU foi paga neste mês
+            if (pertenceAoMes(d, mesSelecionado, anoSelecionado) || pagoNesteMes) {
+                todasDividas.add(d);
             }
         }
         todasDividas.sort((a, b) -> compararDatas(a.getVencimento(), b.getVencimento()));
@@ -231,7 +231,7 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void atualizarTituloMes() {
         tvMesAtualDash.setText(MESES[mesSelecionado - 1] + " " + anoSelecionado);
-        tvBadgeAtualDash.setVisibility(ehMesAtual ? View.VISIBLE : View.INVISIBLE);
+        tvBadgeAtualDash.setVisibility(ehMesAtual ? View.VISIBLE : View.GONE);
     }
 
     private void atualizarBalancoMensal() {
@@ -245,7 +245,6 @@ public class DashboardActivity extends AppCompatActivity {
             return;
         }
 
-        // ⭐ Gastos Pagos: Soma o que foi pago no mês (dataPagamento)
         double gastosPagos = 0;
         for (Divida d : dividasPagasNoMes) {
             gastosPagos += d.getValorTotal();
@@ -273,7 +272,7 @@ public class DashboardActivity extends AppCompatActivity {
             double gastosPagosTotal = db.dividaDao().somarGastosPagosTotal(session.getUserId());
 
             double saldoAtual = saldoInicial + entradasTotal - saidasTotal - gastosPagosTotal;
-            baseCalculo = saldoAtual + gastosPagos; // Base do mês = Saldo Atual + Gastos do Mês
+            baseCalculo = saldoAtual + gastosPagos;
         }
 
         tvSalarioDash.setText(moeda(baseCalculo));
@@ -320,7 +319,6 @@ public class DashboardActivity extends AppCompatActivity {
         Map<String, Double> gastos = new HashMap<>();
         double total = 0;
 
-        // ⭐ Usa a lista de dívidas pagas no mês (pela data de pagamento)
         for (Divida d : dividasPagasNoMes) {
             String cat = categoriaDe(d);
             gastos.put(cat, gastos.getOrDefault(cat, 0.0) + d.getValorTotal());
@@ -557,7 +555,6 @@ public class DashboardActivity extends AppCompatActivity {
 
             double totalMes = 0;
             for (Divida d : todas) {
-                // ⭐ Gráfico de Linha: Usa a DATA DE PAGAMENTO (Regime de Caixa)
                 if (d.isPago() && d.getDataPagamento() != null && d.getDataPagamento().length() >= 10) {
                     if (d.getDataPagamento().substring(3).equals(mesAnoRef)) {
                         totalMes += d.getValorTotal();

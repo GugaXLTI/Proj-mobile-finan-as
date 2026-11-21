@@ -47,37 +47,45 @@ public class DividaDashboardAdapter extends RecyclerView.Adapter<DividaDashboard
 
         holder.tvTitulo.setText(d.getTitulo());
         holder.tvDetalhe.setText(montarDetalhe(d));
-        holder.tvParcela.setText("Parcela " + d.getParcela());
+
+        // ⭐ Oculta a parcela se for conta fixa
+        if (d.isFixa()) {
+            holder.tvParcela.setText("Conta Fixa Mensal");
+        } else {
+            holder.tvParcela.setText("Parcela " + d.getParcela());
+        }
+
         holder.tvValor.setText(NumberFormat.getCurrencyInstance(LOCALE_BR).format(d.getValorTotal()));
 
-        Date data = null;
+        Date dataVencimento = null;
         try {
-            data = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR).parse(d.getVencimento());
+            dataVencimento = new SimpleDateFormat("dd/MM/yyyy", LOCALE_BR).parse(d.getVencimento());
         } catch (Exception ignored) {
         }
 
-        if (data != null) {
+        if (dataVencimento != null) {
             holder.tvMes.setText(new SimpleDateFormat("MMM", LOCALE_BR)
-                    .format(data).replace(".", "").toUpperCase(LOCALE_BR));
-            holder.tvDia.setText(new SimpleDateFormat("dd", LOCALE_BR).format(data));
+                    .format(dataVencimento).replace(".", "").toUpperCase(LOCALE_BR));
+            holder.tvDia.setText(new SimpleDateFormat("dd", LOCALE_BR).format(dataVencimento));
         } else {
             holder.tvMes.setText("--");
             holder.tvDia.setText("--");
         }
 
         if (d.isPago()) {
-            // ⭐ NOVA LÓGICA: Verifica se a data de vencimento é no futuro em relação a hoje
-            if (data != null && data.after(new Date())) {
+            // ⭐ Mostra a data exata de pagamento se existir
+            if (d.getDataPagamento() != null && !d.getDataPagamento().isEmpty()) {
+                holder.tvStatus.setText("Pago dia " + d.getDataPagamento());
+            } else if (dataVencimento != null && dataVencimento.after(new Date())) {
                 holder.tvStatus.setText("Adiantada ✓");
-                holder.tvStatus.setTextColor(Color.parseColor("#60A5FA")); // Azul para indicar adiantamento
             } else {
                 holder.tvStatus.setText("Pago ✓");
-                holder.tvStatus.setTextColor(Color.parseColor("#34D399")); // Verde normal
             }
+            holder.tvStatus.setTextColor(Color.parseColor("#34D399")); // Verde
             holder.tvValor.setTextColor(Color.parseColor("#94A3B8"));
         } else {
             holder.tvValor.setTextColor(Color.WHITE);
-            if (data != null && estaAtrasada(data)) {
+            if (dataVencimento != null && estaAtrasada(dataVencimento)) {
                 holder.tvStatus.setText("Atrasada");
                 holder.tvStatus.setTextColor(Color.parseColor("#F87171"));
             } else {
@@ -97,7 +105,8 @@ public class DividaDashboardAdapter extends RecyclerView.Adapter<DividaDashboard
         String categoria = d.getCategoria() == null ? "" : d.getCategoria().trim();
         if (!banco.isEmpty() && !categoria.isEmpty()) return banco + " · " + categoria;
         if (!banco.isEmpty()) return banco;
-        return categoria;
+        if (!categoria.isEmpty()) return categoria;
+        return "Sem detalhes";
     }
 
     private boolean estaAtrasada(Date data) {

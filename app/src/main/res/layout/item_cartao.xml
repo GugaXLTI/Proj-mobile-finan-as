@@ -12,22 +12,34 @@
     android:orientation="vertical"
     android:padding="20dp">
 
-    <!-- Topo: sigla + banco + tipo -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tvBandeira"
+        <!-- Container da Logo/Sigla -->
+        <FrameLayout
             android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:gravity="center"
-            android:text="NU"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:layout_height="48dp">
+
+            <ImageView
+                android:id="@+id/ivLogoBanco"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:scaleType="fitCenter"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvBandeira"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:gravity="center"
+                android:text="NU"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -73,7 +85,6 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Status da leitura automática -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -103,7 +114,6 @@
         android:layout_marginTop="16dp"
         android:background="#1E2A44" />
 
-    <!-- Base: titular + ações -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

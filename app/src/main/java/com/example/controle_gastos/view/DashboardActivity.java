@@ -200,7 +200,6 @@ public class DashboardActivity extends AppCompatActivity {
         String mesAnoStr = String.format(LOCALE_BR, "%02d/%04d", mesSelecionado, anoSelecionado);
 
         for (Divida d : todas) {
-            // ⭐ Verifica se a dívida foi PAGA neste mês (independente do vencimento)
             boolean pagoNesteMes = false;
             if (d.isPago() && d.getDataPagamento() != null && d.getDataPagamento().length() >= 10) {
                 if (d.getDataPagamento().substring(3).equals(mesAnoStr)) {
@@ -209,7 +208,6 @@ public class DashboardActivity extends AppCompatActivity {
                 }
             }
 
-            // ⭐ Adiciona na lista (para aparecer embaixo e nos filtros) se ela vence neste mês OU foi paga neste mês
             if (pertenceAoMes(d, mesSelecionado, anoSelecionado) || pagoNesteMes) {
                 todasDividas.add(d);
             }
@@ -311,7 +309,13 @@ public class DashboardActivity extends AppCompatActivity {
         pieChart.getLegend().setEnabled(false);
         pieChart.setRotationEnabled(false);
         pieChart.setHighlightPerTapEnabled(false);
-        pieChart.setDrawEntryLabels(false);
+
+        // ⭐ ALTERAÇÃO AQUI: Habilita os nomes nas fatias e configura o visual
+        pieChart.setDrawEntryLabels(true);
+        pieChart.setEntryLabelColor(Color.WHITE);
+        pieChart.setEntryLabelTextSize(11f);
+        pieChart.setEntryLabelTypeface(Typeface.DEFAULT_BOLD);
+
         pieChart.setNoDataText("");
     }
 
@@ -342,7 +346,10 @@ public class DashboardActivity extends AppCompatActivity {
             int cor = CORES[i % CORES.length];
 
             coresPorCategoria.put(cat, cor);
-            entries.add(new PieEntry((float) valor));
+
+            // ⭐ ALTERAÇÃO AQUI: Adicionado o 'cat' para exibir o nome na fatia
+            entries.add(new PieEntry((float) valor, cat));
+
             cores.add(cor);
 
             View row = inflater.inflate(R.layout.item_legenda_categoria, llLegenda, false);

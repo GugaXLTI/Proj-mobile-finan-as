@@ -25,13 +25,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.controle_gastos.R;
-import com.example.controle_gastos.adapter.ChipSelecaoAdapter;
+import com.example.controle_gastos.adapter.BancoBottomSheetAdapter;
 import com.example.controle_gastos.database.AppDatabase;
 import com.example.controle_gastos.model.Cartao;
 import com.example.controle_gastos.model.Categoria;
 import com.example.controle_gastos.model.Divida;
 import com.example.controle_gastos.model.ParsedReceipt;
 import com.example.controle_gastos.utils.AlarmeHelper;
+import com.example.controle_gastos.utils.BancoHelper;
 import com.example.controle_gastos.utils.BottomNavHelper;
 import com.example.controle_gastos.utils.CategoriaSeeder;
 import com.example.controle_gastos.utils.NavScrollHelper;
@@ -41,6 +42,7 @@ import com.example.controle_gastos.utils.ReceiptImageLoader;
 import com.example.controle_gastos.utils.ReceiptOcr;
 import com.example.controle_gastos.utils.ReceiptParser;
 import com.example.controle_gastos.utils.SessionManager;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -61,9 +63,11 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private TextView tvComprovante;
     private ImageView ivComprovante;
 
-    private RecyclerView rvSelecao;
-    private LinearLayout containerVazio, containerSelecao;
-    private TextView btnNovoItem, btnNovaCategoria, tvTituloSelecao, tvResumoParcelas, tvSemCategoria;
+    // Novos componentes do BottomSheet
+    private LinearLayout boxSelecionarBanco, containerVazio, containerSelecao;
+    private TextView btnNovoItem, btnNovaCategoria, tvTituloSelecao, tvResumoParcelas, tvSemCategoria, tvBancoSelecionado;
+    private ImageView ivBancoSelecionadoLogo;
+    private TextView tvBancoSelecionadoIniciais; // ⭐ NOVO COMPONENTE
     private Button btnCadastrarAgora;
     private LinearLayout boxDataCompra, boxVencimento, containerParcelas;
 
@@ -72,12 +76,12 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
     private AppDatabase db;
     private SessionManager session;
-    private ChipSelecaoAdapter chipAdapter;
 
     private int dividaId = -1;
     private Divida dividaEmEdicao = null;
     private List<Categoria> categoriasDoBanco = new ArrayList<>();
     private List<String[]> itensSelecao = new ArrayList<>();
+    private String[] bancoSelecionadoAtual = null;
 
     private final ActivityResultLauncher<String[]> pickComprovanteLauncher =
             registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
@@ -99,6 +103,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         CategoriaSeeder.popularSeVazio(this, session.getUserId());
 
+        // Inicialização dos componentes
         chipGroupTipo = findViewById(R.id.chipGroupTipo);
         chipGroupParcelas = findViewById(R.id.chipGroupParcelas);
         chipGroupCategoria = findViewById(R.id.chipGroupCategoria);
@@ -110,7 +115,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
         btnImportarComprovante = findViewById(R.id.btnImportarComprovante);
         tvComprovante = findViewById(R.id.tvComprovante);
         ivComprovante = findViewById(R.id.ivComprovante);
-        rvSelecao = findViewById(R.id.rvSelecao);
+
         containerVazio = findViewById(R.id.containerVazio);
         containerSelecao = findViewById(R.id.containerSelecao);
         btnNovoItem = findViewById(R.id.btnNovoItem);
@@ -123,11 +128,20 @@ public class CadastroDividaActivity extends AppCompatActivity {
         boxVencimento = findViewById(R.id.boxVencimento);
         containerParcelas = findViewById(R.id.containerParcelas);
 
+        // Novos componentes do BottomSheet
+        boxSelecionarBanco = findViewById(R.id.boxSelecionarBanco);
+        ivBancoSelecionadoLogo = findViewById(R.id.ivBancoSelecionadoLogo);
+        tvBancoSelecionadoIniciais = findViewById(R.id.tvBancoSelecionadoIniciais); // ⭐ INICIALIZADO AQUI
+        tvBancoSelecionado = findViewById(R.id.tvBancoSelecionado);
+
         overlaySucesso = findViewById(R.id.overlaySucesso);
         btnConcluirSucesso = findViewById(R.id.btnConcluirSucesso);
-        btnConcluirSucesso.setOnClickListener(v -> finish());
-
-        rvSelecao.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        btnConcluirSucesso.setOnClickListener(v -> {
+            Intent intent = new Intent(CadastroDividaActivity.this, InicioActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        });
 
         configurarChipGroups();
         configurarDatePicker(boxDataCompra, editDataCompra);
@@ -139,8 +153,33 @@ public class CadastroDividaActivity extends AppCompatActivity {
         btnCadastrarAgora.setOnClickListener(v -> startActivity(new Intent(this, CartoesActivity.class)));
         btnImportarComprovante.setOnClickListener(v -> pickComprovanteLauncher.launch(new String[]{"image/*", "application/pdf"}));
 
+        // Abrir o BottomSheet ao clicar na caixa
+        boxSelecionarBanco.setOnClickListener(v -> abrirBottomSheetBancos());
+
         chipGroupTipo.setOnCheckedStateChangeListener((group, checkedIds) -> atualizarSelecao());
         chipGroupParcelas.setOnCheckedStateChangeListener((group, checkedIds) -> atualizarResumoParcelas());
+
+        // Força a tela a carregar os cartões logo que abre!
+        atualizarSelecao();
+
+        // MÁGICA 1: Auto-Detecção pelo Título da Dívida
+        editDescricao.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                String texto = s.toString().toLowerCase();
+                if (texto.length() < 3 || itensSelecao == null || itensSelecao.isEmpty()) return;
+
+                for (String[] item : itensSelecao) {
+                    String nomeBanco = item[2].toLowerCase();
+                    if (texto.contains(nomeBanco) || (nomeBanco.contains("nubank") && texto.contains("nu"))) {
+                        selecionarBancoNaTela(item);
+                        break;
+                    }
+                }
+            }
+        });
 
         if (getIntent().hasExtra("divida_id")) {
             dividaId = getIntent().getIntExtra("divida_id", -1);
@@ -160,6 +199,50 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
 
         btnSalvar.setOnClickListener(v -> salvarDivida());
+    }
+
+    private void abrirBottomSheetBancos() {
+        if (itensSelecao == null || itensSelecao.isEmpty()) return;
+
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_selecao_banco, null);
+        bottomSheetDialog.setContentView(view);
+
+        TextView tvTituloBS = view.findViewById(R.id.tvTituloBottomSheet);
+        tvTituloBS.setText(tvTituloSelecao.getText().toString());
+
+        RecyclerView rv = view.findViewById(R.id.rvBancosBottomSheet);
+        rv.setLayoutManager(new LinearLayoutManager(this));
+
+        BancoBottomSheetAdapter adapter = new BancoBottomSheetAdapter(itensSelecao, (banco, position) -> {
+            selecionarBancoNaTela(banco);
+            bottomSheetDialog.dismiss(); // Fecha a gaveta
+        });
+        rv.setAdapter(adapter);
+
+        bottomSheetDialog.show();
+    }
+
+    private void selecionarBancoNaTela(String[] banco) {
+        bancoSelecionadoAtual = banco;
+        tvBancoSelecionado.setText(banco[2] + (banco[3].isEmpty() ? "" : " · " + banco[3]));
+
+        int logoResId = BancoHelper.getLogoBanco(banco[2]);
+        if (logoResId != 0) {
+            ivBancoSelecionadoLogo.setImageResource(logoResId);
+            ivBancoSelecionadoLogo.setVisibility(View.VISIBLE);
+            tvBancoSelecionadoIniciais.setVisibility(View.GONE);
+        } else {
+            ivBancoSelecionadoLogo.setVisibility(View.GONE);
+            tvBancoSelecionadoIniciais.setVisibility(View.VISIBLE);
+
+            tvBancoSelecionadoIniciais.setText(banco[0]); // Pega a sigla
+
+            GradientDrawable shape = new GradientDrawable();
+            shape.setShape(GradientDrawable.OVAL);
+            shape.setColor(BancoHelper.getCorBanco(banco[2]));
+            tvBancoSelecionadoIniciais.setBackground(shape);
+        }
     }
 
     private void processarComprovanteEscolhido(Uri uri) {
@@ -307,6 +390,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
         tvResumoParcelas.setVisibility(isAVista ? View.GONE : View.VISIBLE);
 
         itensSelecao.clear();
+        bancoSelecionadoAtual = null;
         containerSelecao.setVisibility(View.VISIBLE);
 
         if (tipo.equals("Cartão de Crédito") || tipo.equals("Cartão de Débito")) {
@@ -334,21 +418,33 @@ public class CadastroDividaActivity extends AppCompatActivity {
             }
         } else {
             tvTituloSelecao.setText("Selecione o Banco / Origem");
-            itensSelecao.add(new String[]{"GE", "Genérico", "Genérico", ""});
+            String[] bancosComuns = {
+                    "Nubank", "Itaú", "Bradesco", "Santander", "Caixa",
+                    "Inter"
+            };
+
+            for (String b : bancosComuns) {
+                String sigla = b.length() >= 2 ? b.substring(0, 2).toUpperCase() : b.toUpperCase();
+                itensSelecao.add(new String[]{sigla, b, b, ""});
+            }
         }
 
         if (itensSelecao.isEmpty()) {
-            rvSelecao.setVisibility(View.GONE);
+            boxSelecionarBanco.setVisibility(View.GONE);
             containerVazio.setVisibility(View.VISIBLE);
-            String msg = "Nenhum cartão cadastrado.";
-            ((TextView) findViewById(R.id.tvMensagemVazio)).setText(msg);
+            ((TextView) findViewById(R.id.tvMensagemVazio)).setText("Nenhum cartão cadastrado.");
             btnCadastrarAgora.setVisibility(View.VISIBLE);
-            chipAdapter = null;
         } else {
-            rvSelecao.setVisibility(View.VISIBLE);
+            boxSelecionarBanco.setVisibility(View.VISIBLE);
             containerVazio.setVisibility(View.GONE);
-            chipAdapter = new ChipSelecaoAdapter(itensSelecao, position -> { });
-            rvSelecao.setAdapter(chipAdapter);
+
+            if (itensSelecao.size() == 1) {
+                selecionarBancoNaTela(itensSelecao.get(0));
+            } else {
+                tvBancoSelecionado.setText("Toque para selecionar...");
+                ivBancoSelecionadoLogo.setVisibility(View.GONE);
+                tvBancoSelecionadoIniciais.setVisibility(View.GONE); // ⭐ ESCONDE AS INICIAIS TAMBÉM
+            }
         }
     }
 
@@ -430,13 +526,16 @@ public class CadastroDividaActivity extends AppCompatActivity {
         try { valor = Double.parseDouble(valorStr); } catch (Exception e) { Toast.makeText(this, "Valor inválido!", Toast.LENGTH_SHORT).show(); return; }
         if (valor <= 0) { Toast.makeText(this, "O valor deve ser maior que zero.", Toast.LENGTH_SHORT).show(); return; }
 
+        if (bancoSelecionadoAtual == null) {
+            Toast.makeText(this, "Por favor, selecione o banco/origem antes de salvar.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String bancoSelecionado = tipoDivida;
-        if (chipAdapter != null && chipAdapter.getItemSelecionado() != null) {
-            if (tipoDivida.equals("Pix")) {
-                bancoSelecionado = "Pix (" + chipAdapter.getItemSelecionado()[2] + ")";
-            } else {
-                bancoSelecionado = chipAdapter.getItemSelecionado()[2];
-            }
+        if (tipoDivida.equals("Pix")) {
+            bancoSelecionado = "Pix (" + bancoSelecionadoAtual[2] + ")";
+        } else {
+            bancoSelecionado = bancoSelecionadoAtual[2];
         }
 
         String parcelas = "1x (À vista)";
@@ -467,7 +566,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         if (isAVista) {
             Divida nova = new Divida(session.getUserId(), descricao, valor, valor, valor, bancoSelecionado, categoria, "1x (À vista)", vencimento, true);
-            // ⭐ AQUI ESTÁ A MÁGICA: Salva a data de pagamento igual à data de vencimento (que é a data da compra em compras à vista)
             nova.setDataPagamento(vencimento);
             db.dividaDao().inserir(nova);
             mostrarTelaSucesso();
@@ -548,6 +646,17 @@ public class CadastroDividaActivity extends AppCompatActivity {
             Chip chip = (Chip) chipGroupCategoria.getChildAt(i);
             if (chip.getText().toString().equals(d.getCategoria())) { chip.setChecked(true); break; }
         }
+
+        boxSelecionarBanco.post(() -> {
+            if (bancoDivida.isEmpty()) return;
+            for (String[] item : itensSelecao) {
+                if (bancoDivida.toLowerCase().contains(item[2].toLowerCase())) {
+                    selecionarBancoNaTela(item);
+                    break;
+                }
+            }
+        });
+
         atualizarResumoParcelas();
     }
 

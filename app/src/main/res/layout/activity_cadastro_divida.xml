@@ -154,7 +154,6 @@
                         android:textColor="#94A3B8"
                         android:textSize="14sp" />
 
-                    <!-- ⭐ HORIZONTAL SCROLLVIEW PARA COMPACTAR OS CHIPS -->
                     <HorizontalScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -243,57 +242,58 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/containerListaSelecao"
+                <!-- ⭐ CAIXA CLICÁVEL ATUALIZADA COM O FRAME_LAYOUT -->
+                <LinearLayout
+                    android:id="@+id/boxSelecionarBanco"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp">
+                    android:layout_height="56dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_lancar_campo"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:visibility="gone">
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvSelecao"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:clipToPadding="false"
-                        android:orientation="horizontal"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                        app:layout_constrainedWidth="true"
-                        app:layout_constraintEnd_toStartOf="@id/btnAdicionarItem"
-                        app:layout_constraintHorizontal_bias="0"
-                        app:layout_constraintHorizontal_chainStyle="packed"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <LinearLayout
-                        android:id="@+id/btnAdicionarItem"
-                        android:layout_width="wrap_content"
-                        android:layout_height="0dp"
-                        android:background="@drawable/bg_lancar_adicionar"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:minWidth="96dp"
-                        android:orientation="vertical"
-                        android:paddingHorizontal="14dp"
-                        app:layout_constraintBottom_toBottomOf="@id/rvSelecao"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@id/rvSelecao"
-                        app:layout_constraintTop_toTopOf="@id/rvSelecao">
+                    <FrameLayout
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_marginEnd="12dp">
 
                         <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:src="@drawable/ic_lancar_mais"
-                            app:tint="#94A3B8" />
+                            android:id="@+id/ivBancoSelecionadoLogo"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:scaleType="fitCenter"
+                            android:visibility="gone" />
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Adicionar"
-                            android:textColor="#94A3B8"
-                            android:textSize="13sp" />
-                    </LinearLayout>
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                            android:id="@+id/tvBancoSelecionadoIniciais"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:gravity="center"
+                            android:textColor="#FFFFFF"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvBancoSelecionado"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Toque para selecionar..."
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_lancar_calendario"
+                        app:tint="#94A3B8" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/containerVazio"

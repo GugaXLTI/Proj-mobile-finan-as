@@ -52,6 +52,21 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
         super.onNotificationPosted(sbn);
 
         String packageName = sbn.getPackageName();
+        Bundle extras = sbn.getNotification().extras;
+
+        // ⭐ LOG DE DEBUG: Mostra TUDO que chega no celular
+        if (extras != null) {
+            CharSequence title = extras.getCharSequence(Notification.EXTRA_TITLE);
+            CharSequence text = extras.getCharSequence(Notification.EXTRA_TEXT);
+            CharSequence bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT);
+
+            Log.d(TAG, "--- NOVA NOTIFICAÇÃO ---");
+            Log.d(TAG, "Pacote: " + packageName);
+            Log.d(TAG, "Título: " + (title != null ? title : "Nulo"));
+            Log.d(TAG, "Texto: " + (text != null ? text : "Nulo"));
+            Log.d(TAG, "BigText: " + (bigText != null ? bigText : "Nulo"));
+        }
+
         SessionManager session = new SessionManager(this);
         int userId = session.getUserId();
 
@@ -60,24 +75,38 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
         AppDatabase db = AppDatabase.getInstance(this);
         List<Cartao> cartoesDoUsuario = db.cartaoDao().listarPorUsuario(userId);
 
-        if (cartoesDoUsuario.isEmpty()) return;
+        if (cartoesDoUsuario.isEmpty()) {
+            Log.d(TAG, "Nenhum cartão cadastrado pelo usuário. Ignorando.");
+            return;
+        }
 
         String bancoDetectado = null;
         for (Cartao c : cartoesDoUsuario) {
             String pacoteDoBanco = BancoHelper.getPackageName(c.instituicao);
-            if (pacoteDoBanco != null && pacoteDoBanco.equals(packageName)) {
+            // Usa contains para evitar erro de pacotes com sufixos diferentes
+            if (pacoteDoBanco != null && (packageName.equals(pacoteDoBanco) || packageName.contains(pacoteDoBanco))) {
                 bancoDetectado = c.instituicao;
                 break;
             }
         }
 
-        if (bancoDetectado == null) return;
+        if (bancoDetectado == null) {
+            Log.d(TAG, "Pacote " + packageName + " ignorado (Banco não cadastrado no ORG ou pacote não bate com o BancoHelper).");
+            return;
+        }
 
-        Bundle extras = sbn.getNotification().extras;
         if (extras == null) return;
 
         CharSequence title = extras.getCharSequence(Notification.EXTRA_TITLE);
         CharSequence text = extras.getCharSequence(Notification.EXTRA_TEXT);
+        CharSequence bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT);
+
+        // Se o texto normal for nulo ou muito curto, tenta pegar o texto longo
+        if (text == null || text.length() < 10) {
+            if (bigText != null) {
+                text = bigText;
+            }
+        }
 
         if (text == null) return;
 
@@ -101,7 +130,7 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
 
         cacheNotificacoes.put(hashNotificacao, agora);
 
-        Log.d(TAG, "Notificação de " + bancoDetectado + " capturada: " + textoCompleto);
+        Log.d(TAG, "⭐ NOTIFICAÇÃO DO BANCO CAPTURADA (" + bancoDetectado + "): " + textoCompleto);
 
         Transacao novaTransacao;
         if (bancoDetectado.toLowerCase().contains("nubank")) {
@@ -121,7 +150,6 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
                     Divida dividaParaSugerir = db.dividaDao().buscarDividaAbertaPorValor(userId, valorLido);
 
                     if (dividaParaSugerir == null) {
-                        // ⭐ CORREÇÃO DO NOME DO MÉTODO AQUI
                         dividaParaSugerir = db.dividaDao().buscarDividaAproximadaPorValor(userId, valorLido);
                     }
 
@@ -135,6 +163,8 @@ public class NotificationListenerServiceApp extends NotificationListenerService 
                 Intent intent = new Intent("NOVA_TRANSACAO_RECEBIDA");
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
             }
+        } else {
+            Log.d(TAG, "O Parser não conseguiu gerar uma transação com o texto acima.");
         }
     }
 

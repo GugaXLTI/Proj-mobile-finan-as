@@ -13,27 +13,19 @@ import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.controle_gastos.R;
 import com.example.controle_gastos.model.Cartao;
+import com.example.controle_gastos.utils.BancoHelper;
 import java.util.List;
 import java.util.Locale;
 
 public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder> {
 
-    // ⭐ Clique longo = excluir
-    public interface OnItemLongClickListener {
-        void onItemLongClick(Cartao cartao);
-    }
-
-    // ⭐ Clique normal = editar
-    public interface OnItemClickListener {
-        void onItemClick(Cartao cartao);
-    }
+    public interface OnItemLongClickListener { void onItemLongClick(Cartao cartao); }
+    public interface OnItemClickListener { void onItemClick(Cartao cartao); }
 
     private final List<Cartao> listaCartoes;
     private final String nomeUsuario;
     private OnItemLongClickListener longClickListener;
     private OnItemClickListener clickListener;
-
-    // Define o texto/cor do status "leitura automática" de cada card
     private boolean leituraAtiva = false;
 
     public CartaoAdapter(List<Cartao> listaCartoes, String nomeUsuario) {
@@ -41,13 +33,8 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
         this.nomeUsuario = nomeUsuario;
     }
 
-    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
-        this.longClickListener = listener;
-    }
-
-    public void setOnItemClickListener(OnItemClickListener listener) {
-        this.clickListener = listener;
-    }
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) { this.longClickListener = listener; }
+    public void setOnItemClickListener(OnItemClickListener listener) { this.clickListener = listener; }
 
     public void setLeituraAtiva(boolean ativa) {
         if (this.leituraAtiva != ativa) {
@@ -56,7 +43,6 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
         }
     }
 
-    /** Cor de destaque de cada banco (também usada pelos chips do formulário). */
     public static int corDoBanco(String instituicao) {
         String s = instituicao == null ? "" : instituicao.toLowerCase(Locale.ROOT);
         if (s.contains("nubank") || s.equals("nu")) return Color.parseColor("#8A05BE");
@@ -71,8 +57,7 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_cartao, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_cartao, parent, false);
         return new ViewHolder(view);
     }
 
@@ -86,7 +71,6 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
         String tipo = (cartao.tipo != null) ? cartao.tipo : "Crédito";
         int cor = corDoBanco(instituicao);
 
-        // Fundo do cartão: gradiente na cor da marca
         GradientDrawable fundo = new GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
                 new int[]{ColorUtils.setAlphaComponent(cor, 80), Color.parseColor("#111A2E")});
@@ -94,26 +78,32 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
         fundo.setStroke(Math.max(1, Math.round(d)), ColorUtils.setAlphaComponent(cor, 110));
         holder.root.setBackground(fundo);
 
-        // Sigla (bandeira se existir, senão as 2 primeiras letras do banco)
-        String sigla = (cartao.bandeira != null && !cartao.bandeira.trim().isEmpty())
-                ? cartao.bandeira.trim() : instituicao;
-        sigla = sigla.length() >= 2 ? sigla.substring(0, 2) : sigla;
-        holder.tvSigla.setText(sigla.toUpperCase(Locale.ROOT));
+        // LÓGICA SEGURA: Imagem ou Inicial
+        int logoResId = BancoHelper.getLogoBanco(instituicao);
+        if (logoResId != 0) {
+            holder.ivLogoBanco.setImageResource(logoResId);
+            holder.ivLogoBanco.setVisibility(View.VISIBLE);
+            holder.tvSigla.setVisibility(View.GONE);
+        } else {
+            holder.ivLogoBanco.setVisibility(View.GONE);
+            holder.tvSigla.setVisibility(View.VISIBLE);
 
-        GradientDrawable badge = new GradientDrawable();
-        badge.setCornerRadius(14 * d);
-        badge.setColor(cor);
-        holder.tvSigla.setBackground(badge);
+            String sigla = (cartao.bandeira != null && !cartao.bandeira.trim().isEmpty()) ? cartao.bandeira.trim() : instituicao;
+            sigla = sigla.length() >= 2 ? sigla.substring(0, 2) : sigla;
+            holder.tvSigla.setText(sigla.toUpperCase(Locale.ROOT));
+
+            GradientDrawable badge = new GradientDrawable();
+            badge.setCornerRadius(14 * d);
+            badge.setColor(cor);
+            holder.tvSigla.setBackground(badge);
+        }
 
         holder.tvNomeCartao.setText(instituicao);
         holder.tvTipoCartao.setText(tipo);
 
-        // Subtítulo: apelido (se for diferente do banco) e, em cartões antigos, o final
         StringBuilder sub = new StringBuilder();
         String apelido = cartao.apelido != null ? cartao.apelido.trim() : "";
-        if (!apelido.isEmpty() && !apelido.equalsIgnoreCase(instituicao)) {
-            sub.append(apelido);
-        }
+        if (!apelido.isEmpty() && !apelido.equalsIgnoreCase(instituicao)) { sub.append(apelido); }
         String final4 = cartao.ultimos4Digitos != null ? cartao.ultimos4Digitos.trim() : "";
         if (!final4.isEmpty()) {
             if (sub.length() > 0) sub.append(" · ");
@@ -122,49 +112,32 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
         holder.tvApelido.setText(sub.toString());
         holder.tvApelido.setVisibility(sub.length() == 0 ? View.GONE : View.VISIBLE);
 
-        // Status da leitura automática
         int corStatus = Color.parseColor(leituraAtiva ? "#34D399" : "#FBBF24");
         GradientDrawable dot = new GradientDrawable();
         dot.setShape(GradientDrawable.OVAL);
         dot.setColor(corStatus);
         holder.vDotStatus.setBackground(dot);
-        holder.tvStatusLeitura.setText(leituraAtiva
-                ? "Leitura automática ativa"
-                : "Aguardando permissão de leitura");
+        holder.tvStatusLeitura.setText(leituraAtiva ? "Leitura automática ativa" : "Aguardando permissão de leitura");
         holder.tvStatusLeitura.setTextColor(corStatus);
 
         holder.tvTitular.setText(nomeUsuario != null ? nomeUsuario.toUpperCase(Locale.ROOT) : "");
 
-        // ⭐ Clique normal = editar
-        holder.itemView.setOnClickListener(v -> {
-            if (clickListener != null) clickListener.onItemClick(cartao);
-        });
-        holder.btnEditar.setOnClickListener(v -> {
-            if (clickListener != null) clickListener.onItemClick(cartao);
-        });
-
-        // ⭐ Clique longo = excluir (e também o ícone da lixeira)
+        holder.itemView.setOnClickListener(v -> { if (clickListener != null) clickListener.onItemClick(cartao); });
+        holder.btnEditar.setOnClickListener(v -> { if (clickListener != null) clickListener.onItemClick(cartao); });
         holder.itemView.setOnLongClickListener(v -> {
-            if (longClickListener != null) {
-                longClickListener.onItemLongClick(cartao);
-                return true;
-            }
+            if (longClickListener != null) { longClickListener.onItemLongClick(cartao); return true; }
             return false;
         });
-        holder.btnExcluir.setOnClickListener(v -> {
-            if (longClickListener != null) longClickListener.onItemLongClick(cartao);
-        });
+        holder.btnExcluir.setOnClickListener(v -> { if (longClickListener != null) longClickListener.onItemLongClick(cartao); });
     }
 
     @Override
-    public int getItemCount() {
-        return listaCartoes.size();
-    }
+    public int getItemCount() { return listaCartoes.size(); }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         View root, vDotStatus;
         TextView tvSigla, tvNomeCartao, tvApelido, tvTipoCartao, tvStatusLeitura, tvTitular;
-        ImageView btnEditar, btnExcluir;
+        ImageView ivLogoBanco, btnEditar, btnExcluir;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -176,6 +149,7 @@ public class CartaoAdapter extends RecyclerView.Adapter<CartaoAdapter.ViewHolder
             tvTipoCartao = itemView.findViewById(R.id.tvTipoCartao);
             tvStatusLeitura = itemView.findViewById(R.id.tvStatusLeitura);
             tvTitular = itemView.findViewById(R.id.tvTitular);
+            ivLogoBanco = itemView.findViewById(R.id.ivLogoBanco);
             btnEditar = itemView.findViewById(R.id.btnEditarCartao);
             btnExcluir = itemView.findViewById(R.id.btnExcluirCartao);
         }

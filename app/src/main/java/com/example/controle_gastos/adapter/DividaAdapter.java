@@ -55,28 +55,28 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
         holder.tvTitulo.setText(agrupada.getTitulo());
         holder.tvDetalhe.setText(montarDetalhe(parcelaExibida));
 
-        try {
-            String banco = parcelaExibida.getBanco();
-            if (banco != null && !banco.trim().isEmpty() && !banco.equalsIgnoreCase("Genérico")) {
+        String banco = parcelaExibida.getBanco();
+
+        if (banco != null && !banco.trim().isEmpty() && !banco.equalsIgnoreCase("Genérico")) {
+            int logoResId = BancoHelper.getLogoBanco(banco);
+            if (logoResId != 0) {
+                holder.ivBankLogo.setImageResource(logoResId);
+                holder.ivBankLogo.setVisibility(View.VISIBLE);
+                holder.tvBankIcon.setVisibility(View.GONE);
+            } else {
+                holder.ivBankLogo.setVisibility(View.GONE);
                 holder.tvBankIcon.setVisibility(View.VISIBLE);
 
-                String iniciais;
-                if (banco.toLowerCase().contains("pix")) {
-                    iniciais = "PX";
-                } else {
-                    iniciais = banco.length() >= 2 ? banco.substring(0, 2).toUpperCase() : banco.toUpperCase();
-                }
-
+                String iniciais = banco.toLowerCase().contains("pix") ? "PX" : (banco.length() >= 2 ? banco.substring(0, 2).toUpperCase() : banco.toUpperCase());
                 holder.tvBankIcon.setText(iniciais);
 
                 GradientDrawable shape = new GradientDrawable();
                 shape.setShape(GradientDrawable.OVAL);
                 shape.setColor(BancoHelper.getCorBanco(banco));
                 holder.tvBankIcon.setBackground(shape);
-            } else {
-                holder.tvBankIcon.setVisibility(View.GONE);
             }
-        } catch (Exception e) {
+        } else {
+            holder.ivBankLogo.setVisibility(View.GONE);
             holder.tvBankIcon.setVisibility(View.GONE);
         }
 
@@ -114,14 +114,9 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             holder.btnPagar.setVisibility(View.GONE);
             holder.tvValor.setTextColor(Color.parseColor("#94A3B8"));
 
-            try {
-                // ⭐ AQUI MUDOU DE "Pago em" PARA "Pago dia"
-                if (parcelaExibida.getDataPagamento() != null && !parcelaExibida.getDataPagamento().isEmpty()) {
-                    holder.tvStatus.setText("Pago dia " + parcelaExibida.getDataPagamento());
-                } else {
-                    holder.tvStatus.setText("Pago ✓");
-                }
-            } catch (Exception e) {
+            if (parcelaExibida.getDataPagamento() != null && !parcelaExibida.getDataPagamento().isEmpty()) {
+                holder.tvStatus.setText("Pago dia " + parcelaExibida.getDataPagamento());
+            } else {
                 holder.tvStatus.setText("Pago ✓");
             }
             holder.tvStatus.setTextColor(Color.parseColor("#34D399"));
@@ -179,6 +174,7 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitulo, tvValor, tvDetalhe, tvParcela, tvStatus, tvMes, tvDia, tvProgresso, tvBankIcon;
+        ImageView ivBankLogo;
         ProgressBar progressBar;
         ImageView btnEditar, btnExcluir;
         TextView btnPagar;
@@ -198,6 +194,7 @@ public class DividaAdapter extends RecyclerView.Adapter<DividaAdapter.ViewHolder
             btnEditar = itemView.findViewById(R.id.btnEditar);
             btnExcluir = itemView.findViewById(R.id.btnExcluir);
             tvBankIcon = itemView.findViewById(R.id.tvBankIcon);
+            ivBankLogo = itemView.findViewById(R.id.ivBankLogo);
         }
     }
 }

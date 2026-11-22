@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 public class GenericBankParser {
 
     private static final String TAG = "GenericBankParser";
-    // Regex universal para capturar valores em Reais (ex: R$ 10,50 ou R$ 0,43)
-    private static final String REGEX_VALOR = "R\\$\\s*?(\\d{1,3}(\\.\\d{3})*,\\d{2}|\\d+,\\d{2})";
+    // ⭐ REGEX ATUALIZADO: Adicionado \u00A0 para ler o espaço invisível de alguns bancos (como Inter)
+    private static final String REGEX_VALOR = "R\\$[\\s\\u00A0]*?(\\d{1,3}(\\.\\d{3})*,\\d{2}|\\d+,\\d{2})";
 
     public static Transacao processarTexto(String textoBruto, int usuarioId, String nomeBanco) {
         if (textoBruto == null || textoBruto.isEmpty()) return null;

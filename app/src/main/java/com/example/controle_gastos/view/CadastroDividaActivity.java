@@ -215,7 +215,8 @@ public class CadastroDividaActivity extends AppCompatActivity {
         editDataCompra.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) { sincronizarChipsData(); }
+            @Override
+            public void afterTextChanged(Editable s) { sincronizarChipsData(); }
         });
         boxDataCompraHoje.setOnClickListener(v -> editDataCompra.setText(getHoje()));
         boxDataCompraOntem.setOnClickListener(v -> editDataCompra.setText(getOntem()));
@@ -435,7 +436,10 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private void configurarChipGroups() {
         chipGroupTipo.addView(criarChipTipo("Cartão de Crédito", R.drawable.ic_nav_card, "#34D399"));
         chipGroupTipo.addView(criarChipTipo("Cartão de Débito", R.drawable.ic_nav_card, "#38BDF8"));
-        chipGroupTipo.addView(criarChipTipo("Pix", R.drawable.ic_pay_pix, "#2DD4BF"));
+
+        // Ícone novo do Pix
+        chipGroupTipo.addView(criarChipTipo("Pix", R.drawable.ic_pix, "#2DD4BF"));
+
         chipGroupTipo.addView(criarChipTipo("Dinheiro", R.drawable.ic_conf_money, "#FBBF24"));
         chipGroupTipo.addView(criarChipTipo("Empréstimo", R.drawable.ic_banco, "#A78BFA"));
         chipGroupTipo.addView(criarChipTipo("Fatura", R.drawable.ic_pay_doc, "#F472B6"));
@@ -580,7 +584,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         return "";
     }
 
-    // ⭐ AQUI ESTÁ A LÓGICA INTELIGENTE DE EXIBIÇÃO
     private void atualizarCamposPorTipo() {
         String tipo = tipoSelecionado();
 
@@ -626,7 +629,14 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         itensSelecao.clear();
         bancoSelecionadoAtual = null;
-        containerSelecao.setVisibility(View.VISIBLE);
+
+        // ⭐ MÁGICA AQUI: Se for Dinheiro, some com a caixa de seleção de banco!
+        if (tipo.equals("Dinheiro")) {
+            containerSelecao.setVisibility(View.GONE);
+            return; // Encerra o método aqui
+        } else {
+            containerSelecao.setVisibility(View.VISIBLE);
+        }
 
         tvBancoSelecionado.setText("Toque para selecionar...");
         tvBancoSelecionado.setTextColor(Color.parseColor("#64748B"));
@@ -647,7 +657,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
                     itensSelecao.add(new String[]{sigla, c.instituicao, c.instituicao, detalhe});
                 }
             }
-        } else if (tipo.equals("Pix") || tipo.equals("Dinheiro")) {
+        } else if (tipo.equals("Pix")) {
             tvTituloSelecao.setText("Selecione o Banco / Origem");
             List<Cartao> cartoes = db.cartaoDao().listarPorUsuario(session.getUserId());
             Set<String> instituicoesUnicas = new HashSet<>();
@@ -729,7 +739,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         atualizarResumoParcelas();
     }
 
-    // ⭐ AQUI ESTÁ A LÓGICA INTELIGENTE DE SALVAMENTO
     private void salvarDivida() {
         String tipoDivida = tipoSelecionado();
         if (tipoDivida.isEmpty()) { Toast.makeText(this, "Selecione o tipo.", Toast.LENGTH_SHORT).show(); return; }
@@ -752,14 +761,18 @@ public class CadastroDividaActivity extends AppCompatActivity {
         try { valor = Double.parseDouble(valorStr); } catch (Exception e) { Toast.makeText(this, "Valor inválido!", Toast.LENGTH_SHORT).show(); return; }
         if (valor <= 0) { Toast.makeText(this, "O valor deve ser > 0.", Toast.LENGTH_SHORT).show(); return; }
 
-        if (bancoSelecionadoAtual == null) {
-            Toast.makeText(this, "Selecione o banco/origem.", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        String bancoSelecionado = "Dinheiro";
 
-        String bancoSelecionado = bancoSelecionadoAtual[2];
-        if (tipoDivida.equals("Pix")) {
-            bancoSelecionado = "Pix (" + bancoSelecionadoAtual[2] + ")";
+        // ⭐ MÁGICA AQUI: Se NÃO for dinheiro, exige o banco. Se for, ignora a validação.
+        if (!tipoDivida.equals("Dinheiro")) {
+            if (bancoSelecionadoAtual == null) {
+                Toast.makeText(this, "Selecione o banco/origem.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            bancoSelecionado = bancoSelecionadoAtual[2];
+            if (tipoDivida.equals("Pix")) {
+                bancoSelecionado = "Pix (" + bancoSelecionadoAtual[2] + ")";
+            }
         }
 
         boolean aceitaParcelamento = tipoDivida.equals("Cartão de Crédito") ||
@@ -787,7 +800,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
             try { n = Integer.parseInt(parcelas.replace("x", "").trim()); } catch (Exception e) { }
             condicao = n > 1 ? n + "x de " + String.format(LOCALE_BR, "R$ %.2f", valor / n) : "1x";
         }
-        prepararResumo(tipoDivida, valor, descricao, categoria, bancoSelecionadoAtual[2],
+        prepararResumo(tipoDivida, valor, descricao, categoria, bancoSelecionado,
                 condicao, dataCompra, aceitaParcelamento ? vencimento : "");
 
         if (dividaEmEdicao != null) {
@@ -935,6 +948,9 @@ public class CadastroDividaActivity extends AppCompatActivity {
             } else if (!tipo.equals("Pix") && bancoDivida.equalsIgnoreCase(tipo)) {
                 chip.setChecked(true);
                 break;
+            } else if (tipo.equals("Dinheiro") && bancoDivida.equalsIgnoreCase("Dinheiro")) {
+                chip.setChecked(true);
+                break;
             }
         }
         for (int i = 0; i < chipGroupCategoria.getChildCount(); i++) {
@@ -942,15 +958,17 @@ public class CadastroDividaActivity extends AppCompatActivity {
             if (chip.getText().toString().equals(d.getCategoria())) { chip.setChecked(true); break; }
         }
 
-        boxSelecionarBanco.post(() -> {
-            if (bancoDivida.isEmpty()) return;
-            for (String[] item : itensSelecao) {
-                if (bancoDivida.toLowerCase().contains(item[2].toLowerCase())) {
-                    selecionarBancoNaTela(item);
-                    break;
+        if (!bancoDivida.equalsIgnoreCase("Dinheiro")) {
+            boxSelecionarBanco.post(() -> {
+                if (bancoDivida.isEmpty()) return;
+                for (String[] item : itensSelecao) {
+                    if (bancoDivida.toLowerCase().contains(item[2].toLowerCase())) {
+                        selecionarBancoNaTela(item);
+                        break;
+                    }
                 }
-            }
-        });
+            });
+        }
 
         atualizarResumoParcelas();
     }

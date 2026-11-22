@@ -11,8 +11,8 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingBottom="112dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toTopOf="@id/layoutBotaoSalvar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -28,6 +28,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <ImageView
@@ -45,7 +46,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
+                    android:layout_marginStart="14dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
@@ -53,70 +54,113 @@
                         android:id="@+id/tvTituloTela"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lançar nova dívida"
+                        android:text="Novo lançamento"
                         android:textColor="#FFFFFF"
-                        android:textSize="26sp"
+                        android:textSize="22sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tvSubtituloTela"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Cartões, faturas, empréstimos ou outras pendências"
+                        android:maxLines="2"
+                        android:text="Despesas, cartões e outras pendências"
                         android:textColor="#94A3B8"
-                        android:textSize="14sp" />
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btnImportarComprovante"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_comprovante_pill"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp">
+
+                    <ImageView
+                        android:id="@+id/ivComprovante"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_lancar_camera"
+                        app:tint="#34D399" />
+
+                    <TextView
+                        android:id="@+id/tvComprovante"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="Comprovante"
+                        android:textColor="#6EE7B7"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- PREENCHER COM COMPROVANTE -->
-            <LinearLayout
-                android:id="@+id/btnImportarComprovante"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/bg_lancar_comprovante"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:id="@+id/ivComprovante"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_lancar_camera"
-                    app:tint="#34D399" />
-
-                <TextView
-                    android:id="@+id/tvComprovante"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="Preencher com comprovante"
-                    android:textColor="#34D399"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- CARD DO VALOR -->
+            <!-- CARD DO VALOR (HERO) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:background="@drawable/bg_card_glass"
+                android:background="@drawable/bg_card_hero"
                 android:orientation="vertical"
                 android:padding="20dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.08"
-                    android:text="VALOR TOTAL"
-                    android:textColor="#94A3B8"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:letterSpacing="0.08"
+                        android:text="VALOR TOTAL"
+                        android:textColor="#34D399"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <!-- Toggle À vista / Parcelado (só aparece no Crédito) -->
+                    <LinearLayout
+                        android:id="@+id/containerToggle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_toggle_container"
+                        android:orientation="horizontal"
+                        android:padding="3dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/btnAVista"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingHorizontal="14dp"
+                            android:text="À vista"
+                            android:textColor="#94A3B8"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/btnParcelado"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingHorizontal="14dp"
+                            android:text="Parcelado"
+                            android:textColor="#94A3B8"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <EditText
                     android:id="@+id/editValor"
@@ -131,14 +175,16 @@
                     android:padding="0dp"
                     android:textColor="#FFFFFF"
                     android:textColorHint="#475569"
-                    android:textSize="44sp"
+                    android:textSize="42sp"
                     android:textStyle="bold" />
 
+                <!-- Painel de parcelas (só no Crédito parcelado) -->
                 <LinearLayout
                     android:id="@+id/containerParcelas"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
                     <View
                         android:layout_width="match_parent"
@@ -146,69 +192,65 @@
                         android:layout_marginTop="14dp"
                         android:background="#1E2A44" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:text="Parcelas"
-                        android:textColor="#94A3B8"
-                        android:textSize="14sp" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                    <HorizontalScrollView
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Parcelas"
+                            android:textColor="#CBD5E1"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvResumoParcelas"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="1x de R$ 0,00 · à vista"
+                            android:textColor="#34D399"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupParcelas"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:overScrollMode="never"
-                        android:scrollbars="none">
-
-                        <com.google.android.material.chip.ChipGroup
-                            android:id="@+id/chipGroupParcelas"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            app:chipSpacingHorizontal="8dp"
-                            app:singleLine="true"
-                            app:singleSelection="true"
-                            app:selectionRequired="true" />
-                    </HorizontalScrollView>
+                        app:chipSpacingHorizontal="8dp"
+                        app:chipSpacingVertical="8dp"
+                        app:selectionRequired="true"
+                        app:singleSelection="true" />
                 </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvResumoParcelas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="1x de R$ 0,00 · à vista"
-                    android:textColor="#94A3B8"
-                    android:textSize="14sp" />
             </LinearLayout>
 
-            <!-- TIPO DE DÍVIDA -->
+            <!-- FORMA DE PAGAMENTO -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="Tipo de dívida"
-                android:textColor="#94A3B8"
-                android:textSize="14sp" />
+                android:text="Forma de pagamento"
+                android:textColor="#CBD5E1"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
-            <HorizontalScrollView
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupTipo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:overScrollMode="never"
-                android:scrollbars="none">
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                app:selectionRequired="true"
+                app:singleSelection="true" />
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupTipo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:chipSpacingHorizontal="8dp"
-                    app:singleLine="true"
-                    app:singleSelection="true"
-                    app:selectionRequired="true" />
-            </HorizontalScrollView>
-
-            <!-- CARTÃO / CHAVE PIX / BANCO -->
+            <!-- CARTÃO / BANCO -->
             <LinearLayout
                 android:id="@+id/containerSelecao"
                 android:layout_width="match_parent"
@@ -228,8 +270,9 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Selecione o Cartão"
-                        android:textColor="#94A3B8"
-                        android:textSize="14sp" />
+                        android:textColor="#CBD5E1"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/btnNovoItem"
@@ -242,39 +285,49 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- ⭐ CAIXA CLICÁVEL ATUALIZADA COM O FRAME_LAYOUT -->
                 <LinearLayout
                     android:id="@+id/boxSelecionarBanco"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="64dp"
                     android:layout_marginTop="10dp"
                     android:background="@drawable/bg_lancar_campo"
                     android:clickable="true"
                     android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:paddingHorizontal="16dp"
                     android:visibility="gone">
 
                     <FrameLayout
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
                         android:layout_marginEnd="12dp">
 
                         <ImageView
+                            android:id="@+id/ivBancoPlaceholder"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:importantForAccessibility="no"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_banco"
+                            app:tint="#64748B" />
+
+                        <ImageView
                             android:id="@+id/ivBancoSelecionadoLogo"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:importantForAccessibility="no"
                             android:scaleType="fitCenter"
                             android:visibility="gone" />
 
                         <TextView
                             android:id="@+id/tvBancoSelecionadoIniciais"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
                             android:gravity="center"
                             android:textColor="#FFFFFF"
-                            android:textSize="11sp"
+                            android:textSize="12sp"
                             android:textStyle="bold"
                             android:visibility="gone" />
                     </FrameLayout>
@@ -284,14 +337,17 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="2"
                         android:text="Toque para selecionar..."
-                        android:textColor="#FFFFFF"
+                        android:textColor="#64748B"
                         android:textSize="15sp" />
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_lancar_calendario"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_chevron_down"
                         app:tint="#94A3B8" />
                 </LinearLayout>
 
@@ -311,7 +367,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        android:gravity="center"
                         android:text="Nenhum cartão cadastrado"
                         android:textColor="#94A3B8"
                         android:textSize="13sp" />
@@ -334,8 +389,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="Descrição"
-                android:textColor="#94A3B8"
-                android:textSize="14sp" />
+                android:textColor="#CBD5E1"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/editDescricao"
@@ -365,8 +421,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Categoria"
-                    android:textColor="#94A3B8"
-                    android:textSize="14sp" />
+                    android:textColor="#CBD5E1"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/btnNovaCategoria"
@@ -379,29 +436,23 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <HorizontalScrollView
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupCategoria"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:overScrollMode="never"
-                android:scrollbars="none">
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupCategoria"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:chipSpacingHorizontal="8dp"
-                    app:singleLine="true"
-                    app:singleSelection="true"
-                    app:selectionRequired="true" />
-            </HorizontalScrollView>
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                app:selectionRequired="true"
+                app:singleLine="false"
+                app:singleSelection="true" />
 
             <TextView
                 android:id="@+id/tvSemCategoria"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Nenhuma categoria cadastrada. Toque em + Nova para criar."
+                android:text="Nenhuma categoria cadastrada."
                 android:textColor="#64748B"
                 android:textSize="13sp"
                 android:visibility="gone" />
@@ -411,147 +462,233 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Data da compra"
+                        android:textColor="#CBD5E1"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvBadgeDataCompra"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Data da compra"
-                        android:textColor="#94A3B8"
+                        android:text="Hoje"
+                        android:textColor="#34D399"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Guarda o valor da data (a lógica lê este campo). Fica escondido -->
+                <EditText
+                    android:id="@+id/editDataCompra"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:focusable="false"
+                    android:importantForAutofill="no"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/boxDataCompraHoje"
+                        android:layout_width="0dp"
+                        android:layout_height="46dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_data_chip"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Hoje"
+                        android:textColor="#CBD5E1"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/boxDataCompraOntem"
+                        android:layout_width="0dp"
+                        android:layout_height="46dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_data_chip"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Ontem"
+                        android:textColor="#CBD5E1"
                         android:textSize="14sp" />
 
                     <LinearLayout
-                        android:id="@+id/boxDataCompra"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_lancar_campo"
+                        android:id="@+id/boxDataCompraOutra"
+                        android:layout_width="0dp"
+                        android:layout_height="46dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_data_chip"
                         android:clickable="true"
                         android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="14dp">
-
-                        <EditText
-                            android:id="@+id/editDataCompra"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@null"
-                            android:clickable="true"
-                            android:cursorVisible="false"
-                            android:focusable="false"
-                            android:hint="dd/mm/aaaa"
-                            android:importantForAutofill="no"
-                            android:maxLines="1"
-                            android:padding="0dp"
-                            android:textColor="#FFFFFF"
-                            android:textColorHint="#64748B"
-                            android:textSize="15sp" />
+                        android:gravity="center"
+                        android:orientation="horizontal">
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:importantForAccessibility="no"
                             android:src="@drawable/ic_lancar_calendario"
-                            app:tint="#94A3B8" />
+                            app:tint="#34D399" />
+
+                        <TextView
+                            android:id="@+id/tvChipOutra"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="Outra"
+                            android:textColor="#CBD5E1"
+                            android:textSize="14sp" />
                     </LinearLayout>
                 </LinearLayout>
 
+                <!-- 1º vencimento (só no Crédito) -->
                 <LinearLayout
                     android:id="@+id/containerVencimento"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_card_glass"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp"
+                    android:visibility="gone">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="1º vencimento"
-                        android:textColor="#94A3B8"
-                        android:textSize="14sp" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="1º vencimento"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvDicaVencimento"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Fatura do cartão selecionado"
+                            android:textColor="#94A3B8"
+                            android:textSize="12sp" />
+                    </LinearLayout>
 
                     <LinearLayout
                         android:id="@+id/boxVencimento"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
                         android:background="@drawable/bg_lancar_campo"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="14dp">
+                        android:paddingHorizontal="12dp">
 
                         <EditText
                             android:id="@+id/editVencimento"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            android:layout_weight="1"
                             android:background="@null"
-                            android:clickable="true"
+                            android:clickable="false"
                             android:cursorVisible="false"
                             android:focusable="false"
                             android:hint="dd/mm/aaaa"
                             android:importantForAutofill="no"
                             android:maxLines="1"
                             android:padding="0dp"
-                            android:textColor="#FFFFFF"
+                            android:textColor="#34D399"
                             android:textColorHint="#64748B"
-                            android:textSize="15sp" />
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginStart="8dp"
+                            android:importantForAccessibility="no"
                             android:src="@drawable/ic_lancar_calendario"
                             app:tint="#94A3B8" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
-
-            <!-- SALVAR -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSalvarDivida"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="32dp"
-                android:backgroundTint="#10B981"
-                android:text="Salvar lançamento"
-                android:textAllCaps="false"
-                android:textColor="#000000"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:cornerRadius="18dp" />
-
         </LinearLayout>
     </ScrollView>
 
-    <!-- BARRA FLUTUANTE (reutilizável) -->
+    <!-- BARRA FIXA DE SALVAR (acima da barra flutuante) -->
+    <LinearLayout
+        android:id="@+id/layoutBotaoSalvar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#F2070E17"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#1E2A44" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSalvarDivida"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_margin="16dp"
+            android:backgroundTint="#10B981"
+            android:text="Salvar lançamento"
+            android:textAllCaps="false"
+            android:textColor="#052E22"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="18dp"
+            app:icon="@drawable/ic_sucesso_check"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="#052E22" />
+    </LinearLayout>
+
+    <!-- BARRA FLUTUANTE -->
     <include
         android:id="@+id/bottomNavigation"
         layout="@layout/layout_bottom_nav"
         android:layout_width="0dp"
         android:layout_height="64dp"
-        android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="16dp"
+        android:layout_marginHorizontal="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- ⭐ OVERLAY DE SUCESSO -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <!-- OVERLAY DE SUCESSO (com resumo) -->
+    <FrameLayout
         android:id="@+id/overlaySucesso"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:background="#E6070E17"
         android:clickable="true"
         android:focusable="true"
@@ -564,47 +701,63 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="32dp"
-            android:gravity="center"
+            android:layout_gravity="center"
+            android:layout_margin="24dp"
+            android:background="@drawable/bg_card_hero"
+            android:gravity="center_horizontal"
             android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:padding="24dp">
 
-            <View
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:background="@drawable/bg_circulo_sucesso" />
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp">
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginTop="-60dp"
-                android:layout_marginBottom="20dp"
-                android:src="@drawable/ic_check"
-                app:tint="#04170E" />
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_sucesso_circulo" />
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_sucesso_check"
+                    app:tint="#04170E" />
+            </FrameLayout>
 
             <TextView
+                android:id="@+id/tvTituloSucesso"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="Dívida registrada!"
                 android:textColor="#FFFFFF"
-                android:textSize="24sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:text="O lançamento já entrou no seu planejamento mensal."
+                android:layout_marginTop="2dp"
+                android:text="Resumo salvo no ORG"
                 android:textColor="#94A3B8"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:id="@+id/llResumoSucesso"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_item_lancamento"
+                android:orientation="vertical"
+                android:padding="16dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnConcluirSucesso"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="20dp"
                 android:backgroundTint="#10B981"
                 android:text="Voltar ao Início"
                 android:textAllCaps="false"
@@ -613,6 +766,6 @@
                 android:textStyle="bold"
                 app:cornerRadius="18dp" />
         </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

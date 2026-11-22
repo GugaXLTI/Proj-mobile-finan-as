@@ -121,8 +121,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         findViewById(R.id.btnVoltar).setOnClickListener(v -> finish());
         BottomNavHelper.configurar(this, BottomNavHelper.LANCAR);
-        // Nesta tela o botão "Salvar" fica fixo acima da barra, então a barra NÃO esconde ao rolar.
-        // (Para voltar a esconder: NavScrollHelper.attach(this);)
 
         CategoriaSeeder.popularSeVazio(this, session.getUserId());
 
@@ -193,7 +191,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
 
         chipGroupTipo.setOnCheckedStateChangeListener((group, checkedIds) -> atualizarSelecao());
         chipGroupParcelas.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            // Se voltou para um chip fixo (1x a 6x), o chip "Mais" volta ao estado original
             if (chipMaisParcelas != null
                     && (checkedIds.isEmpty() || checkedIds.get(0) != chipMaisParcelas.getId())
                     && chipMaisParcelas.isCheckable()) {
@@ -203,7 +200,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
             atualizarResumoParcelas();
         });
 
-        // Alternar À vista / Parcelado só muda o que aparece (não reseta o banco escolhido)
         btnAVista.setOnClickListener(v -> {
             isParceladoAtivo = false;
             atualizarEstiloToggle();
@@ -216,7 +212,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
             atualizarResumoParcelas();
         });
 
-        // Data da compra: o EditText escondido guarda o valor; os chips só refletem
         editDataCompra.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
@@ -269,9 +264,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         btnSalvar.setOnClickListener(v -> salvarDivida());
     }
 
-    // ------------------------------------------------------------------
-    // TOGGLE À VISTA / PARCELADO
-    // ------------------------------------------------------------------
     private void atualizarEstiloToggle() {
         estilizarToggle(btnAVista, !isParceladoAtivo);
         estilizarToggle(btnParcelado, isParceladoAtivo);
@@ -289,9 +281,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
     }
 
-    // ------------------------------------------------------------------
-    // DATA DA COMPRA (Hoje / Ontem / Outra)
-    // ------------------------------------------------------------------
     private void sincronizarChipsData() {
         String data = editDataCompra.getText().toString().trim();
         boolean ehHoje = data.equals(getHoje());
@@ -314,9 +303,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         rotulo.setTypeface(null, selecionado ? Typeface.BOLD : Typeface.NORMAL);
     }
 
-    // ------------------------------------------------------------------
-    // BANCO / CARTÃO
-    // ------------------------------------------------------------------
     private void abrirBottomSheetBancos() {
         if (itensSelecao == null || itensSelecao.isEmpty()) return;
 
@@ -341,7 +327,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
     }
 
     private void deixarFundoDaGavetaTransparente(View conteudo) {
-        // Sem isso, o fundo padrão do BottomSheet aparece atrás dos cantos arredondados
         if (conteudo.getParent() instanceof View) {
             ((View) conteudo.getParent()).setBackgroundColor(Color.TRANSPARENT);
         }
@@ -382,9 +367,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
     }
 
-    // ------------------------------------------------------------------
-    // COMPROVANTE (OCR)
-    // ------------------------------------------------------------------
     private void processarComprovanteEscolhido(Uri uri) {
         btnImportarComprovante.setEnabled(false);
         tvComprovante.setText("Analisando...");
@@ -450,9 +432,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         ivComprovante.setVisibility(View.VISIBLE);
     }
 
-    // ------------------------------------------------------------------
-    // CHIPS
-    // ------------------------------------------------------------------
     private void configurarChipGroups() {
         chipGroupTipo.addView(criarChipTipo("Cartão de Crédito", R.drawable.ic_nav_card, "#34D399"));
         chipGroupTipo.addView(criarChipTipo("Cartão de Débito", R.drawable.ic_nav_card, "#38BDF8"));
@@ -466,7 +445,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         String[] parcelas = {"1x", "2x", "3x", "4x", "5x", "6x"};
         for (String p : parcelas) { chipGroupParcelas.addView(criarChip(p)); }
 
-        // Chip "Mais": abre a gaveta com o stepper (até 24x). Só vira "marcável" depois de escolher
         chipMaisParcelas = criarChip("Mais");
         chipMaisParcelas.setCheckable(false);
         chipMaisParcelas.setOnClickListener(v -> abrirBottomSheetParcelas());
@@ -498,7 +476,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         return chip;
     }
 
-    // Chip do tipo de pagamento, com ícone colorido
     private Chip criarChipTipo(String texto, int iconeRes, String corIcone) {
         Chip chip = criarChip(texto);
         chip.setChipIconResource(iconeRes);
@@ -545,9 +522,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
     }
 
-    // ------------------------------------------------------------------
-    // PARCELAS (chip "Mais" + stepper)
-    // ------------------------------------------------------------------
     private void abrirBottomSheetParcelas() {
         final BottomSheetDialog sheet = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_parcelas, null);
@@ -582,7 +556,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
     private void aplicarParcelasPersonalizadas(int n) {
         parcelasPersonalizadas = n;
 
-        // De 2x a 6x já existe chip fixo: só seleciona ele
         if (n <= 6) {
             for (int i = 0; i < chipGroupParcelas.getChildCount(); i++) {
                 Chip chip = (Chip) chipGroupParcelas.getChildAt(i);
@@ -599,9 +572,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         atualizarResumoParcelas();
     }
 
-    // ------------------------------------------------------------------
-    // CAMPOS POR TIPO
-    // ------------------------------------------------------------------
     private String tipoSelecionado() {
         for (int i = 0; i < chipGroupTipo.getChildCount(); i++) {
             Chip chip = (Chip) chipGroupTipo.getChildAt(i);
@@ -610,28 +580,41 @@ public class CadastroDividaActivity extends AppCompatActivity {
         return "";
     }
 
-    // Toggle, parcelas e vencimento (só visibilidade, não mexe no banco escolhido)
+    // ⭐ AQUI ESTÁ A LÓGICA INTELIGENTE DE EXIBIÇÃO
     private void atualizarCamposPorTipo() {
-        boolean isCredito = tipoSelecionado().equals("Cartão de Crédito");
+        String tipo = tipoSelecionado();
 
-        containerToggle.setVisibility(isCredito ? View.VISIBLE : View.GONE);
+        boolean aceitaParcelamento = tipo.equals("Cartão de Crédito") ||
+                tipo.equals("Empréstimo") ||
+                tipo.equals("Fatura") ||
+                tipo.equals("Boleto");
 
-        if (!isCredito) {
+        boolean exigeVencimento = aceitaParcelamento;
+
+        containerToggle.setVisibility(aceitaParcelamento ? View.VISIBLE : View.GONE);
+
+        if (!aceitaParcelamento) {
             isParceladoAtivo = false;
             atualizarEstiloToggle();
         }
 
-        if (isCredito) {
-            containerVencimento.setVisibility(View.VISIBLE); // Crédito sempre tem vencimento
-            tvDicaVencimento.setText(isParceladoAtivo ? "Vencimento da 1ª parcela" : "Fatura do cartão selecionado");
-
-            containerParcelas.setVisibility(isParceladoAtivo ? View.VISIBLE : View.GONE);
-            tvResumoParcelas.setVisibility(isParceladoAtivo ? View.VISIBLE : View.GONE);
+        if (isParceladoAtivo) {
+            containerParcelas.setVisibility(View.VISIBLE);
+            tvResumoParcelas.setVisibility(View.VISIBLE);
         } else {
-            // Pix, Débito, Dinheiro etc.: sem vencimento e sem parcelas
-            containerVencimento.setVisibility(View.GONE);
             containerParcelas.setVisibility(View.GONE);
             tvResumoParcelas.setVisibility(View.GONE);
+        }
+
+        if (exigeVencimento) {
+            containerVencimento.setVisibility(View.VISIBLE);
+            if (tipo.equals("Cartão de Crédito")) {
+                tvDicaVencimento.setText(isParceladoAtivo ? "Vencimento da 1ª parcela" : "Fatura do cartão selecionado");
+            } else {
+                tvDicaVencimento.setText("Data de vencimento");
+            }
+        } else {
+            containerVencimento.setVisibility(View.GONE);
         }
     }
 
@@ -639,10 +622,8 @@ public class CadastroDividaActivity extends AppCompatActivity {
         String tipo = tipoSelecionado();
         if (tipo.isEmpty()) return;
 
-        // 1. Toggle / parcelas / vencimento
         atualizarCamposPorTipo();
 
-        // 2. Carregar os bancos
         itensSelecao.clear();
         bancoSelecionadoAtual = null;
         containerSelecao.setVisibility(View.VISIBLE);
@@ -736,7 +717,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
             editValor.setSelection(valorFormatado.length());
         }
         if (parsed.getData() != null && !parsed.getData().trim().isEmpty()) {
-            editDataCompra.setText(parsed.getData().trim()); // os chips Hoje/Ontem/Outra se ajustam sozinhos
+            editDataCompra.setText(parsed.getData().trim());
             editVencimento.setText(parsed.getData().trim());
         }
         if (parsed.getCategoria() != null && !parsed.getCategoria().trim().isEmpty()) {
@@ -748,9 +729,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
         atualizarResumoParcelas();
     }
 
-    // ------------------------------------------------------------------
-    // SALVAR (lógica original preservada)
-    // ------------------------------------------------------------------
+    // ⭐ AQUI ESTÁ A LÓGICA INTELIGENTE DE SALVAMENTO
     private void salvarDivida() {
         String tipoDivida = tipoSelecionado();
         if (tipoDivida.isEmpty()) { Toast.makeText(this, "Selecione o tipo.", Toast.LENGTH_SHORT).show(); return; }
@@ -783,11 +762,15 @@ public class CadastroDividaActivity extends AppCompatActivity {
             bancoSelecionado = "Pix (" + bancoSelecionadoAtual[2] + ")";
         }
 
-        boolean isCredito = tipoDivida.equals("Cartão de Crédito");
+        boolean aceitaParcelamento = tipoDivida.equals("Cartão de Crédito") ||
+                tipoDivida.equals("Empréstimo") ||
+                tipoDivida.equals("Fatura") ||
+                tipoDivida.equals("Boleto");
+
         String parcelas = "1x (À vista)";
 
-        if (isCredito) {
-            if (vencimento.isEmpty()) { Toast.makeText(this, "Informe o 1º vencimento.", Toast.LENGTH_SHORT).show(); return; }
+        if (aceitaParcelamento) {
+            if (vencimento.isEmpty()) { Toast.makeText(this, "Informe o vencimento.", Toast.LENGTH_SHORT).show(); return; }
             if (isParceladoAtivo) {
                 for (int i = 0; i < chipGroupParcelas.getChildCount(); i++) {
                     Chip chip = (Chip) chipGroupParcelas.getChildAt(i);
@@ -798,15 +781,14 @@ public class CadastroDividaActivity extends AppCompatActivity {
             vencimento = dataCompra.isEmpty() ? getHoje() : dataCompra;
         }
 
-        // Resumo mostrado na tela de sucesso (só apresentação)
         String condicao = "À vista";
-        if (isCredito && isParceladoAtivo) {
+        if (aceitaParcelamento && isParceladoAtivo) {
             int n = 1;
             try { n = Integer.parseInt(parcelas.replace("x", "").trim()); } catch (Exception e) { }
             condicao = n > 1 ? n + "x de " + String.format(LOCALE_BR, "R$ %.2f", valor / n) : "1x";
         }
         prepararResumo(tipoDivida, valor, descricao, categoria, bancoSelecionadoAtual[2],
-                condicao, dataCompra, isCredito ? vencimento : "");
+                condicao, dataCompra, aceitaParcelamento ? vencimento : "");
 
         if (dividaEmEdicao != null) {
             AlarmeHelper.cancelar(this, dividaEmEdicao);
@@ -815,7 +797,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
             dividaEmEdicao.valorParcela = valor;
             dividaEmEdicao.banco = bancoSelecionado;
             dividaEmEdicao.categoria = categoria;
-            dividaEmEdicao.parcela = (isCredito && isParceladoAtivo) ? parcelas : "1x (À vista)";
+            dividaEmEdicao.parcela = (aceitaParcelamento && isParceladoAtivo) ? parcelas : "1x (À vista)";
             dividaEmEdicao.vencimento = vencimento;
             db.dividaDao().atualizar(dividaEmEdicao);
             if (!dividaEmEdicao.isPago()) { agendarAlarmeSeguro(dividaEmEdicao); }
@@ -823,7 +805,7 @@ public class CadastroDividaActivity extends AppCompatActivity {
             return;
         }
 
-        if (!isCredito || !isParceladoAtivo) {
+        if (!aceitaParcelamento || !isParceladoAtivo) {
             Divida nova = new Divida(session.getUserId(), descricao, valor, valor, valor, bancoSelecionado, categoria, "1x (À vista)", vencimento, true);
             nova.setDataPagamento(vencimento);
             db.dividaDao().inserir(nova);
@@ -873,9 +855,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         }
     }
 
-    // ------------------------------------------------------------------
-    // TELA DE SUCESSO (com resumo)
-    // ------------------------------------------------------------------
     private void prepararResumo(String tipo, double valor, String descricao, String categoria,
                                 String banco, String condicao, String dataCompra, String vencimento) {
         linhasResumo.clear();
@@ -940,9 +919,6 @@ public class CadastroDividaActivity extends AppCompatActivity {
         llResumoSucesso.addView(linha);
     }
 
-    // ------------------------------------------------------------------
-    // EDIÇÃO / HELPERS
-    // ------------------------------------------------------------------
     private void preencherCampos(Divida d) {
         editDescricao.setText(d.getTitulo());
         editValor.setText(String.format(LOCALE_BR, "R$ %.2f", d.getValorTotal()));
